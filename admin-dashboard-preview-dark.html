@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>معاينة: التصميم الداكن الجديد | نظام إحصاء المصيد</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=Tajawal:wght@400;500;700&family=Roboto+Mono:wght@500;600&display=swap');
+
+:root,:root[data-theme="dark"]{
+    --bg:#10151C; --bg-2:#161C26; --sidebar:#0D1219; --sidebar-2:#131A24;
+    --panel:#1A212C; --panel-2:#1F2733; --line:#2A3441; --ink:#E7ECF3; --muted:#8A94A6;
+    --accent:#2FE6C9; --accent-dim:rgba(47,230,201,.14); --accent-2:#4E9CFF;
+    --success:#3CD2A5; --success-bg:rgba(60,210,165,.14);
+    --warning:#FF9F0C; --warning-bg:rgba(255,159,12,.14);
+    --danger:#FF6060; --danger-bg:rgba(255,96,96,.14);
+    --info:#30BEFF; --info-bg:rgba(48,190,255,.14);
+    --muted-bg:rgba(138,148,166,.14);
+    --radius:12px; --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+}
+:root[data-theme="light"]{
+    --bg:#F2F4F8; --bg-2:#FFFFFF; --sidebar:#10151C; --sidebar-2:#161C26;
+    --panel:#FFFFFF; --panel-2:#F7F9FB; --line:#E1E6ED; --ink:#1A212C; --muted:#64707E;
+    --accent:#0FB8A0; --accent-dim:rgba(15,184,160,.12); --accent-2:#2E77E6;
+    --success:#1C9E76; --success-bg:rgba(28,158,118,.10);
+    --warning:#C97A0A; --warning-bg:rgba(201,122,10,.10);
+    --danger:#E14A4A; --danger-bg:rgba(225,74,74,.10);
+    --info:#1F8FCC; --info-bg:rgba(31,143,204,.10);
+    --muted-bg:rgba(100,112,126,.10);
+    --shadow:0 1px 2px rgba(20,30,45,.05), 0 6px 18px rgba(20,30,45,.06);
+}
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{ font-family:'Tajawal',sans-serif; background:var(--bg); color:var(--ink); transition:background-color .2s,color .2s; }
+h1,h2,h3,.brand-text,.stat-value{ font-family:'Almarai',sans-serif; }
+.mono,.stat-value,td.num{ font-family:'Roboto Mono',monospace; font-variant-numeric:tabular-nums; }
+a{ text-decoration:none; color:inherit; }
+
+.layout{ display:flex; min-height:100vh; }
+.sidebar{
+    width:268px; flex-shrink:0;
+    background:linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-2) 100%);
+    color:#B9C4D1; display:flex; flex-direction:column;
+    border-left:1px solid rgba(255,255,255,.06);
+}
+.sidebar-brand{ display:flex; align-items:center; gap:10px; padding:22px 20px; border-bottom:1px solid rgba(255,255,255,.07); }
+.brand-icon{ font-size:22px; filter:drop-shadow(0 0 6px var(--accent)); }
+.brand-text{ font-weight:700; font-size:15px; color:#EAF3F1; }
+.sidebar-nav{ flex:1; padding:10px 0; }
+.nav-link{ display:flex; align-items:center; gap:10px; padding:11px 20px; font-size:13.5px; color:#93A1B0; border-right:3px solid transparent; }
+.nav-link.active{ background:var(--accent-dim); color:var(--accent); border-right-color:var(--accent); font-weight:700; }
+.nav-link .dot{ width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.7; }
+.sidebar-footer{ padding:14px 20px 20px; border-top:1px solid rgba(255,255,255,.07); }
+.logout-link{ color:#FF8A8A; font-size:13px; }
+
+.main{ flex:1; min-width:0; }
+.topbar{ display:flex; align-items:center; gap:14px; padding:16px 26px; background:var(--bg-2); border-bottom:1px solid var(--line); }
+.page-title{ font-size:19px; margin:0; flex:1; color:var(--ink); }
+.theme-toggle{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:999px;
+    width:38px; height:38px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:16px; color:var(--ink);
+}
+.theme-toggle .theme-icon-light{ display:none; }
+[data-theme="light"] .theme-toggle .theme-icon-dark{ display:none; }
+[data-theme="light"] .theme-toggle .theme-icon-light{ display:inline; }
+.topbar-user{ text-align:left; line-height:1.3; }
+.user-role{ display:block; font-size:11px; color:var(--muted); }
+.user-name{ display:block; font-size:14px; font-weight:700; }
+.content{ padding:24px 26px 60px; }
+
+.mockup-banner{ background:var(--accent); color:#08211E; font-size:12.5px; font-weight:700; text-align:center; padding:8px; }
+
+.kpi-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:26px; }
+.kpi-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
+.kpi-card::before{ content:''; position:absolute; inset-inline-start:0; top:0; bottom:0; width:3px; background:var(--accent); }
+.kpi-card .stat-label{ font-size:12.5px; color:var(--muted); display:block; margin-bottom:6px; }
+.kpi-card .stat-value{ font-size:26px; font-weight:700; color:var(--ink); text-shadow:0 0 18px var(--accent-dim); }
+.kpi-card.warn-tone::before{ background:var(--warning); }
+.kpi-card.alert-tone::before{ background:var(--danger); }
+.kpi-card.alert-tone .stat-value{ color:var(--danger); text-shadow:0 0 18px var(--danger-bg); }
+
+.grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+@media (max-width:900px){ .grid-2{ grid-template-columns:1fr; } .sidebar{ display:none; } }
+
+.panel{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow); margin-bottom:18px; }
+.panel h3{ margin:0 0 14px; font-size:15px; color:var(--ink); }
+
+table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+thead th{ text-align:right; background:var(--panel-2); color:var(--ink); font-weight:700; padding:10px 12px; border-bottom:2px solid var(--line); }
+tbody td{ padding:10px 12px; border-bottom:1px solid var(--line); }
+tbody tr:hover{ background:var(--panel-2); }
+
+.badge{ display:inline-block; padding:3px 10px; border-radius:999px; font-size:11.5px; font-weight:700; }
+.badge-success{ background:var(--success-bg); color:var(--success); }
+.badge-warning{ background:var(--warning-bg); color:var(--warning); }
+.badge-danger{ background:var(--danger-bg); color:var(--danger); }
+.badge-info{ background:var(--info-bg); color:var(--info); }
+</style>
+</head>
+<body>
+
+<div class="mockup-banner">✨ معاينة التصميم الداكن الجديد — جرّب زر ☀️/🌙 بأعلى يمين الصفحة</div>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-icon">⚓</span>
+            <span class="brand-text">نظام إحصاء المصيد</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-link active"><span class="dot"></span><span>الرئيسية - الإدارة العليا</span></a>
+            <a class="nav-link"><span class="dot"></span><span>لوحة المنطقة</span></a>
+            <a class="nav-link"><span class="dot"></span><span>لوحة المحافظة</span></a>
+            <a class="nav-link"><span class="dot"></span><span>لوحة الميناء</span></a>
+            <a class="nav-link"><span class="dot"></span><span>الموارد البشرية</span></a>
+            <a class="nav-link"><span class="dot"></span><span>موظف الإحصاء</span></a>
+            <a class="nav-link"><span class="dot"></span><span>القوارب والرحلات</span></a>
+            <a class="nav-link"><span class="dot"></span><span>الفروقات وجودة البيانات</span></a>
+            <a class="nav-link"><span class="dot"></span><span>أداء موظفي الإحصاء</span></a>
+            <a class="nav-link"><span class="dot"></span><span>الحضور والمناوبات</span></a>
+            <a class="nav-link"><span class="dot"></span><span>الرواتب والمستحقات</span></a>
+            <a class="nav-link"><span class="dot"></span><span>التغطية الجغرافية</span></a>
+            <a class="nav-link"><span class="dot"></span><span>التقارير والتحليلات</span></a>
+            <a class="nav-link"><span class="dot"></span><span>التنبيهات والرقابة</span></a>
+        </nav>
+        <div class="sidebar-footer"><a class="nav-link logout-link">تسجيل الخروج</a></div>
+    </aside>
+
+    <div class="main">
+        <header class="topbar">
+            <h1 class="page-title">الرئيسية - الإدارة العليا</h1>
+            <button class="theme-toggle" id="themeToggle" type="button" aria-label="تبديل الوضع">
+                <span class="theme-icon-dark">🌙</span>
+                <span class="theme-icon-light">☀️</span>
+            </button>
+            <div class="topbar-user">
+                <span class="user-role">الإدارة العليا</span>
+                <span class="user-name">أحمد الشهري</span>
+            </div>
+        </header>
+
+        <main class="content">
+            <div class="kpi-grid">
+                <div class="kpi-card"><span class="stat-label">إجمالي المناطق</span><span class="stat-value">5</span></div>
+                <div class="kpi-card"><span class="stat-label">إجمالي المحافظات</span><span class="stat-value">18</span></div>
+                <div class="kpi-card"><span class="stat-label">إجمالي الموانئ</span><span class="stat-value">42</span></div>
+                <div class="kpi-card"><span class="stat-label">موظفو الإحصاء النشطون</span><span class="stat-value">137</span></div>
+                <div class="kpi-card"><span class="stat-label">القوارب الواصلة اليوم</span><span class="stat-value">96</span></div>
+                <div class="kpi-card"><span class="stat-label">إجمالي مصيد اليوم (كجم)</span><span class="stat-value">48,320</span></div>
+                <div class="kpi-card warn-tone"><span class="stat-label">الرحلات ذات الفروقات</span><span class="stat-value">11</span></div>
+                <div class="kpi-card alert-tone"><span class="stat-label">الموانئ غير المغطاة اليوم</span><span class="stat-value">3</span></div>
+            </div>
+
+            <div class="grid-2">
+                <div class="panel">
+                    <h3>مقارنة الإنتاج بين المناطق (آخر 30 يومًا)</h3>
+                    <table>
+                        <thead><tr><th>المنطقة</th><th>إجمالي المصيد (كجم)</th></tr></thead>
+                        <tbody>
+                        <tr><td>منطقة عسير</td><td class="num">312,480</td></tr>
+                        <tr><td>منطقة جازان</td><td class="num">288,910</td></tr>
+                        <tr><td>منطقة مكة المكرمة</td><td class="num">254,600</td></tr>
+                        <tr><td>المنطقة الشرقية</td><td class="num">198,340</td></tr>
+                        <tr><td>منطقة تبوك</td><td class="num">142,075</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel">
+                    <h3>أعلى أنواع الأسماك إنتاجًا</h3>
+                    <table>
+                        <thead><tr><th>النوع</th><th>الكمية (كجم)</th></tr></thead>
+                        <tbody>
+                        <tr><td>الهامور</td><td class="num">86,210</td></tr>
+                        <tr><td>الشعري</td><td class="num">71,540</td></tr>
+                        <tr><td>الكنعد</td><td class="num">63,980</td></tr>
+                        <tr><td>الزبيدي</td><td class="num">49,120</td></tr>
+                        <tr><td>الروبيان</td><td class="num">38,760</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>تنبيهات الإدارة</h3>
+                <table>
+                    <thead><tr><th>النوع</th><th>الرسالة</th><th>الخطورة</th><th>التاريخ</th></tr></thead>
+                    <tbody>
+                    <tr><td>ميناء غير مغطى</td><td>ميناء الشقيق بدون أي موظف إحصاء مسند لليوم</td><td><span class="badge badge-danger">حرج</span></td><td>اليوم 06:15 ص</td></tr>
+                    <tr><td>فرق تجاوز الحد المسموح</td><td>الرحلة TR-1042 بميناء القنفذة بفرق 14.2% بانتظار اعتماد المشرف</td><td><span class="badge badge-danger">حرج</span></td><td>اليوم 08:40 ص</td></tr>
+                    <tr><td>ازدحام قوارب في ميناء</td><td>ميناء حلي به 5 قوارب بانتظار/تحت الإحصاء حاليًا</td><td><span class="badge badge-warning">تحذير</span></td><td>اليوم 09:05 ص</td></tr>
+                    <tr><td>عقد قرب من الانتهاء</td><td>عقد الموظف سالم علي ينتهي بتاريخ 2026-08-15</td><td><span class="badge badge-warning">تحذير</span></td><td>منذ يومين</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+document.documentElement.setAttribute('data-theme', 'dark');
+document.getElementById('themeToggle').addEventListener('click', function () {
+    var current = document.documentElement.getAttribute('data-theme');
+    document.documentElement.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+});
+</script>
+</body>
+</html>
