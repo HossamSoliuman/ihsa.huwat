@@ -198,7 +198,7 @@ require __DIR__ . '/../../includes/header.php';
         <span><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#9AA3A8; margin-inline-end:5px;"></span> غير نشط</span>
     </div>
 
-    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:12px;">
+    <div class="coverage-map-grid">
         <?php foreach ($ports as $p):
             $color = match($p['coverage_status']) {
                 'covered' => 'var(--success)', 'high_load' => 'var(--warning)',
@@ -206,7 +206,8 @@ require __DIR__ . '/../../includes/header.php';
             };
         ?>
         <a href="?<?= $regionFilter ? 'region_id=' . $regionFilter . '&' : '' ?>port_detail=<?= (int)$p['id'] ?>"
-           style="display:block; border:1px solid var(--line); border-top:4px solid <?= $color ?>; border-radius:10px; padding:12px 14px; background:#fff; <?= $portDetailId == $p['id'] ? 'box-shadow:0 0 0 2px ' . $color . ';' : '' ?>">
+           class="coverage-port-card<?= $portDetailId == $p['id'] ? ' is-selected' : '' ?>"
+           style="--port-status-color: <?= $color ?>;">
             <strong style="font-size:13.5px;"><?= e($p['name']) ?></strong><br>
             <span style="font-size:11.5px; color:var(--muted);"><?= e($p['gov_name']) ?> — <?= e($p['region_name']) ?></span>
             <?php if ($p['is_active']): ?>
