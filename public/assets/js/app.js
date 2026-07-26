@@ -87,4 +87,31 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape') { closeSearch(); closeMobileSidebar(); }
     });
+
+    document.querySelectorAll('[data-dialog]').forEach(function (trigger) {
+        trigger.addEventListener('click', function () {
+            var dialog = document.getElementById(trigger.getAttribute('data-dialog'));
+            if (dialog && typeof dialog.showModal === 'function') dialog.showModal();
+        });
+    });
+    document.querySelectorAll('[data-detail]').forEach(function (trigger) {
+        trigger.addEventListener('click', function () {
+            var dialog = document.getElementById(trigger.getAttribute('data-detail'));
+            if (!dialog || typeof dialog.showModal !== 'function') return;
+            var filter = trigger.getAttribute('data-filter');
+            dialog.querySelectorAll('[data-row-type]').forEach(function (row) {
+                row.hidden = !!filter && row.getAttribute('data-row-type') !== filter;
+            });
+            dialog.showModal();
+        });
+    });
+    document.querySelectorAll('dialog [data-close]').forEach(function (button) {
+        button.addEventListener('click', function () { button.closest('dialog').close(); });
+    });
+    document.querySelectorAll('dialog').forEach(function (dialog) {
+        dialog.addEventListener('click', function (event) {
+            var rect = dialog.getBoundingClientRect();
+            if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+        });
+    });
 });

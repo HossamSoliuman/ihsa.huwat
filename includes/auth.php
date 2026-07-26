@@ -131,6 +131,7 @@ function sidebarMenu(): array
         ['route' => 'region.php',         'label' => 'لوحة المنطقة',                'icon' => 'map',       'group' => 'الإدارة الجغرافية', 'roles' => ['super_admin','region_manager']],
         ['route' => 'governorate.php',    'label' => 'لوحة المحافظة',               'icon' => 'flag',      'group' => 'الإدارة الجغرافية', 'roles' => ['super_admin','region_manager','gov_supervisor']],
         ['route' => 'port.php',           'label' => 'لوحة الميناء',                 'icon' => 'anchor',    'group' => 'الإدارة الجغرافية', 'roles' => ['super_admin','gov_supervisor','port_supervisor']],
+        ['route' => 'harbor_details.php', 'label' => 'تفاصيل المرفأ',                'icon' => 'ship',      'group' => 'الإدارة الجغرافية', 'roles' => ['super_admin','region_manager','gov_supervisor','port_supervisor']],
         ['route' => 'coverage.php',       'label' => 'التغطية الجغرافية',            'icon' => 'globe',     'group' => 'الإدارة الجغرافية', 'roles' => ['super_admin','region_manager']],
 
         ['route' => 'trips.php',          'label' => 'القوارب والرحلات',            'icon' => 'ship',      'group' => 'العمليات', 'roles' => ['super_admin','gov_supervisor','port_supervisor','stat_employee']],

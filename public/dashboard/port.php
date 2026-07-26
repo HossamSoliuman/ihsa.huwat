@@ -273,6 +273,10 @@ require __DIR__ . '/../../includes/header.php';
 </form>
 <?php endif; ?>
 
+<div style="display:flex; justify-content:flex-end; margin:-4px 0 18px;">
+    <a class="btn btn-outline" href="<?= BASE_URL ?>/dashboard/harbor_details.php?port_id=<?= $portId ?>">عرض تفاصيل المرفأ</a>
+</div>
+
 <div class="kpi-grid">
     <div class="kpi-card"><span class="stat-label">الموظفون في المناوبة</span><span class="stat-value"><?= numberAr($kpi['on_shift']) ?></span></div>
     <div class="kpi-card"><span class="stat-label">الموظفون المتاحون</span><span class="stat-value"><?= numberAr($kpi['available']) ?></span></div>

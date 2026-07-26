@@ -28,6 +28,8 @@ CREATE TABLE ports (
     id INT AUTO_INCREMENT PRIMARY KEY,
     governorate_id INT NOT NULL,
     name VARCHAR(150) NOT NULL,
+    location_name VARCHAR(190) NULL,
+    location_url VARCHAR(500) NULL,
     is_active TINYINT(1) DEFAULT 1,
     latitude DECIMAL(10,6) NULL,
     longitude DECIMAL(10,6) NULL,
@@ -173,8 +175,75 @@ CREATE TABLE boats (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
     registration_no VARCHAR(50) NULL UNIQUE,
+    boat_type ENUM('large','small','recreational','unclassified') NOT NULL DEFAULT 'unclassified',
+    harbor_status ENUM('occupied','disabled','inactive','unclassified') NOT NULL DEFAULT 'unclassified',
     home_port_id INT NULL,
     FOREIGN KEY (home_port_id) REFERENCES ports(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE harbor_boat_capacities (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    port_id INT NOT NULL,
+    boat_type ENUM('large','small','recreational') NOT NULL,
+    capacity INT UNSIGNED NOT NULL DEFAULT 0,
+    status ENUM('available','full','stopped') NOT NULL DEFAULT 'available',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_port_boat_type (port_id, boat_type),
+    FOREIGN KEY (port_id) REFERENCES ports(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE harbor_workers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    port_id INT NOT NULL,
+    employee_name VARCHAR(150) NOT NULL,
+    identity_number VARCHAR(255) NULL,
+    nationality ENUM('saudi','non_saudi') NOT NULL DEFAULT 'saudi',
+    worker_type ENUM('supervisor','contractor','fisherman','foreign_worker') NOT NULL,
+    mobile_number VARCHAR(30) NULL,
+    employment_status ENUM('active','suspended','expired') NOT NULL DEFAULT 'active',
+    start_date DATE NULL,
+    end_date DATE NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (port_id) REFERENCES ports(id) ON DELETE CASCADE,
+    INDEX idx_harbor_workers_port_type (port_id, worker_type, employment_status)
+) ENGINE=InnoDB;
+
+CREATE TABLE harbor_licenses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    port_id INT NOT NULL,
+    license_number VARCHAR(80) NOT NULL,
+    license_type ENUM('seasonal','operational') NOT NULL DEFAULT 'seasonal',
+    license_holder_name VARCHAR(190) NOT NULL,
+    boat_number VARCHAR(80) NULL,
+    issue_date DATE NULL,
+    expiry_date DATE NULL,
+    license_status ENUM('valid','expired','suspended','cancelled') NOT NULL DEFAULT 'valid',
+    attachment_path VARCHAR(500) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_harbor_license_number (license_number),
+    FOREIGN KEY (port_id) REFERENCES ports(id) ON DELETE CASCADE,
+    INDEX idx_harbor_licenses_port_type (port_id, license_type, license_status)
+) ENGINE=InnoDB;
+
+CREATE TABLE harbor_violations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    port_id INT NOT NULL,
+    violation_number VARCHAR(80) NOT NULL,
+    violation_type VARCHAR(120) NOT NULL,
+    violation_description TEXT NULL,
+    violation_date DATETIME NOT NULL,
+    boat_id INT NULL,
+    boat_owner_name VARCHAR(190) NULL,
+    fine_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    violation_status ENUM('open','paid','appealed','closed') NOT NULL DEFAULT 'open',
+    created_by INT NULL,
+    attachment_path VARCHAR(500) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_harbor_violation_number (violation_number),
+    FOREIGN KEY (port_id) REFERENCES ports(id) ON DELETE CASCADE,
+    FOREIGN KEY (boat_id) REFERENCES boats(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_harbor_violations_port_status (port_id, violation_status)
 ) ENGINE=InnoDB;
 
 CREATE TABLE captains (
