@@ -383,15 +383,15 @@ require __DIR__ . '/../../includes/header.php';
         <?php endif; ?>
     </header>
 
-    <section class="harbor-section">
+    <section class="harbor-section identity-section">
         <div class="section-heading"><span>1</span><h2>البيانات الأساسية</h2></div>
         <div class="identity-grid">
-            <button class="metric-card tone-purple clickable" data-detail="harborInfoDialog"><i class="card-icon">⌖</i><small>المنطقة</small><strong><?= e($harbor['region_name']) ?></strong></button>
-            <button class="metric-card tone-green clickable" data-detail="harborInfoDialog"><i class="card-icon">⌂</i><small>المحافظة</small><strong><?= e($harbor['governorate_name']) ?></strong></button>
-            <button class="metric-card tone-blue wide clickable" data-detail="boatsDialog"><i class="card-icon">⚓</i><small>اسم المرفأ</small><strong><?= e($harbor['name']) ?></strong></button>
-            <?php if ($harbor['location_url']): ?><a class="metric-card tone-green" href="<?= e($harbor['location_url']) ?>" target="_blank" rel="noopener"><i class="card-icon">⌖</i><small>الموقع</small><strong><?= e($harbor['location_name'] ?: 'فتح الخريطة') ?></strong></a><?php else: ?><button class="metric-card tone-green clickable" data-dialog="editHarborDialog"><i class="card-icon">⌖</i><small>الموقع</small><strong><?= e($harbor['location_name'] ?: 'غير مسجل') ?></strong></button><?php endif; ?>
-            <button class="metric-card tone-red compact clickable" data-detail="boatsDialog"><i class="card-icon">◴</i><small>نسبة التشغيل</small><strong><?= numberAr($occupancyRate, $occupancyRate == (int)$occupancyRate ? 0 : 1) ?>%</strong><span class="mini-progress"><b style="width:<?= $occupancyRate ?>%"></b></span></button>
-            <button class="metric-card tone-red compact clickable" data-detail="boatsDialog"><i class="card-icon">⛴</i><small>القوة الاستيعابية</small><strong><?= numberAr($totalCapacity) ?> <em>قارب</em></strong></button>
+            <div class="metric-card tone-purple"><i class="card-icon">⌖</i><small>المنطقة</small><strong><?= e($harbor['region_name']) ?></strong></div>
+            <div class="metric-card tone-green"><i class="card-icon">⌂</i><small>المحافظة</small><strong><?= e($harbor['governorate_name']) ?></strong></div>
+            <div class="metric-card tone-blue wide"><i class="card-icon">⚓</i><small>اسم المرفأ</small><strong><?= e($harbor['name']) ?></strong></div>
+            <?php if ($harbor['location_url']): ?><a class="metric-card tone-green" href="<?= e($harbor['location_url']) ?>" target="_blank" rel="noopener"><i class="card-icon">⌖</i><small>الموقع</small><strong><?= e($harbor['location_name'] ?: 'فتح الخريطة') ?></strong></a><?php else: ?><div class="metric-card tone-green"><i class="card-icon">⌖</i><small>الموقع</small><strong><?= e($harbor['location_name'] ?: 'غير مسجل') ?></strong></div><?php endif; ?>
+            <div class="metric-card tone-red compact"><i class="card-icon">◴</i><small>نسبة التشغيل</small><strong><?= numberAr($occupancyRate, $occupancyRate == (int)$occupancyRate ? 0 : 1) ?>%</strong><span class="mini-progress"><b style="width:<?= $occupancyRate ?>%"></b></span></div>
+            <div class="metric-card tone-red compact"><i class="card-icon">⛴</i><small>القوة الاستيعابية</small><strong><?= numberAr($totalCapacity) ?> <em>قارب</em></strong></div>
         </div>
     </section>
 

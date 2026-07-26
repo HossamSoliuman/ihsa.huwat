@@ -288,10 +288,11 @@ svg { display: block; }
     border-inline: 1px solid var(--line);
 }
 .kpi-card > *, .panel > * { position: relative; z-index: 1; }
-.kpi-card { min-height: 118px; padding: 20px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
-.kpi-card .stat-label { display: block; margin-bottom: 11px; color: var(--muted); font-size: 11px; font-weight: 700; }
-.kpi-card .stat-value { display: block; color: var(--ink); font-size: 28px; font-weight: 600; line-height: 1; letter-spacing: -.03em; }
-.kpi-card .stat-value::after { content: ''; display: block; width: 26px; height: 2px; margin-top: 13px; background: var(--accent); opacity: .65; }
+.kpi-card { min-height: 96px; padding: 14px 18px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; border: 1px solid var(--line); border-radius: 18px; }
+.kpi-card::before, .kpi-card::after { display: none; }
+.kpi-card .stat-label { display: block; margin-bottom: 8px; color: var(--ink); font-size: 16px; font-weight: 700; line-height: 1.45; }
+.kpi-card .stat-value { display: block; color: var(--muted); font-size: 14px; font-weight: 600; line-height: 1.35; letter-spacing: 0; }
+.kpi-card .stat-value::after { content: ''; display: block; width: 26px; height: 2px; margin-top: 9px; background: var(--accent); opacity: .65; }
 .kpi-card.warn-tone .stat-value::after { background: var(--warning); }
 .kpi-card.alert-tone .stat-value::after { background: var(--danger); }
 .kpi-card.tone-green .stat-value::after { background: var(--green); }
@@ -427,7 +428,6 @@ select option { color: var(--ink); background: var(--bg); }
     border-inline: 1px solid var(--hud-edge);
 }
 .hud-stat-card > *, .analytics-panel > *, .dashboard-alerts > * { position: relative; z-index: 1; }
-.kpi-card,
 .panel,
 .coverage-port-card,
 .hud-stat-card,
@@ -631,7 +631,7 @@ body.sidebar-collapsed .main { margin-inline-start: 0; }
     .page-title { font-size: 18px; }
     .kpi-grid { grid-template-columns: 1fr; gap: 12px; }
     .hud-stats { grid-template-columns: 1fr; gap: 12px; }
-    .kpi-card { min-height: 105px; }
+    .kpi-card { min-height: 92px; }
     .hud-stat-card { height: 150px; }
     .species-analytics { grid-template-columns: 1fr; padding-top: 10px; }
     .species-donut { width: 132px; height: 132px; }
@@ -970,6 +970,64 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .harbor-report :is(.metric-card, .boat-type-card, .person-card, .license-summary, .calc-card, .harbor-action):hover {
     border-color: var(--accent);
+}
+
+/* Compact identity summary: clear labels, quiet values, and softer geometry. */
+.identity-section .section-heading { margin-bottom: 12px; }
+.identity-section .section-heading h2 { font-size: 18px; font-weight: 700; }
+.identity-section .identity-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+}
+.identity-section .metric-card,
+.identity-section .metric-card.compact {
+    width: 100%;
+    min-height: 92px;
+    padding: 14px 14px 14px 58px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    background-color: var(--panel-strong);
+    background-image: none;
+    border-radius: 14px;
+}
+.identity-section .metric-card .card-icon {
+    position: absolute;
+    inset-block-start: 50%;
+    left: 14px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    font-size: 17px;
+    transform: translateY(-50%);
+}
+.identity-section .metric-card small {
+    margin: 0 0 5px;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+.identity-section .metric-card strong,
+.identity-section .metric-card.wide strong {
+    color: var(--muted);
+    font: 500 13px/1.45 'Tajawal', sans-serif;
+    white-space: normal;
+}
+.identity-section .metric-card strong em { color: inherit; font-size: 10px; }
+.identity-section .mini-progress { margin-top: 7px; border-radius: 999px; }
+.identity-section .mini-progress b { border-radius: inherit; }
+.identity-section .metric-card:not(a):hover { border-color: var(--line); }
+
+@media (max-width: 1500px) {
+    .identity-section .identity-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+    .identity-section .identity-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+    .identity-section .identity-grid { grid-template-columns: 1fr; }
 }
 
 .harbor-dialog h4 { margin: 16px 20px 0; font-size: 13px; }
