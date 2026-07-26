@@ -126,11 +126,8 @@ function sidebarMenu(): array
 {
     return [
         ['route' => 'admin.php',          'label' => 'الرئيسية - الإدارة العليا',   'icon' => 'grid',      'group' => 'الرئيسية', 'roles' => ['super_admin']],
-        ['route' => 'master_data.php',    'label' => 'البيانات الأساسية',           'icon' => 'database',  'group' => 'الرئيسية', 'roles' => ['super_admin']],
-
         ['route' => 'region.php',         'label' => 'لوحة المنطقة',                'icon' => 'map',       'group' => 'الإدارة الجغرافية', 'roles' => ['super_admin','region_manager']],
         ['route' => 'governorate.php',    'label' => 'لوحة المحافظة',               'icon' => 'flag',      'group' => 'الإدارة الجغرافية', 'roles' => ['super_admin','region_manager','gov_supervisor']],
-        ['route' => 'port.php',           'label' => 'لوحة الميناء',                 'icon' => 'anchor',    'group' => 'الإدارة الجغرافية', 'roles' => ['super_admin','gov_supervisor','port_supervisor']],
         ['route' => 'harbor_details.php', 'label' => 'تفاصيل المرفأ',                'icon' => 'ship',      'group' => 'الإدارة الجغرافية', 'roles' => ['super_admin','region_manager','gov_supervisor','port_supervisor']],
         ['route' => 'coverage.php',       'label' => 'التغطية الجغرافية',            'icon' => 'globe',     'group' => 'الإدارة الجغرافية', 'roles' => ['super_admin','region_manager']],
 
@@ -145,5 +142,7 @@ function sidebarMenu(): array
 
         ['route' => 'reports.php',        'label' => 'التقارير والتحليلات',          'icon' => 'file-text', 'group' => 'التقارير والرقابة', 'roles' => ['super_admin','region_manager','gov_supervisor']],
         ['route' => 'alerts.php',         'label' => 'التنبيهات والرقابة',           'icon' => 'bell',      'group' => 'التقارير والرقابة', 'roles' => ['super_admin','port_supervisor','gov_supervisor']],
+
+        ['route' => 'master_data.php',    'label' => 'الإعدادات',                    'icon' => 'database',  'group' => 'الإعدادات', 'roles' => ['super_admin']],
     ];
 }
