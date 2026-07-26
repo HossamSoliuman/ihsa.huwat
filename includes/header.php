@@ -18,7 +18,7 @@ $flash = getFlash();
         document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');
     })();
 </script>
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app.css">
+<link rel="stylesheet" href="<?= e(assetUrl('css/app.css')) ?>">
 </head>
 <body class="<?= e($bodyClass ?? '') ?>">
 <div class="layout">

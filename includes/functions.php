@@ -8,6 +8,21 @@ function e(?string $value): string
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Build a deployment-safe URL for a public asset.
+ *
+ * The content hash changes whenever the file changes, preventing browsers and
+ * hosting/CDN caches from pairing new markup with an older stylesheet/script.
+ */
+function assetUrl(string $path): string
+{
+    $path = ltrim(str_replace('\\', '/', $path), '/');
+    $file = BASE_PATH . '/public/assets/' . $path;
+    $version = is_file($file) ? substr((string) md5_file($file), 0, 12) : 'missing';
+
+    return BASE_URL . '/assets/' . $path . '?v=' . $version;
+}
+
 function numberAr($number, int $decimals = 0): string
 {
     if ($number === null) return '0';

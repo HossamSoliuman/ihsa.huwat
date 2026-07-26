@@ -4,7 +4,7 @@
  * لإنشاء حساب "الإدارة العليا" الأول بكلمة مرور حقيقية ومشفّرة.
  * بعد نجاح الإنشاء يحذف نفسه تلقائيًا من السيرفر لأسباب أمنية.
  */
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/config.php';
 
 $pdo = db();
 
@@ -60,7 +60,7 @@ if ($exists > 0) {
         document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
     })();
 </script>
-<link rel="stylesheet" href="../public/assets/css/app.css">
+<link rel="stylesheet" href="<?= e(assetUrl('css/app.css')) ?>">
 </head>
 <body class="login-page">
     <div class="login-card">

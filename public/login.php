@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
     })();
 </script>
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app.css">
+<link rel="stylesheet" href="<?= e(assetUrl('css/app.css')) ?>">
 </head>
 <body class="login-page">
     <div class="login-card">
