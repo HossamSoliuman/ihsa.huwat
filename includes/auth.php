@@ -125,6 +125,7 @@ function requireLogin(array $allowedRoles = []): array
 function sidebarMenu(): array
 {
     return [
+        ['route' => 'employment_profile.php', 'label' => 'ملفي الوظيفي', 'icon' => 'id-card', 'group' => 'بوابة الموظف', 'roles' => ['employee_portal']],
         ['route' => 'admin.php',          'label' => 'الرئيسية - الإدارة العليا',   'icon' => 'grid',      'group' => 'الرئيسية', 'roles' => ['super_admin']],
         ['route' => 'region.php',         'label' => 'لوحة المنطقة',                'icon' => 'map',       'group' => 'الإدارة الجغرافية', 'roles' => ['super_admin','region_manager']],
         ['route' => 'governorate.php',    'label' => 'لوحة المحافظة',               'icon' => 'flag',      'group' => 'الإدارة الجغرافية', 'roles' => ['super_admin','region_manager','gov_supervisor']],
@@ -142,6 +143,9 @@ function sidebarMenu(): array
 
         ['route' => 'reports.php',        'label' => 'التقارير والتحليلات',          'icon' => 'file-text', 'group' => 'التقارير والرقابة', 'roles' => ['super_admin','region_manager','gov_supervisor']],
         ['route' => 'alerts.php',         'label' => 'التنبيهات والرقابة',           'icon' => 'bell',      'group' => 'التقارير والرقابة', 'roles' => ['super_admin','port_supervisor','gov_supervisor']],
+
+        ['route' => 'jobs.php', 'label' => 'إدارة الوظائف', 'icon' => 'briefcase', 'group' => 'التوظيف', 'roles' => ['super_admin','hr_manager']],
+        ['route' => 'job_applications.php', 'label' => 'طلبات التوظيف', 'icon' => 'clipboard', 'group' => 'التوظيف', 'roles' => ['super_admin','hr_manager']],
 
         ['route' => 'master_data.php',    'label' => 'الإعدادات',                    'icon' => 'database',  'group' => 'الإعدادات', 'roles' => ['super_admin']],
     ];

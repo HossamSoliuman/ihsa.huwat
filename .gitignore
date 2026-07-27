@@ -1,2 +1,4 @@
 /config/*
 docs
+/storage/employment_uploads/*
+!/storage/employment_uploads/.htaccess

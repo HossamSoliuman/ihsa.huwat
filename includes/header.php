@@ -19,6 +19,9 @@ $flash = getFlash();
     })();
 </script>
 <link rel="stylesheet" href="<?= e(assetUrl('css/app.css')) ?>">
+<?php foreach (($pageStyles ?? []) as $pageStyle): ?>
+<link rel="stylesheet" href="<?= e(assetUrl((string)$pageStyle)) ?>">
+<?php endforeach; ?>
 </head>
 <body class="<?= e($bodyClass ?? '') ?>">
 <div class="layout">

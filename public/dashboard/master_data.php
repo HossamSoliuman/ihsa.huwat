@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../config/config.php';
+require_once BASE_PATH . '/includes/database_updates.php';
 
 $currentUserData = requireLogin(['super_admin']);
 $pageTitle   = 'البيانات الأساسية';
@@ -8,6 +9,11 @@ $activeRoute = 'master_data.php';
 $pdo = db();
 $redirectUrl = BASE_URL . '/dashboard/master_data.php';
 $section = $_GET['section'] ?? 'regions';
+$migrationPath = BASE_PATH . '/database/employment_update_20260727.sql';
+$migrationStatus = employmentDatabaseUpdateStatus($pdo);
+$migrationReadable = is_file($migrationPath) && is_readable($migrationPath);
+$migrationHash = $migrationReadable ? hash_file('sha256', $migrationPath) : false;
+$migrationModifiedAt = $migrationReadable ? filemtime($migrationPath) : false;
 
 /* ------------------------------------------------------------
    الإجراءات: إضافة أو حذف
@@ -137,6 +143,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 redirectWithMessage($redirectUrl . '?section=trips', 'success', 'تم حذف الرحلة.');
                 break;
 
+            case 'import_employment_update':
+                if ($migrationStatus['complete']) {
+                    redirectWithMessage(
+                        $redirectUrl . '?section=database_update',
+                        'success',
+                        'تحديث قاعدة البيانات مثبت بالفعل ولا يحتاج إلى إعادة تشغيل.'
+                    );
+                }
+                $statementCount = importEmploymentDatabaseUpdate($pdo, $migrationPath);
+                redirectWithMessage(
+                    $redirectUrl . '?section=database_update',
+                    'success',
+                    'تم استيراد تحديث التوظيف بنجاح وتنفيذ ' . numberAr($statementCount) . ' أوامر SQL.'
+                );
+                break;
+
             default:
                 redirectWithMessage($redirectUrl . '?section=' . $section, 'error', 'إجراء غير معروف.');
         }
@@ -144,6 +166,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirectWithMessage($redirectUrl . '?section=' . $section, 'error', $e->getMessage());
     } catch (Throwable $e) {
         error_log('Master data error: ' . $e->getMessage());
+        if ($action === 'import_employment_update') {
+            redirectWithMessage(
+                $redirectUrl . '?section=database_update',
+                'error',
+                'تعذر استيراد التحديث. راجع سجل أخطاء الخادم وخذ نسخة احتياطية قبل إعادة المحاولة.'
+            );
+        }
         redirectWithMessage($redirectUrl . '?section=' . $section, 'error', 'حدث خطأ (ربما قيمة مكررة أو مرتبطة ببيانات أخرى).');
     }
 }
@@ -182,6 +211,7 @@ $sections = [
     'captains'     => 'الكباتن',
     'species'      => 'أنواع الأسماك',
     'trips'        => 'الرحلات',
+    'database_update' => 'تحديث قاعدة البيانات',
 ];
 
 require __DIR__ . '/../../includes/header.php';
@@ -455,6 +485,82 @@ require __DIR__ . '/../../includes/header.php';
         </tbody>
     </table>
 </div>
+
+<?php elseif ($section === 'database_update'): ?>
+<section class="database-update-shell settings-database-update" aria-labelledby="databaseUpdateTitle">
+    <div class="database-update-hero">
+        <div class="database-update-copy">
+            <span class="database-update-kicker">SYSTEM PATCH / 2026.07.27</span>
+            <h2 id="databaseUpdateTitle">تحديث وحدة التوظيف</h2>
+            <p>استيراد آمن ومحدد لملف SQL المرفق بالمشروع. يضيف جداول الوظائف وطلبات التوظيف وحقول ملف الموظف.</p>
+        </div>
+        <div class="database-update-state <?= $migrationStatus['complete'] ? 'is-complete' : 'is-pending' ?>">
+            <span class="database-update-state-icon" aria-hidden="true"><?= $migrationStatus['complete'] ? '✓' : '!' ?></span>
+            <small>حالة قاعدة البيانات</small>
+            <strong><?= $migrationStatus['complete'] ? 'التحديث مثبت' : 'بانتظار الاستيراد' ?></strong>
+        </div>
+    </div>
+
+    <div class="database-update-grid">
+        <article class="panel database-update-card">
+            <div class="database-update-card-head">
+                <div>
+                    <span>جاهزية المخطط</span>
+                    <strong><?= numberAr($migrationStatus['found']) ?> / <?= numberAr($migrationStatus['total']) ?></strong>
+                </div>
+                <em><?= numberAr(round(($migrationStatus['found'] / max(1, $migrationStatus['total'])) * 100)) ?>%</em>
+            </div>
+            <div class="database-update-progress" aria-label="نسبة اكتمال التحديث">
+                <i style="width: <?= e((string)round(($migrationStatus['found'] / max(1, $migrationStatus['total'])) * 100, 2)) ?>%"></i>
+            </div>
+
+            <?php if ($migrationStatus['complete']): ?>
+                <div class="database-update-message is-success">
+                    <strong>لا يلزم اتخاذ أي إجراء</strong>
+                    <p>كل الجداول والحقول المطلوبة موجودة بالفعل. تم تعطيل إعادة الاستيراد لتجنب تنفيذ تحديث لمرة واحدة مرتين.</p>
+                </div>
+                <button class="btn btn-primary database-update-submit" type="button" disabled>تم استيراد التحديث</button>
+            <?php elseif (!$migrationReadable): ?>
+                <div class="database-update-message is-error">
+                    <strong>ملف التحديث غير متاح</strong>
+                    <p>تأكد من وجود الملف داخل مجلد قاعدة البيانات ومن صلاحية قراءته بواسطة الخادم.</p>
+                </div>
+                <button class="btn btn-primary database-update-submit" type="button" disabled>تعذر بدء الاستيراد</button>
+            <?php else: ?>
+                <div class="database-update-message is-warning">
+                    <strong>خذ نسخة احتياطية أولاً</strong>
+                    <p>هذا تحديث بنيوي لمرة واحدة. قد تنفذ بعض أوامر DDL مباشرة حتى إذا توقف أمر لاحق.</p>
+                </div>
+                <form method="post" class="database-update-form">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="import_employment_update">
+                    <button class="btn btn-primary database-update-submit" type="submit">استيراد تحديث SQL الآن</button>
+                    <small>متاح فقط من الإعدادات لحساب الإدارة العليا، ولا يسمح برفع أو تشغيل ملفات SQL أخرى.</small>
+                </form>
+            <?php endif; ?>
+        </article>
+
+        <aside class="panel database-update-details">
+            <h2>بيانات الحزمة</h2>
+            <dl>
+                <div><dt>الملف</dt><dd dir="ltr">employment_update_20260727.sql</dd></div>
+                <div><dt>النوع</dt><dd>ترحيل إضافي لمرة واحدة</dd></div>
+                <div><dt>آخر تعديل</dt><dd dir="ltr"><?= $migrationModifiedAt ? e(date('Y-m-d H:i', $migrationModifiedAt)) : '—' ?></dd></div>
+                <div><dt>بصمة SHA-256</dt><dd class="database-update-hash" dir="ltr" title="<?= e((string)$migrationHash) ?>"><?= $migrationHash ? e(substr($migrationHash, 0, 16)) . '…' : '—' ?></dd></div>
+            </dl>
+            <?php if (!$migrationStatus['complete'] && $migrationStatus['missing'] !== []): ?>
+                <details class="database-update-missing">
+                    <summary>العناصر المتبقية (<?= numberAr(count($migrationStatus['missing'])) ?>)</summary>
+                    <ul dir="ltr">
+                        <?php foreach ($migrationStatus['missing'] as $missingItem): ?>
+                            <li><?= e($missingItem) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </details>
+            <?php endif; ?>
+        </aside>
+    </div>
+</section>
 
 <?php elseif ($section === 'trips'): ?>
 <div class="panel">

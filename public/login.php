@@ -65,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <button type="submit" class="btn btn-primary btn-block">دخول</button>
         </form>
+        <p class="login-public-link">تبحث عن فرصة عمل؟ <a href="<?= e(BASE_URL . '/#available-jobs') ?>">تصفح الوظائف المتاحة</a></p>
     </div>
 </body>
 </html>
