@@ -117,4 +117,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
         });
     });
+
+    document.querySelectorAll('form[data-confirm]').forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!window.confirm(form.getAttribute('data-confirm'))) event.preventDefault();
+        });
+    });
 });

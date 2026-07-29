@@ -1,98 +1,70 @@
-# نظام إحصاء المصيد وإدارة الموانئ — PHP (بدون فريمورك)
+# IHSA Fisheries Operations
 
-## هيكلة المشروع
-```
-fisheries-system/
-├── config/
-│   ├── config.php        # الإعدادات العامة + تشغيل الجلسة
-│   └── database.php       # اتصال PDO بقاعدة البيانات
-├── includes/
-│   ├── auth.php            # تسجيل الدخول، الصلاحيات، القائمة الجانبية
-│   ├── functions.php       # دوال مساعدة عامة (CSRF، تنسيق أرقام...)
-│   ├── header.php          # رأس الصفحة + الشريط الجانبي المشترك
-│   └── footer.php          # تذييل الصفحة المشترك
-├── database/
-│   └── schema.sql          # قاعدة البيانات الكاملة (جميع الجداول)
-└── public/                 # هذا هو المجلد الذي تشير له الاستضافة (Document Root)
-    ├── index.php            # موجّه رئيسي
-    ├── login.php
-    ├── logout.php
-    ├── setup.php            # تشغّل مرة واحدة فقط لإنشاء حساب المدير
-    ├── assets/css/app.css
-    ├── assets/js/app.js
-    └── dashboard/
-        ├── admin.php               # لوحة الإدارة العليا (نموذج كامل وجاهز)
-        ├── region.php               # لوحة المنطقة
-        ├── governorate.php          # لوحة المحافظة
-        ├── port.php                 # لوحة الميناء
-        ├── hr.php                   # الموارد البشرية
-        ├── employee.php             # موظف الإحصاء
-        ├── trips.php                # القوارب والرحلات
-        ├── discrepancies.php        # الفروقات وجودة البيانات
-        ├── employee_performance.php # أداء الموظفين
-        ├── attendance.php           # الحضور والمناوبات
-        ├── payroll.php              # الرواتب
-        ├── coverage.php             # التغطية الجغرافية
-        ├── reports.php              # التقارير
-        └── alerts.php                # التنبيهات
+Native Laravel 12 application for fisheries statistics, port operations, workforce management, recruitment, payroll, data quality, and geographic reporting.
+
+## Requirements
+
+- PHP 8.2 or newer
+- Composer 2
+- MySQL 8+ or MariaDB 10.6+
+- Node.js 20+ and npm
+
+## Installation
+
+```bash
+composer install
+copy .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+npm install
+npm run build
 ```
 
-## خطوات التشغيل
+Configure the `DB_*` values in `.env` before running migrations. The seeders install the supported roles, work shifts, and reference fish species.
 
-1. **قاعدة البيانات**
-   - أنشئ قاعدة بيانات MySQL واستورد الملف `database/schema.sql` (ينشئ القاعدة، الجداول، والأدوار الثمانية تلقائيًا).
+Point the web server document root at `public/`. With XAMPP, the application can also be served locally with:
 
-2. **إعدادات الاتصال**
-   - افتح `config/database.php` وعدّل `DB_HOST` / `DB_NAME` / `DB_USER` / `DB_PASS` حسب استضافتك.
+```bash
+php artisan serve
+```
 
-3. **رفع الملفات**
-   - ارفع مجلد المشروع كاملًا، واجعل `public/` هو الـ Document Root (أو أنشئ توجيهًا له).
+Open `/setup` once to create the first `super_admin` account, then sign in through `/login`.
 
-4. **إنشاء حساب الإدارة العليا**
-   - افتح `public/setup.php` في المتصفح مرة واحدة فقط، واملأ بيانات المدير.
-   - السكربت يشفّر كلمة المرور تلقائيًا (`password_hash`) ثم يحذف نفسه بعد النجاح.
+## Development
 
-5. **الدخول**
-   - افتح `public/login.php` وسجّل الدخول بالحساب الذي أنشأته.
+```bash
+composer run dev
+```
 
-## نظام الأدوار (Roles) المطبَّق
-| الكود | الدور | صفحة الداشبورد الافتراضية |
-|---|---|---|
-| super_admin | الإدارة العليا | admin.php |
-| region_manager | مدير المنطقة | region.php |
-| gov_supervisor | مشرف المحافظة | governorate.php |
-| port_supervisor | مشرف الميناء | port.php |
-| stat_employee | موظف الإحصاء | employee.php |
-| hr_manager | مدير الموارد البشرية | hr.php |
-| finance_officer | مسؤول الرواتب | payroll.php |
-| quality_supervisor | مراقب الجودة | discrepancies.php |
+The application follows standard Laravel boundaries:
 
-الشريط الجانبي يُبنى ديناميكيًا من `includes/auth.php` (دالة `sidebarMenu()`)
-ويعرض فقط اللوحات المسموح بها لدور المستخدم الحالي. أي صفحة داشبورد تتحقق
-بنفسها من الصلاحية عبر `requireLogin(['role1','role2', ...])` في أول سطر.
+- routes in `routes/web.php`;
+- controllers and validated Form Requests in `app/Http`;
+- authorization policies in `app/Policies`;
+- business workflows in `app/Actions`;
+- Eloquent models in `app/Models`;
+- Blade views in `resources/views`;
+- domain migrations and idempotent seeders in `database`.
 
-## الحالة الحالية
-- ✅ الهيكلة الكاملة + قاعدة البيانات + تسجيل الدخول والصلاحيات (CSRF، قفل الحساب
-  بعد محاولات فاشلة متكررة، جلسات آمنة).
-- ✅ اللوحات المكتملة فعليًا وتقرأ/تكتب بيانات حقيقية من قاعدة البيانات:
-  - `admin.php` — الإدارة العليا
-  - `port.php` — مشرف الميناء (إسناد رحلات، اعتماد فروقات، إضافة موظفين للمناوبة)
-  - `trips.php` — القوارب والرحلات (فلاتر + نطاق صلاحية تلقائي)
-  - `discrepancies.php` — الفروقات وجودة البيانات (تحليلات + اعتماد الفروقات)
-  - `employee.php` — موظف الإحصاء (بدء الإحصاء + تسجيل بيانات المصيد فعليًا)
-  - `attendance.php` — الحضور والمناوبات (تسجيل حضور/انصراف، تبديل مناوبات، تغطية)
-  - `hr.php` — الموارد البشرية (قائمة الموظفين، العقود، الإجازات، النقل والتكليف، إضافة موظف)
-  - `payroll.php` — الرواتب والمستحقات (توليد مسير شهري، تعديل بدلات/خصومات، اعتماد الصرف)
-  - `employee_performance.php` — أداء موظفي الإحصاء (إنتاجية، جودة، تقييم تلقائي)
-  - `alerts.php` — التنبيهات والرقابة (11 نوع تنبيه محسوبة حيًا من البيانات الفعلية)
-  - `coverage.php` — التغطية الجغرافية (خريطة حالة الموانئ + تفاصيل تفاعلية + تكليف مباشر)
-  - `region.php` — لوحة المنطقة (مقارنة محافظات، توزيع موظفين، أعلى أداء، تنبيهات تغطية)
-  - `governorate.php` — لوحة المحافظة (مقارنة موانئ، مناوبات، رحلات متأخرة، تنبيهات غياب/ازدحام)
-  - `reports.php` — مركز التقارير (12 نوع تقرير + فلاتر موحّدة: فترة، منطقة، محافظة،
-    ميناء، قارب، كابتن، موظف، نوع سمك، حالة، نسبة فرق)
+## Verification
 
-## ✅ الحالة: كل اللوحات الـ15 مكتملة وتعمل على بيانات حقيقية من قاعدة البيانات.
+```bash
+php artisan test
+vendor/bin/pint --test
+php artisan view:cache
+composer audit
+```
 
-النظام جاهز للاستخدام الفعلي بعد: استيراد `schema.sql`، تعديل بيانات الاتصال،
-تشغيل `setup.php` مرة واحدة، ثم إدخال بيانات تجريبية (مناطق/محافظات/موانئ/قوارب/
-كباتن) يدويًا أو عبر إضافة نموذج إدخال بيانات أساسية لاحقًا إذا احتجت ذلك.
+Tests use an in-memory SQLite database and seed the same reference data used by a normal installation.
+
+## Main workspaces
+
+- Executive and regional dashboards
+- Governorate and port control rooms
+- Trips, catches, discrepancies, and alerts
+- Attendance, geographic coverage, HR, and payroll
+- Recruitment and employee self-service
+- Harbor records, licenses, workers, capacities, and violations
+- Twelve role-scoped reports with UTF-8 CSV export
+
+Uploads are stored through Laravel disks and protected attachments are served only after authorization. Do not expose the project root or `storage/` as a public document root.

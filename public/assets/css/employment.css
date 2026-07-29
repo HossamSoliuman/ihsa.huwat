@@ -1488,3 +1488,5 @@
     .employment-hud-public .employment-form-grid-three { grid-template-columns: 1fr; }
     .employment-hud-public .employment-application-sidebar { grid-template-columns: 1fr; }
 }
+/* Preserve administrator-authored line breaks without rendering raw HTML. */
+.preserve-lines { white-space: pre-line; }
