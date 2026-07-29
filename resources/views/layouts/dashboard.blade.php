@@ -24,7 +24,7 @@
             @foreach(config('dashboard.navigation') as $item)
                 @continue(!in_array(auth()->user()->role->code, $item['roles'], true))
                 @if($lastGroup !== $item['group']) @php($lastGroup = $item['group']) <div class="sidebar-section">{{ $lastGroup }}</div> @endif
-                <a href="{{ route($item['route']) }}" class="nav-link {{ request()->routeIs($item['active']) ? 'active' : '' }}"><span class="nav-icon" data-icon="grid"></span><span>{{ $item['label'] }}</span></a>
+                <a href="{{ route($item['route']) }}" class="nav-link {{ request()->routeIs($item['active']) ? 'active' : '' }}"><span class="nav-icon" data-icon="{{ $item['icon'] }}"></span><span>{{ $item['label'] }}</span></a>
             @endforeach
         </nav>
         <div class="sidebar-footer">
