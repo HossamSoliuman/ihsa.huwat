@@ -23,7 +23,7 @@
     </section>
 @else
     <header class="harbor-commandbar"><div class="harbor-titleblock"><div class="harbor-kicker"><span>إدارة المرافئ</span><b>HBR–{{ str_pad((string) $harbor->id, 4, '0', STR_PAD_LEFT) }}</b></div><h1>{{ $harbor->name }}</h1><p>{{ $harbor->governorate->region->name }} · {{ $harbor->governorate->name }} @if($harbor->location_name)· {{ $harbor->location_name }}@endif</p></div><div class="harbor-command-actions">
-        @if($ports->count() > 1)<form method="get" action="{{ route('dashboard.harbors.index') }}" class="harbor-picker"><label>المرفأ<select name="port_id" disabled><option>{{ $harbor->name }}</option></select></label></form><div class="harbor-switcher">@foreach($ports as $port)<a class="{{ $port->is($harbor) ? 'active' : '' }}" href="{{ route('dashboard.harbors.show', $port) }}">{{ $port->name }}</a>@endforeach</div>@endif
+        @if($ports->count() > 1)<details class="harbor-switcher"><summary><span class="harbor-switcher-copy"><span>اختيار المرفأ</span><strong>{{ $harbor->name }}</strong></span><span class="harbor-switcher-chevron" aria-hidden="true"></span></summary><nav aria-label="اختيار المرفأ">@foreach($ports as $port)<a class="{{ $port->is($harbor) ? 'active' : '' }}" href="{{ route('dashboard.harbors.show', $port) }}" @if($port->is($harbor)) aria-current="page" @endif>{{ $port->name }}<small>{{ $port->governorate->name }}</small></a>@endforeach</nav></details>@endif
         <a class="harbor-icon-button" href="{{ route('dashboard.harbors.export', $harbor) }}" title="تصدير CSV" aria-label="تصدير CSV">⇩</a>
     </div></header>
 
