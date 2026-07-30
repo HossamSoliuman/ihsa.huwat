@@ -13,21 +13,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          coverage: none
-
-      - name: Install production PHP dependencies
-        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
-
-      - name: Build frontend assets
-        run: |
-          npm ci
-          npm run build
-
-      - name: Deploy via FTP
+      - name: Deploy application files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: 91.108.101.100
@@ -44,6 +30,7 @@ jobs:
             **/.env
             **/.env.*
             **/node_modules/**
+            **/vendor/**
             **/storage/**
             **/tests/**
             **/docs/**
