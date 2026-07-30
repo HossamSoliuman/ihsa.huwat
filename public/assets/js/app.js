@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', function () {
         'dollar-sign': '<circle cx="12" cy="12" r="9"/><path d="M16 8.5c-.8-1-2-1.5-4-1.5-2.2 0-4 1.1-4 3s1.5 2.5 4 3 4 1.2 4 3-1.8 3-4 3c-2 0-3.3-.6-4-1.6M12 5v14"/>',
         'file-text': '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
         'bell': '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
+        'calendar': '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>',
+        'landmark': '<path d="m3 9 9-5 9 5M5 10h14M6 10v8M10 10v8M14 10v8M18 10v8M4 18h16M3 21h18"/>',
         'log-out': '<path d="M10 4H5v16h5M14 8l4 4-4 4M8 12h10"/>'
     };
 
@@ -123,5 +125,9 @@ document.addEventListener('DOMContentLoaded', function () {
         form.addEventListener('submit', function (event) {
             if (!window.confirm(form.getAttribute('data-confirm'))) event.preventDefault();
         });
+    });
+
+    document.querySelectorAll('[data-print]').forEach(function (button) {
+        button.addEventListener('click', function () { window.print(); });
     });
 });

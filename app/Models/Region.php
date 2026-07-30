@@ -18,4 +18,9 @@ class Region extends Model
     {
         return $this->hasMany(Governorate::class);
     }
+
+    public function seasons(): HasMany
+    {
+        return $this->hasMany(Season::class);
+    }
 }

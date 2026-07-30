@@ -20,7 +20,7 @@ class RegionController extends Controller
 
     public function destroy(DeleteMasterDataRequest $request, Region $region, DeleteMasterDataRecordAction $action): RedirectResponse
     {
-        $action->execute($region, ['governorates' => 'region_id', 'users' => 'region_id'], 'المنطقة');
+        $action->execute($region, ['governorates' => 'region_id', 'users' => 'region_id', 'seasons' => 'region_id'], 'المنطقة');
 
         return $this->redirect()->with('status', 'تم حذف المنطقة.');
     }
