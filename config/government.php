@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'allowed_roles' => ['super_admin'],
+    'allowed_roles' => ['government_admin'],
 
     'navigation' => [
         ['route' => 'government.dashboard', 'active' => 'government.dashboard', 'label' => 'لوحة التحكم', 'icon' => 'landmark', 'group' => 'نظرة عامة'],

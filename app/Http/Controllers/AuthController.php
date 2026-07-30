@@ -42,17 +42,20 @@ class AuthController extends Controller
             'password' => $credentials['password'],
             'is_active' => true,
         ]);
+        $authorized = $authenticated && $this->isIhsaUser();
 
         LoginAttempt::query()->create([
             'username' => $credentials['username'],
             'ip_address' => $request->ip() ?? 'unknown',
-            'success' => $authenticated,
+            'success' => $authorized,
             'created_at' => now(),
         ]);
 
-        if (! $authenticated) {
+        if (! $authorized) {
+            Auth::logout();
+
             return back()->withErrors([
-                'username' => 'اسم المستخدم أو كلمة المرور غير صحيحة، أو أن الحساب غير مفعّل.',
+                'username' => 'اسم المستخدم أو كلمة المرور غير صحيحة، أو أن الحساب غير مخول لبوابة IHSA.',
             ])->onlyInput('username');
         }
 
@@ -77,5 +80,13 @@ class AuthController extends Controller
         $user = Auth::user()->loadMissing('role');
 
         return redirect()->route($user->role->dashboard_route);
+    }
+
+    private function isIhsaUser(): bool
+    {
+        /** @var User|null $user */
+        $user = Auth::user()?->loadMissing('role');
+
+        return $user !== null && ! in_array($user->role->code, config('government.allowed_roles'), true);
     }
 }

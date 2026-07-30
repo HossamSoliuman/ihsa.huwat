@@ -2,6 +2,7 @@
 
 @section('title', 'الوظائف المتاحة')
 @section('body-class', 'employment-home-page employment-simple-home')
+@section('simple-public-header', 'true')
 
 @section('content')
 <section class="employment-simple-hero" aria-labelledby="careers-title">

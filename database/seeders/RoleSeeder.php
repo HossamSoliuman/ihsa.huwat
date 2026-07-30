@@ -11,6 +11,7 @@ class RoleSeeder extends Seeder
     {
         foreach ([
             ['code' => 'super_admin', 'name_ar' => 'الإدارة العليا', 'dashboard_route' => 'dashboard.admin'],
+            ['code' => 'government_admin', 'name_ar' => 'مسؤول البوابة الحكومية', 'dashboard_route' => 'government.dashboard'],
             ['code' => 'region_manager', 'name_ar' => 'مدير المنطقة', 'dashboard_route' => 'dashboard.region-overview.index'],
             ['code' => 'gov_supervisor', 'name_ar' => 'مشرف المحافظة', 'dashboard_route' => 'dashboard.governorate-overview.index'],
             ['code' => 'port_supervisor', 'name_ar' => 'مشرف الميناء', 'dashboard_route' => 'dashboard.port-operations.index'],

@@ -14,22 +14,35 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $superAdministratorRole = Role::query()
-            ->where('code', 'super_admin')
-            ->firstOrFail();
-
-        User::query()->updateOrCreate(
-            ['username' => 'admin'],
+        foreach ([
             [
-                'role_id' => $superAdministratorRole->id,
-                'full_name' => 'System Administrator',
-                'email' => 'admin@example.com',
-                'password_hash' => Hash::make('password'),
-                'region_id' => null,
-                'governorate_id' => null,
-                'port_id' => null,
-                'is_active' => true,
+                'role' => 'super_admin',
+                'username' => 'admin',
+                'full_name' => 'IHSA System Administrator',
+                'email' => 'admin@ihsa.huwat.sa',
             ],
-        );
+            [
+                'role' => 'government_admin',
+                'username' => 'government_admin',
+                'full_name' => 'Government Portal Administrator',
+                'email' => 'government@ihsa.huwat.sa',
+            ],
+        ] as $account) {
+            $role = Role::query()->where('code', $account['role'])->firstOrFail();
+
+            User::query()->updateOrCreate(
+                ['username' => $account['username']],
+                [
+                    'role_id' => $role->id,
+                    'full_name' => $account['full_name'],
+                    'email' => $account['email'],
+                    'password_hash' => Hash::make('password'),
+                    'region_id' => null,
+                    'governorate_id' => null,
+                    'port_id' => null,
+                    'is_active' => true,
+                ],
+            );
+        }
     }
 }

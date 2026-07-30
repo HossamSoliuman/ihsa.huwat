@@ -12,18 +12,25 @@ class UserSeederTest extends TestCase
 {
     use LazilyRefreshDatabase;
 
-    public function test_it_seeds_an_active_super_administrator_idempotently(): void
+    public function test_it_seeds_separate_active_ihsa_and_government_administrators_idempotently(): void
     {
         $this->seed(UserSeeder::class);
 
-        $administrator = User::query()
+        $ihsaAdministrator = User::query()
             ->where('username', 'admin')
             ->firstOrFail();
+        $governmentAdministrator = User::query()
+            ->where('username', 'government_admin')
+            ->firstOrFail();
 
-        $this->assertDatabaseCount('users', 1);
-        $this->assertSame('super_admin', $administrator->role->code);
-        $this->assertSame('admin@example.com', $administrator->email);
-        $this->assertTrue($administrator->is_active);
-        $this->assertTrue(Hash::check('password', $administrator->password_hash));
+        $this->assertDatabaseCount('users', 2);
+        $this->assertSame('super_admin', $ihsaAdministrator->role->code);
+        $this->assertSame('admin@example.com', $ihsaAdministrator->email);
+        $this->assertTrue($ihsaAdministrator->is_active);
+        $this->assertTrue(Hash::check('password', $ihsaAdministrator->password_hash));
+        $this->assertSame('government_admin', $governmentAdministrator->role->code);
+        $this->assertSame('government@example.com', $governmentAdministrator->email);
+        $this->assertTrue($governmentAdministrator->is_active);
+        $this->assertTrue(Hash::check('password', $governmentAdministrator->password_hash));
     }
 }

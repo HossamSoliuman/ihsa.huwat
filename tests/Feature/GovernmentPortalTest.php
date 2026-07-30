@@ -35,7 +35,7 @@ class GovernmentPortalTest extends TestCase
 
     public function test_main_ihsa_session_does_not_authenticate_the_government_portal(): void
     {
-        $this->actingAs($this->administrator())
+        $this->actingAs($this->ihsaAdministrator())
             ->get(route('government.dashboard'))
             ->assertRedirect(route('government.login'));
 
@@ -45,7 +45,7 @@ class GovernmentPortalTest extends TestCase
     public function test_authorized_user_can_start_a_separate_government_session(): void
     {
         $this->withoutMiddleware(ThrottleRequests::class);
-        $administrator = $this->administrator([
+        $administrator = $this->governmentAdministrator([
             'username' => 'government-admin',
             'password_hash' => Hash::make('secure-password'),
         ]);
@@ -59,18 +59,16 @@ class GovernmentPortalTest extends TestCase
         $this->assertGuest('web');
     }
 
-    public function test_non_administrator_credentials_are_rejected_by_the_government_login(): void
+    public function test_ihsa_administrator_credentials_are_rejected_by_the_government_login(): void
     {
         $this->withoutMiddleware(ThrottleRequests::class);
-        $role = Role::query()->where('code', 'gov_supervisor')->firstOrFail();
-        $supervisor = User::factory()->create([
-            'role_id' => $role->id,
+        $administrator = $this->ihsaAdministrator([
             'username' => 'government-denied',
             'password_hash' => Hash::make('secure-password'),
         ]);
 
         $this->from(route('government.login'))->post(route('government.login.store'), [
-            'username' => $supervisor->username,
+            'username' => $administrator->username,
             'password' => 'secure-password',
         ])->assertRedirect(route('government.login'))->assertSessionHasErrors('username');
 
@@ -79,17 +77,14 @@ class GovernmentPortalTest extends TestCase
 
     public function test_only_authorized_roles_can_use_an_existing_government_session(): void
     {
-        $role = Role::query()->where('code', 'gov_supervisor')->firstOrFail();
-        $supervisor = User::factory()->create(['role_id' => $role->id]);
-
-        $this->actingAs($supervisor, 'government')
+        $this->actingAs($this->ihsaAdministrator(), 'government')
             ->get(route('government.dashboard'))
             ->assertForbidden();
     }
 
     public function test_government_root_redirects_to_the_government_dashboard(): void
     {
-        $this->actingAs($this->administrator(), 'government')
+        $this->actingAs($this->governmentAdministrator(), 'government')
             ->get('/gov')
             ->assertRedirect(route('government.dashboard'));
     }
@@ -103,7 +98,7 @@ class GovernmentPortalTest extends TestCase
             'licenses_count' => 45,
         ]);
 
-        $this->actingAs($this->administrator(), 'government')
+        $this->actingAs($this->governmentAdministrator(), 'government')
             ->get(route('government.dashboard'))
             ->assertOk()
             ->assertSeeInOrder(['البوابة الحكومية', 'لوحة التحكم الحكومية', 'المواسم النشطة', 'أحدث المواسم'])
@@ -121,7 +116,7 @@ class GovernmentPortalTest extends TestCase
         Season::factory()->for($region)->create(['name' => 'موسم الروبيان المستهدف', 'status' => Season::STATUS_ACTIVE]);
         Season::factory()->for($otherRegion)->create(['name' => 'موسم لا يظهر', 'status' => Season::STATUS_CLOSED]);
 
-        $this->actingAs($this->administrator(), 'government')
+        $this->actingAs($this->governmentAdministrator(), 'government')
             ->get(route('government.seasons.index', [
                 'search' => 'الروبيان',
                 'status' => Season::STATUS_ACTIVE,
@@ -135,7 +130,7 @@ class GovernmentPortalTest extends TestCase
     public function test_administrator_can_create_a_fishing_season(): void
     {
         $region = Region::factory()->create();
-        $administrator = $this->administrator();
+        $administrator = $this->governmentAdministrator();
 
         $this->actingAs($administrator, 'government')
             ->get(route('government.seasons.create'))
@@ -170,7 +165,7 @@ class GovernmentPortalTest extends TestCase
     {
         $region = Region::factory()->create();
 
-        $this->actingAs($this->administrator(), 'government')
+        $this->actingAs($this->governmentAdministrator(), 'government')
             ->from(route('government.seasons.create'))
             ->post(route('government.seasons.store'), [
                 'name' => 'موسم غير صالح',
@@ -193,7 +188,7 @@ class GovernmentPortalTest extends TestCase
         $region = Region::factory()->create();
         Season::factory()->for($region)->create();
 
-        $this->actingAs($this->administrator())
+        $this->actingAs($this->ihsaAdministrator())
             ->from(route('dashboard.master-data.index', ['section' => 'regions']))
             ->delete(route('dashboard.regions.destroy', $region))
             ->assertSessionHasErrors('delete');
@@ -203,24 +198,33 @@ class GovernmentPortalTest extends TestCase
 
     public function test_government_logout_does_not_end_the_main_ihsa_session(): void
     {
-        $administrator = $this->administrator();
-        $this->actingAs($administrator, 'web');
-        Auth::guard('government')->login($administrator);
+        $ihsaAdministrator = $this->ihsaAdministrator();
+        $governmentAdministrator = $this->governmentAdministrator();
+        $this->actingAs($ihsaAdministrator, 'web');
+        Auth::guard('government')->login($governmentAdministrator);
 
         $this->post(route('government.logout'))->assertRedirect(route('government.login'));
 
-        $this->assertAuthenticatedAs($administrator, 'web');
+        $this->assertAuthenticatedAs($ihsaAdministrator, 'web');
         $this->assertGuest('government');
     }
 
     public function test_unrequested_government_modules_are_not_exposed(): void
     {
-        $this->actingAs($this->administrator(), 'government')->get('/gov/fishing-tools')->assertNotFound();
-        $this->actingAs($this->administrator(), 'government')->get('/gov/production')->assertNotFound();
+        $this->actingAs($this->governmentAdministrator(), 'government')->get('/gov/fishing-tools')->assertNotFound();
+        $this->actingAs($this->governmentAdministrator(), 'government')->get('/gov/production')->assertNotFound();
     }
 
     /** @param array<string, mixed> $attributes */
-    private function administrator(array $attributes = []): User
+    private function governmentAdministrator(array $attributes = []): User
+    {
+        $role = Role::query()->where('code', 'government_admin')->firstOrFail();
+
+        return User::factory()->create(['role_id' => $role->id, ...$attributes]);
+    }
+
+    /** @param array<string, mixed> $attributes */
+    private function ihsaAdministrator(array $attributes = []): User
     {
         $role = Role::query()->where('code', 'super_admin')->firstOrFail();
 

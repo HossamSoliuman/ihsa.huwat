@@ -28,7 +28,7 @@ class AuthenticationTest extends TestCase
     {
         $this->withoutMiddleware(ThrottleRequests::class);
 
-        foreach (Role::query()->get() as $role) {
+        foreach (Role::query()->whereNotIn('code', config('government.allowed_roles'))->get() as $role) {
             $user = User::factory()->create([
                 'role_id' => $role->id,
                 'username' => "user_{$role->code}",
@@ -39,5 +39,23 @@ class AuthenticationTest extends TestCase
                 ->assertRedirect(route($role->dashboard_route));
             $this->post(route('logout'));
         }
+    }
+
+    public function test_government_user_cannot_log_in_to_the_ihsa_portal(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        $role = Role::query()->where('code', 'government_admin')->firstOrFail();
+        $user = User::factory()->create([
+            'role_id' => $role->id,
+            'username' => 'government-only',
+            'password_hash' => Hash::make('password123'),
+        ]);
+
+        $this->from(route('login'))->post(route('login.store'), [
+            'username' => $user->username,
+            'password' => 'password123',
+        ])->assertRedirect(route('login'))->assertSessionHasErrors('username');
+
+        $this->assertGuest('web');
     }
 }
