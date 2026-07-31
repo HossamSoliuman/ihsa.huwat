@@ -9,7 +9,7 @@
 </head>
 <body class="login-page">
     <main class="login-card government-login-card-simple">
-        <div class="login-brand"><span class="brand-icon" aria-hidden="true">⚓</span></div>
+        <div class="login-brand"><img class="login-brand-logo" src="{{ asset('assets/img/hud/hawat-logo.png') }}" alt="منصة حوات"></div>
         <h1 class="login-title">البوابة الحكومية</h1>
 
         @if ($errors->any())

@@ -23,6 +23,7 @@ class GovernmentPortalTest extends TestCase
             ->assertSeeInOrder(['البوابة الحكومية', 'اسم المستخدم', 'كلمة المرور', 'دخول'])
             ->assertDontSee('SECURE DECISION GATEWAY')
             ->assertDontSee('بوابة منفصلة عن جلسة النظام الإداري')
+            ->assertSee(asset('assets/img/hud/hawat-logo.png'), false)
             ->assertSee(route('government.login.store'), false);
     }
 

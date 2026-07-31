@@ -15,6 +15,14 @@ class AuthenticationTest extends TestCase
 {
     use LazilyRefreshDatabase;
 
+    public function test_login_page_uses_hawat_logo(): void
+    {
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee(asset('assets/img/hud/hawat-logo.png'), false)
+            ->assertSee('alt="منصة حوات"', false);
+    }
+
     public function test_authenticated_user_can_log_out_from_the_sidebar(): void
     {
         $user = User::factory()->create();

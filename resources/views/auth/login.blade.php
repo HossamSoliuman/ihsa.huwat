@@ -8,7 +8,7 @@
 </head>
 <body class="login-page">
     <main class="login-card">
-        <div class="login-brand"><span class="brand-icon" aria-hidden="true">⚓</span></div>
+        <div class="login-brand"><img class="login-brand-logo" src="{{ asset('assets/img/hud/hawat-logo.png') }}" alt="منصة حوات"></div>
         <h1 class="login-title">{{ config('app.name') }}</h1>
         <p class="login-sub">الرجاء تسجيل الدخول للمتابعة</p>
 
