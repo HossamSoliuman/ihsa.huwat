@@ -1,38 +1,49 @@
-name: Deploy to Server
+name: Deploy to production
 
 on:
   push:
     branches:
       - main
 
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Deploy application files via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.5
         with:
-          server: 91.108.101.100
-          username: u887190404
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
-          port: 21
-          local-dir: ./
-          server-dir: public_html/ihsa/
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/.github/**
-            **/.env
-            **/.env.*
-            **/node_modules/**
-            **/vendor/**
-            **/storage/**
-            **/tests/**
-            **/docs/**
-            **/.phpunit.result.cache
-            **/phpunit.xml
+          host: 191.218.163.161
+          username: root
+          password: ${{ secrets.SSH_PASSWORD }}
+          command_timeout: 15m
+          script: |
+            set -e
+
+            cd /www/wwwroot/ihsa
+
+            php artisan down --retry=60
+            trap 'php artisan up' EXIT
+
+            git -c safe.directory=/www/wwwroot/ihsa pull --ff-only origin main
+
+            export COMPOSER_ALLOW_SUPERUSER=1
+            composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
+            npm ci
+            npm run build
+
+            php artisan migrate --force
+            php artisan optimize
+            php artisan queue:restart
+            php artisan up
+
+            trap - EXIT
