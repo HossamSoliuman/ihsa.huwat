@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
+use RuntimeException;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -57,5 +59,36 @@ class AuthenticationTest extends TestCase
         ])->assertRedirect(route('login'))->assertSessionHasErrors('username');
 
         $this->assertGuest('web');
+    }
+
+    public function test_invalid_dashboard_route_is_handled_without_an_exception_page(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        $role = Role::query()->where('code', 'super_admin')->firstOrFail();
+        $role->update(['dashboard_route' => 'admin.php']);
+        $user = User::factory()->create([
+            'role_id' => $role->id,
+            'username' => 'invalid-dashboard-route',
+            'password_hash' => Hash::make('password123'),
+        ]);
+
+        $this->post(route('login.store'), [
+            'username' => $user->username,
+            'password' => 'password123',
+        ])->assertRedirect(route('login'))->assertSessionHasErrors('username');
+
+        $this->assertGuest('web');
+    }
+
+    public function test_server_errors_do_not_expose_details_when_debugging_is_disabled(): void
+    {
+        config()->set('app.debug', false);
+        Route::get('/test-server-error', fn (): never => throw new RuntimeException('sensitive exception details'));
+
+        $this->get('/test-server-error')
+            ->assertInternalServerError()
+            ->assertSee('تعذر إكمال الطلب')
+            ->assertDontSee('sensitive exception details')
+            ->assertDontSee(RuntimeException::class);
     }
 }

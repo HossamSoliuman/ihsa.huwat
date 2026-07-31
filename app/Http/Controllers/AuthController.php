@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 
 class AuthController extends Controller
@@ -79,7 +81,23 @@ class AuthController extends Controller
         /** @var User $user */
         $user = Auth::user()->loadMissing('role');
 
-        return redirect()->route($user->role->dashboard_route);
+        $dashboardRoute = $user->role->dashboard_route;
+
+        if (Route::has($dashboardRoute)) {
+            return redirect()->route($dashboardRoute);
+        }
+
+        Log::error('Role dashboard route is not defined.', [
+            'user_id' => $user->id,
+            'role_code' => $user->role->code,
+            'dashboard_route' => $dashboardRoute,
+        ]);
+
+        Auth::logout();
+
+        return redirect()->route('login')->withErrors([
+            'username' => 'تعذر فتح لوحة التحكم لهذا الحساب. يرجى التواصل مع مسؤول النظام.',
+        ]);
     }
 
     private function isIhsaUser(): bool

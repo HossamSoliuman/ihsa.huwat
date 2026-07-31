@@ -12,7 +12,7 @@
 <body class="@yield('body-class')">
 <div class="layout">
     <header class="topbar">
-        <div class="topbar-brand"><a href="{{ route('home') }}" class="brand-link"><span class="brand-mark"></span><span class="brand-text">نظام إحصاء المصيد</span></a></div>
+        <div class="topbar-brand"><a href="{{ route('home') }}" class="brand-link"><span class="brand-mark"></span><span class="brand-copy"><span class="brand-text">إحصاء المصيد</span><span class="brand-subtitle">منصة حوات</span></span></a></div>
         <button class="sidebar-toggle icon-button" id="sidebarToggle" type="button" aria-label="فتح القائمة"><span class="hamburger"><i></i><i></i><i></i></span></button>
         <div class="topbar-spacer"></div>
         <button class="theme-toggle icon-button topbar-action" id="themeToggle" type="button" aria-label="تبديل المظهر">◐</button>

@@ -29,3 +29,5 @@ jobs:
             set -e
             cd /www/wwwroot/ihsa
             git -c safe.directory=/www/wwwroot/ihsa pull --ff-only origin main
+            php artisan migrate --force
+            php artisan optimize

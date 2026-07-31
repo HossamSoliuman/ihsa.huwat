@@ -32,6 +32,8 @@ class AdminDashboardTest extends TestCase
         $this->actingAs($user)
             ->get(route('dashboard.admin'))
             ->assertOk()
+            ->assertSee('إحصاء المصيد')
+            ->assertSee('منصة حوات')
             ->assertSeeInOrder(['نظرة عامة', 'الرئيسية', 'المنطقة', 'العمل اليومي', 'الرحلات'])
             ->assertSee('data-icon="home"', false)
             ->assertSee('data-icon="ship"', false)
