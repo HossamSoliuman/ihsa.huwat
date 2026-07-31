@@ -24,26 +24,8 @@ jobs:
           host: 191.218.163.161
           username: root
           password: ${{ secrets.SSH_PASSWORD }}
-          command_timeout: 15m
+          command_timeout: 2m
           script: |
             set -e
-
             cd /www/wwwroot/ihsa
-
-            php artisan down --retry=60
-            trap 'php artisan up' EXIT
-
             git -c safe.directory=/www/wwwroot/ihsa pull --ff-only origin main
-
-            export COMPOSER_ALLOW_SUPERUSER=1
-            composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
-
-            npm ci
-            npm run build
-
-            php artisan migrate --force
-            php artisan optimize
-            php artisan queue:restart
-            php artisan up
-
-            trap - EXIT
