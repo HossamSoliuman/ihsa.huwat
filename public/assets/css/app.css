@@ -165,13 +165,14 @@ svg { display: block; }
 }
 .brand-link { display: inline-flex; align-items: center; gap: 15px; min-width: 0; }
 .brand-mark {
-    width: 46px;
+    width: 70px;
     height: 38px;
     display: block;
     flex: 0 0 auto;
     border: 1px solid rgba(255,255,255,.18);
     border-radius: 4px;
-    background: rgba(255,255,255,.96) url('../img/hud/hawat-logo.png') center / calc(100% - 8px) auto no-repeat;
+    overflow: hidden;
+    background: #f7f7f7 url('../img/hud/ihsa-logo.jpeg') center / 164% auto no-repeat;
 }
 .brand-copy { display: grid; gap: 2px; min-width: 0; }
 .brand-text { color: rgba(255,255,255,.94); font-size: 16px; font-weight: 600; line-height: 1.15; letter-spacing: .04em; white-space: nowrap; }
@@ -415,7 +416,7 @@ select option { color: var(--ink); background: var(--bg); }
 
 .login-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; background-color: var(--bg); background-image: radial-gradient(circle at 50% 35%, rgba(var(--accent-rgb), .10), transparent 36%); }
 .login-card { position: relative; width: 390px; max-width: 100%; padding: 34px 30px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); box-shadow: 0 24px 80px rgba(0, 0, 0, .22); }
-.login-brand-logo { width: 104px; height: auto; display: block; margin: 0 auto; padding: 9px; border: 1px solid rgba(255,255,255,.18); border-radius: 5px; background: rgba(255,255,255,.96); }
+.login-brand-logo { width: 176px; height: 84px; display: block; margin: 0 auto; border: 1px solid rgba(255,255,255,.18); border-radius: 5px; background: #f7f7f7 url('../img/hud/ihsa-logo.jpeg') center / 164% auto no-repeat; }
 .login-title { margin: 16px 0 4px; text-align: center; font-size: 19px; }
 .login-sub { margin-bottom: 23px; color: var(--muted); text-align: center; font-size: 12px; }
 .btn-block { width: 100%; }

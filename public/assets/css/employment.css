@@ -129,17 +129,17 @@
 .employment-header-inner { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 32px; }
 .employment-brand { display: inline-flex; align-items: center; gap: 13px; min-width: 0; }
 .employment-brand-mark {
-    width: 49px;
+    width: 76px;
     height: 49px;
-    display: grid;
-    place-items: center;
+    display: block;
     flex: 0 0 auto;
-    color: var(--ep-paper);
-    background: var(--ep-navy);
-    border-radius: 50% 50% 45% 55% / 48% 44% 56% 52%;
+    overflow: hidden;
+    background: #f7f7f7 url('../img/hud/ihsa-logo.jpeg') center / 164% auto no-repeat;
+    border: 1px solid rgba(var(--ep-navy-rgb), .18);
+    border-radius: 8px 3px 8px 3px;
     transform: rotate(-3deg);
 }
-.employment-brand-mark svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.employment-brand-mark svg { display: none; }
 .employment-brand > span:last-child { display: grid; gap: 3px; min-width: 0; }
 .employment-brand strong { font-size: 14px; font-weight: 700; }
 .employment-brand small { max-width: 360px; overflow: hidden; color: var(--ep-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
@@ -632,7 +632,7 @@
 @media (max-width: 650px) {
     .employment-public { font-size: 14px; }
     .employment-container { width: min(100% - 24px, 600px); }
-    .employment-brand-mark { width: 42px; height: 42px; }
+    .employment-brand-mark { width: 64px; height: 42px; }
     .employment-brand strong { font-size: 12px; }
     .employment-home-page .employment-hero { min-height: auto; padding-block: 45px; }
     .employment-home-page .employment-hero h1,

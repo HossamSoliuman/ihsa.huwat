@@ -3,12 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/jpeg" href="{{ asset('assets/img/hud/ihsa-logo.jpeg') }}">
     <title>تسجيل الدخول | {{ config('app.name') }}</title>
     <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
 </head>
 <body class="login-page">
     <main class="login-card">
-        <div class="login-brand"><img class="login-brand-logo" src="{{ asset('assets/img/hud/hawat-logo.png') }}" alt="منصة حوات"></div>
+        <div class="login-brand"><span class="login-brand-logo" role="img" aria-label="Hawat"></span></div>
         <h1 class="login-title">{{ config('app.name') }}</h1>
         <p class="login-sub">الرجاء تسجيل الدخول للمتابعة</p>
 

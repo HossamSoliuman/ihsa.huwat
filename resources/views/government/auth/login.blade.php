@@ -4,12 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#1d2835">
+    <link rel="icon" type="image/jpeg" href="{{ asset('assets/img/hud/ihsa-logo.jpeg') }}">
     <title>تسجيل الدخول الحكومي | {{ config('app.name') }}</title>
     <link rel="stylesheet" href="{{ asset('assets/css/government.css') }}">
 </head>
 <body class="login-page">
     <main class="login-card government-login-card-simple">
-        <div class="login-brand"><img class="login-brand-logo" src="{{ asset('assets/img/hud/hawat-logo.png') }}" alt="منصة حوات"></div>
+        <div class="login-brand"><span class="login-brand-logo" role="img" aria-label="Hawat"></span></div>
         <h1 class="login-title">البوابة الحكومية</h1>
 
         @if ($errors->any())

@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0b2942">
+    <link rel="icon" type="image/jpeg" href="{{ asset('assets/img/hud/ihsa-logo.jpeg') }}">
     <meta name="description" content="@yield('description', 'اكتشف فرص العمل المتاحة وقدّم طلبك إلكترونياً.')">
     <title>@yield('title', 'بوابة التوظيف') | {{ config('app.name') }}</title>
     <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
