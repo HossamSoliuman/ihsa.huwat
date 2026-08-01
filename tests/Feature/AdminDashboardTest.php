@@ -35,6 +35,7 @@ class AdminDashboardTest extends TestCase
             ->assertSee('إحصاء المصيد')
             ->assertSee('منصة حوات')
             ->assertSeeInOrder(['نظرة عامة', 'الرئيسية', 'المرافئ', 'العمل اليومي', 'الرحلات'])
+            ->assertSeeInOrder(['الإدارة', 'الموظفون', 'الحضور', 'الرواتب'])
             ->assertSee('data-icon="home"', false)
             ->assertSee('data-icon="ship"', false)
             ->assertDontSee(route('dashboard.region-overview.index'), false)
