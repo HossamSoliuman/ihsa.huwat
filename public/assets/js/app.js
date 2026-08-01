@@ -130,4 +130,49 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-print]').forEach(function (button) {
         button.addEventListener('click', function () { window.print(); });
     });
+
+    document.querySelectorAll('[data-harbor-selector]').forEach(function (form) {
+        var region = form.querySelector('[data-harbor-region]');
+        var city = form.querySelector('[data-harbor-city]');
+        var harbor = form.querySelector('[data-harbor-port]');
+        var submit = form.querySelector('[data-harbor-submit]');
+
+        if (!region || !city || !harbor) return;
+
+        function filterOptions(select, attribute, value) {
+            Array.from(select.options).forEach(function (option, index) {
+                if (index === 0) return;
+                var isVisible = value !== '' && option.getAttribute(attribute) === value;
+                option.hidden = !isVisible;
+                option.disabled = !isVisible;
+            });
+        }
+
+        function refreshCities(resetValue) {
+            if (resetValue) city.value = '';
+            filterOptions(city, 'data-region-id', region.value);
+            city.disabled = region.value === '';
+            if (city.selectedOptions[0] && city.selectedOptions[0].disabled) city.value = '';
+        }
+
+        function refreshHarbors(resetValue) {
+            if (resetValue) harbor.value = '';
+            filterOptions(harbor, 'data-governorate-id', city.value);
+            harbor.disabled = city.value === '';
+            if (harbor.selectedOptions[0] && harbor.selectedOptions[0].disabled) harbor.value = '';
+            if (submit) submit.disabled = harbor.value === '';
+        }
+
+        region.addEventListener('change', function () {
+            refreshCities(true);
+            refreshHarbors(true);
+        });
+        city.addEventListener('change', function () { refreshHarbors(true); });
+        harbor.addEventListener('change', function () {
+            if (submit) submit.disabled = harbor.value === '';
+        });
+
+        refreshCities(false);
+        refreshHarbors(false);
+    });
 });

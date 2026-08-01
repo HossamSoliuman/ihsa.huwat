@@ -10,7 +10,9 @@ class BuildHarborWorkspaceAction
     public function execute(User $user, ?Port $selectedPort): array
     {
         $ports = Port::query()->visibleTo($user)->with('governorate.region')->orderBy('name')->get();
-        $harbor = $selectedPort ?? $ports->first();
+        $regions = $ports->pluck('governorate.region')->unique('id')->sortBy('name')->values();
+        $selectorGovernorates = $ports->pluck('governorate')->unique('id')->sortBy('name')->values();
+        $harbor = $selectedPort ?? ($ports->count() === 1 ? $ports->first() : null);
 
         if ($harbor !== null) {
             $harbor->load([
@@ -39,6 +41,6 @@ class BuildHarborWorkspaceAction
                 'status' => $capacityRecord?->status === 'stopped' ? 'stopped' : ($capacity > 0 && $occupied >= $capacity ? 'full' : 'available')];
         });
 
-        return compact('ports', 'harbor', 'boatTypes');
+        return compact('ports', 'regions', 'selectorGovernorates', 'harbor', 'boatTypes');
     }
 }

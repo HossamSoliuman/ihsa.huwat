@@ -15,15 +15,30 @@
     $violationStatusLabels = ['open' => 'مفتوحة', 'paid' => 'مسددة', 'appealed' => 'معترض عليها', 'closed' => 'مغلقة'];
 @endphp
 <div class="harbor-workspace">
-@if(!$harbor)
+@if($ports->isNotEmpty())
+    <section class="harbor-scope-selector">
+        <header><div><span>مسار الوصول</span><h2>اختيار المرفأ</h2></div><small>المحافظة ← المدينة ← المرفأ</small></header>
+        <form method="get" action="{{ route('dashboard.harbors.index') }}" data-harbor-selector>
+            <label><span><b>01</b> المحافظة</span><select name="region_id" data-harbor-region required><option value="">اختر المحافظة</option>@foreach($regions as $region)<option value="{{ $region->id }}" @selected((string) ($selection['region_id'] ?? '') === (string) $region->id)>{{ $region->name }}</option>@endforeach</select>@error('region_id')<small>{{ $message }}</small>@enderror</label>
+            <i aria-hidden="true"></i>
+            <label><span><b>02</b> المدينة</span><select name="governorate_id" data-harbor-city required><option value="">اختر المدينة</option>@foreach($selectorGovernorates as $governorate)<option value="{{ $governorate->id }}" data-region-id="{{ $governorate->region_id }}" @selected((string) ($selection['governorate_id'] ?? '') === (string) $governorate->id)>{{ $governorate->name }}</option>@endforeach</select>@error('governorate_id')<small>{{ $message }}</small>@enderror</label>
+            <i aria-hidden="true"></i>
+            <label><span><b>03</b> المرفأ</span><select name="port_id" data-harbor-port required><option value="">اختر المرفأ</option>@foreach($ports as $port)<option value="{{ $port->id }}" data-region-id="{{ $port->governorate->region_id }}" data-governorate-id="{{ $port->governorate_id }}" @selected((string) ($selection['port_id'] ?? '') === (string) $port->id)>{{ $port->name }}{{ $port->is_active ? '' : ' — غير نشط' }}</option>@endforeach</select>@error('port_id')<small>{{ $message }}</small>@enderror</label>
+            <button class="btn btn-primary" type="submit" data-harbor-submit>عرض بيانات المرفأ</button>
+        </form>
+    </section>
+@endif
+
+@if($ports->isEmpty())
     <section class="harbor-empty"><span class="harbor-kicker">سجل المرافئ</span><h1>لا يوجد مرفأ ضمن نطاق صلاحيتك</h1><p>أنشئ أول مرفأ لبدء تسجيل الطاقة الاستيعابية والقوارب والقوى البشرية والتراخيص.</p>
         @can('create', App\Models\Port::class)<details class="harbor-create-drawer" open><summary>إنشاء مرفأ جديد</summary><form method="post" action="{{ route('dashboard.harbors.store') }}" class="harbor-form-grid">@csrf
             <label>اسم المرفأ<input name="name" required maxlength="150"></label><label>المحافظة<select name="governorate_id" required>@foreach($governorates as $governorate)<option value="{{ $governorate->id }}">{{ $governorate->region->name }} — {{ $governorate->name }}</option>@endforeach</select></label><label>اسم الموقع<input name="location_name" maxlength="190"></label><label>رابط الموقع<input type="url" name="location_url" maxlength="500" dir="ltr"></label><label>خط العرض<input type="number" name="latitude" step="0.000001" min="-90" max="90"></label><label>خط الطول<input type="number" name="longitude" step="0.000001" min="-180" max="180"></label><label class="harbor-check"><input type="checkbox" name="is_active" value="1" checked> نشط</label><button class="btn btn-primary" type="submit">إنشاء المرفأ</button>
         </form></details>@endcan
     </section>
+@elseif(!$harbor)
+    <section class="harbor-empty harbor-selection-empty"><span class="harbor-kicker">دليل المرافئ</span><h1>اختر المرفأ المطلوب</h1><p>ابدأ بالمحافظة، ثم المدينة، ثم المرفأ لعرض جميع بياناته وإدارتها.</p></section>
 @else
     <header class="harbor-commandbar"><div class="harbor-titleblock"><div class="harbor-kicker"><span>إدارة المرافئ</span><b>HBR–{{ str_pad((string) $harbor->id, 4, '0', STR_PAD_LEFT) }}</b></div><h1>{{ $harbor->name }}</h1><p>{{ $harbor->governorate->region->name }} · {{ $harbor->governorate->name }} @if($harbor->location_name)· {{ $harbor->location_name }}@endif</p></div><div class="harbor-command-actions">
-        @if($ports->count() > 1)<details class="harbor-switcher"><summary><span class="harbor-switcher-copy"><span>اختيار المرفأ</span><strong>{{ $harbor->name }}</strong></span><span class="harbor-switcher-chevron" aria-hidden="true"></span></summary><nav aria-label="اختيار المرفأ">@foreach($ports as $port)<a class="{{ $port->is($harbor) ? 'active' : '' }}" href="{{ route('dashboard.harbors.show', $port) }}" @if($port->is($harbor)) aria-current="page" @endif>{{ $port->name }}<small>{{ $port->governorate->name }}</small></a>@endforeach</nav></details>@endif
         <a class="harbor-icon-button" href="{{ route('dashboard.harbors.export', $harbor) }}" title="تصدير CSV" aria-label="تصدير CSV">⇩</a>
     </div></header>
 

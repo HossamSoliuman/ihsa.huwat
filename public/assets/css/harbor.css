@@ -1,5 +1,24 @@
 .harbor-details-page .content { max-width: 1680px; margin-inline: auto; }
 .harbor-workspace { min-width: 0; display: grid; gap: 18px; }
+.harbor-scope-selector { position: relative; padding: 22px 24px; overflow: hidden; border: 1px solid var(--line); background: linear-gradient(100deg, rgba(var(--accent-rgb), .07), rgba(0,0,0,.08) 54%, transparent); }
+.harbor-scope-selector::before { content: 'HARBOR ACCESS'; position: absolute; inset: 14px auto auto 24px; color: var(--faint); font: 600 34px 'Chakra Petch', sans-serif; letter-spacing: .12em; opacity: .08; pointer-events: none; }
+.harbor-scope-selector > header { position: relative; z-index: 1; margin-bottom: 18px; padding-bottom: 14px; display: flex; align-items: end; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--line); }
+.harbor-scope-selector > header div { display: grid; gap: 4px; }
+.harbor-scope-selector > header span { color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+.harbor-scope-selector > header h2 { margin: 0; color: var(--ink); font-size: 18px; }
+.harbor-scope-selector > header small { color: var(--muted); font-size: 10px; }
+.harbor-scope-selector form { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(180px, 1fr) 28px minmax(180px, 1fr) 28px minmax(180px, 1fr) auto; align-items: end; gap: 10px; }
+.harbor-scope-selector label { min-width: 0; display: grid; gap: 7px; color: var(--muted); font-size: 11px; font-weight: 600; }
+.harbor-scope-selector label > span { display: flex; align-items: center; gap: 8px; }
+.harbor-scope-selector label b { color: var(--accent); font: 600 9px 'Chakra Petch', sans-serif; }
+.harbor-scope-selector select { width: 100%; min-height: 42px; padding: 8px 11px; color: var(--ink); background: color-mix(in srgb, var(--bg) 88%, transparent); border: 1px solid var(--line); border-radius: 0; }
+.harbor-scope-selector select:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+.harbor-scope-selector select:disabled { color: var(--faint); opacity: .55; cursor: not-allowed; }
+.harbor-scope-selector label > small { color: var(--danger); font-size: 9px; }
+.harbor-scope-selector form > i { height: 1px; margin-bottom: 20px; background: linear-gradient(90deg, var(--line), var(--accent), var(--line)); opacity: .55; }
+.harbor-scope-selector [data-harbor-submit] { min-height: 42px; white-space: nowrap; }
+.harbor-scope-selector [data-harbor-submit]:disabled { opacity: .4; cursor: not-allowed; filter: grayscale(.7); }
+.harbor-selection-empty { min-height: 330px; }
 .harbor-commandbar, .harbor-panel, .harbor-empty { position: relative; border: 1px solid var(--line); background: linear-gradient(145deg, rgba(255,255,255,.055), rgba(0,0,0,.08)); }
 .harbor-commandbar::before, .harbor-panel::before { content: ''; position: absolute; inset: 0 auto auto 0; width: 44px; height: 2px; background: var(--accent); }
 .harbor-commandbar { min-height: 154px; padding: 28px 32px; display: flex; align-items: end; justify-content: space-between; gap: 24px; overflow: visible; }
@@ -80,7 +99,7 @@
 .harbor-empty { min-height: 420px; padding: 54px; display: grid; align-content: center; justify-items: start; }
 .harbor-empty h1 { margin: 12px 0; font-size: clamp(32px, 6vw, 62px); max-width: 780px; }
 .harbor-empty p { color: var(--muted); max-width: 600px; }
-@media (max-width: 1180px) { .harbor-commandbar { align-items: stretch; flex-direction: column; } .harbor-command-actions { width: 100%; } .harbor-switcher { width: min(360px, calc(100% - 50px)); } }
+@media (max-width: 1180px) { .harbor-scope-selector form { grid-template-columns: repeat(3, minmax(180px, 1fr)); } .harbor-scope-selector form > i { display: none; } .harbor-scope-selector [data-harbor-submit] { grid-column: 1 / -1; justify-self: end; } .harbor-commandbar { align-items: stretch; flex-direction: column; } .harbor-command-actions { width: 100%; } .harbor-switcher { width: min(360px, calc(100% - 50px)); } }
 @media (max-width: 1100px) { .harbor-vitals { grid-template-columns: repeat(3, 1fr); } .harbor-section-grid { grid-template-columns: 1fr; } }
-@media (max-width: 720px) { .harbor-commandbar { padding: 22px; } .harbor-switcher { width: auto; flex: 1; } .harbor-vitals { grid-template-columns: repeat(2, 1fr); } .harbor-capacity-rings { grid-template-columns: 1fr; } .harbor-panel { padding: 17px; } .harbor-span-2 { grid-column: auto; } }
+@media (max-width: 720px) { .harbor-scope-selector { padding: 19px 17px; } .harbor-scope-selector > header { align-items: start; flex-direction: column; } .harbor-scope-selector form { grid-template-columns: 1fr; } .harbor-scope-selector [data-harbor-submit] { grid-column: auto; justify-self: stretch; } .harbor-commandbar { padding: 22px; } .harbor-switcher { width: auto; flex: 1; } .harbor-vitals { grid-template-columns: repeat(2, 1fr); } .harbor-capacity-rings { grid-template-columns: 1fr; } .harbor-panel { padding: 17px; } .harbor-span-2 { grid-column: auto; } }
 @media (max-width: 460px) { .harbor-commandbar { padding: 20px 17px; } .harbor-titleblock h1 { font-size: 30px; } .harbor-vitals { grid-template-columns: 1fr; } .harbor-vitals article { min-height: 92px; border-inline-end: 0; border-bottom: 1px solid var(--line); } .harbor-vitals article:last-child { border-bottom: 0; } .harbor-tabs { width: 100%; } }

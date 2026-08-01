@@ -214,6 +214,7 @@ class GovernmentPortalTest extends TestCase
     {
         $this->actingAs($this->governmentAdministrator(), 'government')->get('/gov/fishing-tools')->assertNotFound();
         $this->actingAs($this->governmentAdministrator(), 'government')->get('/gov/production')->assertNotFound();
+        $this->actingAs($this->governmentAdministrator(), 'government')->get('/gov/harbors')->assertNotFound();
     }
 
     /** @param array<string, mixed> $attributes */

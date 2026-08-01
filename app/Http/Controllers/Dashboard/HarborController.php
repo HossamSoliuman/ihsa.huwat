@@ -16,7 +16,12 @@ class HarborController extends Controller
 {
     public function index(ViewHarborRequest $request, BuildHarborWorkspaceAction $action): View
     {
-        return $this->workspace($request, null, $action);
+        $selectedPortId = $request->validated('port_id');
+        $selectedPort = $selectedPortId
+            ? Port::query()->visibleTo($request->user())->findOrFail((int) $selectedPortId)
+            : null;
+
+        return $this->workspace($request, $selectedPort, $action);
     }
 
     public function show(ViewHarborRequest $request, Port $port, BuildHarborWorkspaceAction $action): View
@@ -46,6 +51,15 @@ class HarborController extends Controller
             ->when(in_array($request->user()->role->code, ['gov_supervisor', 'port_supervisor'], true), fn ($query) => $query->whereKey($data['harbor']?->governorate_id ?? $request->user()->governorate_id))
             ->orderBy('name')->get();
         $data['tab'] = $request->validated('tab', 'overview');
+        $data['selection'] = $request->safe()->only(['region_id', 'governorate_id', 'port_id']);
+
+        if ($data['harbor'] !== null) {
+            $data['selection'] = [
+                'region_id' => $data['harbor']->governorate->region_id,
+                'governorate_id' => $data['harbor']->governorate_id,
+                'port_id' => $data['harbor']->id,
+            ];
+        }
 
         return view('dashboard.harbors.show', $data);
     }

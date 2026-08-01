@@ -40,6 +40,56 @@ class HarborManagementTest extends TestCase
         $this->actingAs($user)->get(route('dashboard.harbors.show', $otherPort))->assertForbidden();
     }
 
+    public function test_administrator_selects_a_harbor_through_governorate_and_city(): void
+    {
+        $region = Region::factory()->create(['name' => 'محافظة الساحل']);
+        $city = Governorate::factory()->for($region)->create(['name' => 'مدينة الموج']);
+        $harbor = Port::factory()->for($city, 'governorate')->create(['name' => 'مرفأ الصيادين']);
+        Port::factory()->create();
+
+        $this->actingAs($this->administrator())
+            ->get(route('dashboard.harbors.index', [
+                'region_id' => $region->id,
+                'governorate_id' => $city->id,
+                'port_id' => $harbor->id,
+            ]))
+            ->assertOk()
+            ->assertViewHas('harbor', fn (Port $selectedHarbor): bool => $selectedHarbor->is($harbor))
+            ->assertSeeInOrder(['اختيار المرفأ', 'المحافظة', 'المدينة', 'المرفأ', 'مرفأ الصيادين'])
+            ->assertSee('data-harbor-selector', false)
+            ->assertSee('data-harbor-submit', false);
+    }
+
+    public function test_harbor_selection_must_follow_the_selected_geography(): void
+    {
+        $selectedRegion = Region::factory()->create();
+        $selectedCity = Governorate::factory()->for($selectedRegion)->create();
+        $otherRegion = Region::factory()->create();
+        $otherCity = Governorate::factory()->for($otherRegion)->create();
+        $otherHarbor = Port::factory()->for($otherCity, 'governorate')->create();
+
+        $this->actingAs($this->administrator())
+            ->from(route('dashboard.harbors.index'))
+            ->get(route('dashboard.harbors.index', [
+                'region_id' => $selectedRegion->id,
+                'governorate_id' => $selectedCity->id,
+                'port_id' => $otherHarbor->id,
+            ]))
+            ->assertRedirect(route('dashboard.harbors.index'))
+            ->assertSessionHasErrors('port_id');
+    }
+
+    public function test_administrator_is_prompted_to_select_when_multiple_harbors_are_available(): void
+    {
+        Port::factory()->count(2)->create();
+
+        $this->actingAs($this->administrator())
+            ->get(route('dashboard.harbors.index'))
+            ->assertOk()
+            ->assertViewHas('harbor', null)
+            ->assertSee('اختر المرفأ المطلوب');
+    }
+
     public function test_super_administrator_can_render_every_harbor_tab(): void
     {
         $user = $this->administrator();
