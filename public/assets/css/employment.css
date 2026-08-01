@@ -455,8 +455,8 @@
     background: linear-gradient(105deg, rgba(var(--accent-rgb), .10), transparent 58%);
     border: 1px solid var(--line);
 }
-.employment-admin-hero h2 { max-width: 760px; margin: 7px 0 8px; font: 700 clamp(22px, 2.5vw, 34px)/1.5 'Noto Kufi Arabic', sans-serif; }
-.employment-admin-hero p { max-width: 760px; margin: 0; color: var(--muted); line-height: 1.8; }
+.employment-admin-hero h2 { max-width: 760px; margin: 7px 0 8px; font: 700 var(--text-page-title)/1.4 'Noto Kufi Arabic', sans-serif; text-wrap: balance; overflow-wrap: anywhere; }
+.employment-admin-hero p { max-width: 760px; margin: 0; color: var(--muted); font-size: var(--text-body); line-height: 1.8; }
 .employment-admin-shell .employment-eyebrow { color: var(--accent); }
 .employment-admin-shell .employment-eyebrow::before { background: var(--accent); }
 .employment-admin-hero .employment-hero-actions { justify-content: flex-end; }
@@ -464,17 +464,17 @@
 .employment-workflow-nav a { padding: 12px 3px; color: var(--muted); border-bottom: 2px solid transparent; font-weight: 600; }
 .employment-workflow-nav a.active { color: var(--ink); border-color: var(--accent); }
 .employment-kpis { margin-bottom: 18px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-.employment-kpis article { min-height: 90px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; background: var(--panel); border: 1px solid var(--line); }
-.employment-kpis span { color: var(--muted); font-size: 10px; }
-.employment-kpis strong { color: var(--ink); font: 600 23px 'Chakra Petch', 'Tajawal', sans-serif; }
+.employment-kpis article { min-height: 100px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; background: var(--panel); border: 1px solid var(--line); }
+.employment-kpis span { color: var(--muted); font-size: var(--text-small); font-weight: 500; line-height: 1.55; }
+.employment-kpis strong { color: var(--ink); font: 600 var(--text-kpi)/1 'Chakra Petch', 'Tajawal', sans-serif; }
 .employment-kpis article::after { content: ''; width: 30px; height: 2px; background: var(--line-strong); }
 .employment-kpis .tone-live::after { background: var(--accent); }
 .employment-admin-shell .employment-section-heading { margin-bottom: 20px; align-items: center; }
-.employment-admin-shell .employment-section-heading span { color: var(--accent); font-size: 9px; font-weight: 700; }
-.employment-admin-shell .employment-section-heading h3 { margin: 3px 0 0; font-size: 18px; }
+.employment-admin-shell .employment-section-heading span { color: var(--accent); font-size: var(--text-caption); font-weight: 700; }
+.employment-admin-shell .employment-section-heading h3 { margin: 3px 0 0; font-size: var(--text-section-title); }
 .employment-editor { padding: 25px; }
 .employment-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
-.employment-form-grid label { color: var(--muted); font-size: 11px; font-weight: 600; }
+.employment-form-grid label { color: var(--muted); font-size: var(--text-caption); font-weight: 600; }
 .employment-form-grid label b { color: var(--danger); }
 .employment-form-grid :is(input, select, textarea) { width: 100%; margin-top: 6px; }
 .employment-form-grid textarea { min-height: 100px; resize: vertical; }
@@ -483,21 +483,21 @@
 .employment-inline-notice { padding: 14px; color: var(--warning); background: var(--warning-bg); border: 1px solid color-mix(in srgb, var(--warning) 40%, transparent); }
 .employment-list-panel { padding: 25px; }
 .employment-filter-bar { margin-bottom: 22px; padding: 13px; display: grid; grid-template-columns: 1fr 190px auto auto; align-items: end; gap: 9px; background: var(--muted-bg); border: 1px solid var(--line); }
-.employment-filter-bar label { color: var(--muted); font-size: 10px; }
+.employment-filter-bar label { color: var(--muted); font-size: var(--text-caption); font-weight: 600; line-height: 1.5; }
 .employment-filter-bar input,
-.employment-filter-bar select { width: 100%; margin-top: 5px; }
+.employment-filter-bar select { width: 100%; min-height: 42px; margin-top: 6px; font-size: var(--text-body); }
 .employment-job-admin-list { display: grid; gap: 8px; }
 .employment-job-admin-card { padding: 18px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 22px; background: var(--panel-strong); border: 1px solid var(--line); transition: border .2s, background .2s; }
 .employment-job-admin-card:hover { background: var(--panel-hover); border-color: var(--line-strong); }
 .employment-card-topline { display: flex; align-items: center; gap: 11px; }
-.employment-card-topline code { color: var(--muted); font: 500 10px 'Chakra Petch', sans-serif; }
-.employment-status { min-width: 65px; padding: 4px 8px; text-align: center; font-size: 9px; font-weight: 700; }
+.employment-card-topline code { color: var(--muted); font: 500 var(--text-caption) 'Chakra Petch', sans-serif; }
+.employment-status { min-width: 65px; padding: 4px 8px; text-align: center; font-size: var(--text-caption); font-weight: 700; }
 .employment-status.status-open { color: var(--success); background: var(--success-bg); }
 .employment-status.status-draft { color: var(--muted); background: var(--muted-bg); }
 .employment-status.status-closed { color: var(--warning); background: var(--warning-bg); }
 .employment-status.status-archived { color: var(--danger); background: var(--danger-bg); }
 .employment-job-main h4 { margin: 8px 0 4px; color: var(--ink); font-size: 16px; }
-.employment-job-main > p { margin: 0; color: var(--muted); font-size: 10px; }
+.employment-job-main > p { margin: 0; color: var(--muted); font-size: var(--text-small); }
 .employment-job-main .employment-job-meta { margin-top: 9px; color: var(--muted); }
 .employment-card-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
 .employment-card-actions form { margin: 0; }
@@ -900,7 +900,7 @@
 .employment-table-wrap { overflow-x: auto; border: 1px solid var(--line); }
 .employment-applications-table { min-width: 850px; }
 .employment-applications-table td strong { display: block; }
-.employment-applications-table td small { margin-top: 3px; display: block; color: var(--muted); font-size: 8px; }
+.employment-applications-table td small { margin-top: 3px; display: block; color: var(--muted); font-size: var(--text-caption); }
 .employment-status.status-submitted { color: var(--info); background: var(--info-bg); }
 .employment-status.status-under_review,
 .employment-status.status-shortlisted,

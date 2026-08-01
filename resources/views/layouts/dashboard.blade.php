@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/employment.css') }}">
     @stack('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/dashboard-typography.css') }}">
 </head>
 <body class="@yield('body-class')">
 <div class="layout">
