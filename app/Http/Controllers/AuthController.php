@@ -84,7 +84,7 @@ class AuthController extends Controller
         $dashboardRoute = $user->role->dashboard_route;
 
         if (Route::has($dashboardRoute)) {
-            return redirect()->route($dashboardRoute);
+            return redirect()->intended(route($dashboardRoute));
         }
 
         Log::error('Role dashboard route is not defined.', [

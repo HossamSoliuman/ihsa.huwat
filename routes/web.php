@@ -36,6 +36,7 @@ use App\Http\Controllers\Dashboard\ReportController;
 use App\Http\Controllers\Dashboard\ReportExportController;
 use App\Http\Controllers\Dashboard\TripController;
 use App\Http\Controllers\EmploymentApplicationController;
+use App\Http\Controllers\InformationPortalController;
 use App\Http\Controllers\PublicJobController;
 use App\Http\Controllers\SetupController;
 use Illuminate\Support\Facades\Route;
@@ -57,6 +58,14 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'destroy'])->middleware('auth')->name('logout');
 
 Route::middleware('auth')->group(function () {
+    Route::prefix('/info')->name('information.')->middleware('role:super_admin,stat_employee')->group(function () {
+        Route::get('/', [InformationPortalController::class, 'create'])->name('create');
+        Route::post('/', [InformationPortalController::class, 'store'])->middleware('throttle:30,1')->name('store');
+        Route::post('/draft', [InformationPortalController::class, 'storeDraft'])->middleware('throttle:30,1')->name('draft.store');
+        Route::delete('/draft', [InformationPortalController::class, 'discardDraft'])->middleware('throttle:30,1')->name('draft.discard');
+        Route::get('/submitted/{reference}', [InformationPortalController::class, 'submitted'])->name('submitted');
+    });
+
     Route::get('/dashboard/admin', AdminDashboardController::class)->middleware('role:super_admin')->name('dashboard.admin');
     Route::get('/dashboard/alerts', AlertController::class)->middleware('role:super_admin,gov_supervisor,port_supervisor')->name('dashboard.alerts.index');
 
