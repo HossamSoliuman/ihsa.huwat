@@ -25,3 +25,5 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 Thumbs.db
+.user.ini
+.user.ini.bak
