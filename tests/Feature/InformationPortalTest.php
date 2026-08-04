@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Boat;
 use App\Models\Captain;
 use App\Models\HarborLicense;
-use App\Models\InformationDraft;
 use App\Models\InformationSubmission;
 use App\Models\Port;
 use App\Models\Role;
@@ -54,44 +53,12 @@ class InformationPortalTest extends TestCase
             ->get(route('information.create'))
             ->assertOk()
             ->assertSee('بيانات المالك')
-            ->assertSee('معلومات الرخصة')
-            ->assertSee('معلومات الهيكل والمحرك')
+            ->assertSee('بيانات القارب')
+            ->assertSee('القبطان والبحارة')
             ->assertSee('قائمة البحارة')
             ->assertSee('أدوات الصيد')
+            ->assertSee('سجل الأدوات')
             ->assertSee('المستندات والمرفقات');
-    }
-
-    public function test_user_can_save_restore_and_discard_a_partial_draft(): void
-    {
-        $user = $this->dataEntryUser();
-        $draftPayload = [
-            'fields' => ['owner_full_name' => 'عبدالله أحمد'],
-            'crew_members' => [['full_name' => 'سالم علي']],
-            'fishing_tools' => [['type' => 'trawl_net']],
-        ];
-
-        $this->actingAs($user)
-            ->postJson(route('information.draft.store'), [
-                'current_step' => 3,
-                'payload' => $draftPayload,
-            ])
-            ->assertOk()
-            ->assertJsonPath('message', 'تم حفظ المسودة.');
-
-        $draft = InformationDraft::query()->whereBelongsTo($user)->sole();
-        $this->assertSame(3, $draft->current_step);
-        $this->assertSame('عبدالله أحمد', $draft->payload['fields']['owner_full_name']);
-
-        $this->actingAs($user)
-            ->get(route('information.create'))
-            ->assertOk()
-            ->assertSee('توجد مسودة محفوظة');
-
-        $this->actingAs($user)
-            ->deleteJson(route('information.draft.discard'))
-            ->assertNoContent();
-
-        $this->assertModelMissing($draft);
     }
 
     public function test_valid_submission_persists_every_reference_section_and_private_file(): void
@@ -99,11 +66,6 @@ class InformationPortalTest extends TestCase
         Storage::fake('local');
         $user = $this->dataEntryUser();
         $port = Port::factory()->create();
-        InformationDraft::query()->create([
-            'user_id' => $user->id,
-            'payload' => ['fields' => [], 'crew_members' => [], 'fishing_tools' => []],
-            'current_step' => 2,
-        ]);
 
         $response = $this->actingAs($user)->post(route('information.store'), $this->validSubmissionData($port));
 
@@ -122,7 +84,6 @@ class InformationPortalTest extends TestCase
         $this->assertCount(8, $submission->document_paths);
         $this->assertNotNull($submission->captain_photo_path);
         $this->assertNotNull($submission->consented_at);
-        $this->assertSame(0, InformationDraft::query()->whereBelongsTo($user)->count());
 
         $license = HarborLicense::query()->where('license_number', 'LIC-2026-77')->sole();
         $this->assertSame($submission->document_paths['fishing_license'], $license->attachment_path);

@@ -61,8 +61,6 @@ Route::middleware('auth')->group(function () {
     Route::prefix('/info')->name('information.')->middleware('role:super_admin,stat_employee')->group(function () {
         Route::get('/', [InformationPortalController::class, 'create'])->name('create');
         Route::post('/', [InformationPortalController::class, 'store'])->middleware('throttle:30,1')->name('store');
-        Route::post('/draft', [InformationPortalController::class, 'storeDraft'])->middleware('throttle:30,1')->name('draft.store');
-        Route::delete('/draft', [InformationPortalController::class, 'discardDraft'])->middleware('throttle:30,1')->name('draft.discard');
         Route::get('/submitted/{reference}', [InformationPortalController::class, 'submitted'])->name('submitted');
     });
 

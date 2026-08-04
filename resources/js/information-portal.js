@@ -11,7 +11,6 @@ function initializeInformationPortal() {
     const announcer = form.querySelector('[data-info-announcer]');
     const progressStep = form.querySelector('[data-info-progress-step]');
     const progressTitle = form.querySelector('[data-info-progress-title]');
-    const progressCaption = form.querySelector('[data-info-progress-caption]');
     const progressBar = form.querySelector('[data-info-progress-bar]');
     const submitButton = form.querySelector('[data-info-submit]');
     const totalSteps = panels.length;
@@ -101,7 +100,6 @@ function initializeInformationPortal() {
     function updateProgress() {
         const activeStep = steps.find((item) => Number.parseInt(item.dataset.infoStep, 10) === currentStep);
         const label = activeStep?.querySelector('.info-step-label strong')?.textContent.trim() || '';
-        const caption = activeStep?.querySelector('.info-step-label small')?.textContent.trim() || '';
 
         if (progressStep) {
             progressStep.textContent = `الخطوة ${currentStep} من ${totalSteps}`;
@@ -109,10 +107,6 @@ function initializeInformationPortal() {
 
         if (progressTitle) {
             progressTitle.textContent = label;
-        }
-
-        if (progressCaption) {
-            progressCaption.textContent = caption;
         }
 
         if (progressBar) {
@@ -646,245 +640,6 @@ function initializeInformationPortal() {
             announce('تمت إزالة الملف.');
         });
     });
-
-    const draftDataElement = document.querySelector('[data-info-draft-data]');
-    const draftNotice = document.querySelector('[data-info-draft-notice]');
-    const draftTime = document.querySelector('[data-info-draft-time]');
-    const draftStatus = form.querySelector('[data-info-draft-status]');
-    const draftSaveButtons = Array.from(form.querySelectorAll('[data-info-save-draft]'));
-    const draftRestoreButton = document.querySelector('[data-info-restore-draft]');
-    const draftDiscardButton = document.querySelector('[data-info-discard-draft]');
-    const csrfToken = form.querySelector('input[name="_token"]')?.value || '';
-    let availableDraft = null;
-
-    try {
-        availableDraft = JSON.parse(draftDataElement?.textContent || 'null');
-    } catch {
-        availableDraft = null;
-    }
-
-    function serializeDraftRows(list, rowSelector) {
-        if (!list) {
-            return [];
-        }
-
-        return Array.from(list.querySelectorAll(rowSelector)).map((row) => {
-            const values = {};
-
-            row.querySelectorAll('[name]').forEach((control) => {
-                if (!(control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement)) {
-                    return;
-                }
-
-                const field = control.name.match(/\[([^\]]+)\]$/)?.[1];
-
-                if (!field) {
-                    return;
-                }
-
-                values[field] = control.type === 'checkbox' ? (control.checked ? '1' : '0') : control.value;
-            });
-
-            return values;
-        });
-    }
-
-    function serializeDraft() {
-        const fields = {};
-        const excludedNames = new Set(['_token', 'website', 'current_step', 'crew_count']);
-
-        form.querySelectorAll('input[name], select[name], textarea[name]').forEach((control) => {
-            if (!(control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement)) {
-                return;
-            }
-
-            if (excludedNames.has(control.name)
-                || control.type === 'file'
-                || control.name.startsWith('crew_members[')
-                || control.name.startsWith('fishing_tools[')
-                || control.name.startsWith('documents[')) {
-                return;
-            }
-
-            fields[control.name] = control.type === 'checkbox' ? (control.checked ? '1' : '0') : control.value;
-        });
-
-        return {
-            fields,
-            crew_members: serializeDraftRows(crewList, '[data-info-crew-row]'),
-            fishing_tools: serializeDraftRows(toolList, '[data-info-tool-row]'),
-        };
-    }
-
-    function restoreDraftRows(list, template, rowSelector, rows) {
-        if (!list || !template || !Array.isArray(rows) || rows.length === 0) {
-            return;
-        }
-
-        list.replaceChildren();
-
-        rows.forEach((values, index) => {
-            list.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__INDEX__', String(index)));
-            const row = list.querySelectorAll(rowSelector)[index];
-
-            row?.querySelectorAll('[name]').forEach((control) => {
-                if (!(control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement)) {
-                    return;
-                }
-
-                const field = control.name.match(/\[([^\]]+)\]$/)?.[1];
-
-                if (!field || !Object.hasOwn(values, field)) {
-                    return;
-                }
-
-                if (control.type === 'checkbox') {
-                    control.checked = values[field] === '1';
-                } else if (control.type !== 'hidden' || !row.querySelector(`[type="checkbox"][name$="[${field}]"]`)) {
-                    control.value = values[field] ?? '';
-                }
-            });
-        });
-    }
-
-    function updateDraftNotice() {
-        if (!draftNotice || !availableDraft) {
-            return;
-        }
-
-        draftNotice.hidden = false;
-
-        if (draftTime && availableDraft.saved_at) {
-            const savedAt = new Date(availableDraft.saved_at);
-            draftTime.textContent = `آخر حفظ: ${new Intl.DateTimeFormat('ar-SA', {
-                calendar: 'gregory',
-                dateStyle: 'medium',
-                timeStyle: 'short',
-            }).format(savedAt)}`;
-        }
-    }
-
-    function restoreDraft() {
-        const payload = availableDraft?.payload;
-
-        if (!payload || typeof payload !== 'object') {
-            return;
-        }
-
-        Object.entries(payload.fields || {}).forEach(([name, value]) => {
-            const control = form.elements.namedItem(name);
-
-            if (!(control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement)) {
-                return;
-            }
-
-            if (control.type === 'checkbox') {
-                control.checked = value === '1';
-            } else {
-                control.value = value ?? '';
-            }
-        });
-
-        restoreDraftRows(crewList, crewTemplate, '[data-info-crew-row]', payload.crew_members);
-        restoreDraftRows(toolList, toolTemplate, '[data-info-tool-row]', payload.fishing_tools);
-        filterGovernorates();
-        updateLivePreviews();
-        updateCollectionSummaries();
-        showStep(Number.parseInt(availableDraft.current_step || '1', 10), false);
-        hasUnsavedChanges = false;
-        draftNotice.hidden = true;
-
-        if (draftStatus) {
-            draftStatus.textContent = 'تمت استعادة المسودة — اختر المرفقات من جديد';
-        }
-
-        announce('تمت استعادة المسودة. اختر المرفقات من جديد قبل الإرسال.');
-    }
-
-    draftSaveButtons.forEach((button) => {
-        button.addEventListener('click', async () => {
-            draftSaveButtons.forEach((draftButton) => {
-                draftButton.disabled = true;
-            });
-
-            if (draftStatus) {
-                draftStatus.textContent = 'جارٍ حفظ المسودة…';
-            }
-
-            try {
-                const response = await fetch(form.dataset.infoDraftSaveUrl, {
-                    method: 'POST',
-                    headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                    },
-                    body: JSON.stringify({
-                        current_step: currentStep,
-                        payload: serializeDraft(),
-                    }),
-                });
-
-                if (!response.ok) {
-                    throw new Error('Draft request failed.');
-                }
-
-                const result = await response.json();
-                availableDraft = {
-                    payload: serializeDraft(),
-                    current_step: currentStep,
-                    saved_at: result.saved_at,
-                };
-                hasUnsavedChanges = false;
-                updateDraftNotice();
-
-                if (draftStatus) {
-                    draftStatus.textContent = 'تم حفظ المسودة. يمكنك العودة إليها لاحقاً.';
-                }
-
-                announce('تم حفظ المسودة بنجاح.');
-            } catch {
-                if (draftStatus) {
-                    draftStatus.textContent = 'تعذر حفظ المسودة. تحقق من الاتصال وحاول مرة أخرى.';
-                }
-
-                announce('تعذر حفظ المسودة.');
-            } finally {
-                draftSaveButtons.forEach((draftButton) => {
-                    draftButton.disabled = false;
-                });
-            }
-        });
-    });
-
-    draftRestoreButton?.addEventListener('click', restoreDraft);
-
-    draftDiscardButton?.addEventListener('click', async () => {
-        draftDiscardButton.disabled = true;
-
-        try {
-            const response = await fetch(form.dataset.infoDraftDiscardUrl, {
-                method: 'DELETE',
-                headers: {
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Draft delete failed.');
-            }
-
-            availableDraft = null;
-            draftNotice.hidden = true;
-            announce('تم حذف المسودة المحفوظة.');
-        } catch {
-            draftDiscardButton.disabled = false;
-            announce('تعذر حذف المسودة. حاول مرة أخرى.');
-        }
-    });
-
-    updateDraftNotice();
 
     function updateCollectionSummaries() {
         updateCrewCollection();

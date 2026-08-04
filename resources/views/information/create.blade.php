@@ -5,12 +5,12 @@
 @section('content')
 @php
     $workflowSteps = [
-        ['label' => 'بيانات المالك', 'caption' => 'الهوية والرخصة والعنوان'],
-        ['label' => 'بيانات القارب', 'caption' => 'التسجيل والهيكل والمحرك'],
-        ['label' => 'القبطان والبحارة', 'caption' => 'الطاقم والمؤهلات'],
-        ['label' => 'أدوات الصيد', 'caption' => 'النوع والعدد والحالة'],
-        ['label' => 'المستندات', 'caption' => 'ثمانية أنواع من المرفقات'],
-        ['label' => 'المراجعة', 'caption' => 'تأكيد جميع البيانات'],
+        'بيانات المالك',
+        'بيانات القارب',
+        'القبطان والبحارة',
+        'أدوات الصيد',
+        'المستندات',
+        'المراجعة',
     ];
 
     $stepPrefixes = [
@@ -150,22 +150,13 @@
             }
         }
     }
-
-    $draftData = $draft ? [
-        'payload' => $draft->payload,
-        'current_step' => $draft->current_step,
-        'saved_at' => $draft->updated_at?->toISOString(),
-    ] : null;
 @endphp
-
-<script type="application/json" data-info-draft-data>@json($draftData)</script>
 
 <section class="info-page" aria-labelledby="portal-title">
     <header class="info-page-intro">
         <div class="info-page-intro-copy">
             <p class="info-eyebrow"><span></span>سجل بحري متكامل</p>
             <h1 id="portal-title">تسجيل بيانات القارب</h1>
-            <p>مسار واحد يجمع كل بيانات المالك والقارب والطاقم وأدوات الصيد والمرفقات كما وردت في نموذج العميل.</p>
         </div>
 
         <div class="info-session-status">
@@ -196,15 +187,6 @@
         </div>
     @endif
 
-    <div class="info-draft-notice" data-info-draft-notice @hidden(! $draft)>
-        <span class="info-draft-notice-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h12l2 2v14H5V4Zm3 0v6h7V4M8 20v-6h8v6"></path></svg></span>
-        <div><strong>توجد مسودة محفوظة</strong><p>يمكن استعادة الحقول المحفوظة ومتابعة الإدخال. لأسباب أمنية ستحتاج إلى اختيار الملفات مرة أخرى.</p><small data-info-draft-time></small></div>
-        <div class="info-draft-notice-actions">
-            <button type="button" data-info-restore-draft>استعادة المسودة</button>
-            <button type="button" data-info-discard-draft>حذفها</button>
-        </div>
-    </div>
-
     <form
         method="post"
         action="{{ route('information.store') }}"
@@ -213,8 +195,6 @@
         data-info-form
         data-start-step="{{ $startStep }}"
         data-has-unsaved-input="{{ $errors->any() ? '1' : '0' }}"
-        data-info-draft-save-url="{{ route('information.draft.store') }}"
-        data-info-draft-discard-url="{{ route('information.draft.discard') }}"
     >
         @csrf
         <input class="hidden" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -222,7 +202,7 @@
 
         <div class="info-workflow-header">
             <div class="info-progress-copy" aria-live="polite">
-                <span><b data-info-progress-step>الخطوة 1 من 6</b><small data-info-progress-caption>الهوية والرخصة والعنوان</small></span>
+                <span><b data-info-progress-step>الخطوة 1 من 6</b></span>
                 <strong data-info-progress-title>بيانات المالك</strong>
             </div>
             <div class="info-progress-track" aria-hidden="true"><span data-info-progress-bar></span></div>
@@ -231,9 +211,9 @@
                 <ol>
                     @foreach($workflowSteps as $index => $step)
                         <li class="info-step" data-info-step="{{ $index + 1 }}">
-                            <button type="button" data-info-step-target="{{ $index + 1 }}" aria-label="الخطوة {{ $index + 1 }}: {{ $step['label'] }}">
+                            <button type="button" data-info-step-target="{{ $index + 1 }}" aria-label="الخطوة {{ $index + 1 }}: {{ $step }}">
                                 <span class="info-step-dot"><span>{{ $index + 1 }}</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 10 3 3 7-7"></path></svg></span>
-                                <span class="info-step-label"><strong>{{ $step['label'] }}</strong><small>{{ $step['caption'] }}</small></span>
+                                <span class="info-step-label"><strong>{{ $step }}</strong></span>
                             </button>
                         </li>
                     @endforeach
@@ -247,13 +227,11 @@
                     <div class="info-panel-main">
                         <header class="info-panel-heading">
                             <span class="info-panel-index" aria-hidden="true">01</span>
-                            <div><p>الهوية والترخيص</p><h2 tabindex="-1">بيانات المالك</h2><span>البيانات الشخصية، رخصة الصيد، ومحل الإقامة المسجل.</span></div>
+                            <div><h2 tabindex="-1">بيانات المالك</h2></div>
                         </header>
 
-                        <section class="info-section-block" aria-labelledby="owner-personal-title">
-                            <header class="info-section-heading"><span>01</span><div><h3 id="owner-personal-title">البيانات الشخصية</h3><p>مطابقة للهوية الوطنية أو الإقامة.</p></div></header>
-                            <div class="info-field-grid info-field-grid-three">
-                                <div class="info-field info-field-span-two">
+                        <div class="info-field-grid info-field-grid-three">
+                                <div class="info-field">
                                     <label for="owner_full_name">الاسم الرباعي <b aria-hidden="true">*</b></label>
                                     <input id="owner_full_name" name="owner_full_name" value="{{ old('owner_full_name') }}" required minlength="3" maxlength="150" autocomplete="name" placeholder="الاسم كما يظهر في الهوية" @error('owner_full_name') aria-invalid="true" aria-describedby="owner_full_name_error" @enderror>
                                     @error('owner_full_name')<small id="owner_full_name_error" class="info-field-error">{{ $message }}</small>@enderror
@@ -293,12 +271,7 @@
                                     <input id="owner_phone" name="owner_phone" value="{{ old('owner_phone') }}" required inputmode="tel" maxlength="15" autocomplete="tel" dir="ltr" placeholder="05xxxxxxxx" @error('owner_phone') aria-invalid="true" aria-describedby="owner_phone_error" @enderror>
                                     @error('owner_phone')<small id="owner_phone_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
-                            </div>
-                        </section>
 
-                        <section class="info-section-block" aria-labelledby="owner-license-title">
-                            <header class="info-section-heading"><span>02</span><div><h3 id="owner-license-title">معلومات الرخصة</h3><p>رخصة مزاولة الصيد المرتبطة بالمالك.</p></div></header>
-                            <div class="info-field-grid info-field-grid-three">
                                 <div class="info-field">
                                     <label for="license_number">رقم رخصة الصيد <b aria-hidden="true">*</b></label>
                                     <input id="license_number" name="license_number" value="{{ old('license_number') }}" required minlength="2" maxlength="80" dir="ltr" placeholder="LIC-2026-77" @error('license_number') aria-invalid="true" aria-describedby="license_number_error" @enderror>
@@ -316,12 +289,7 @@
                                     <input type="date" id="license_expiry_date" name="license_expiry_date" value="{{ old('license_expiry_date') }}" required dir="ltr" @error('license_expiry_date') aria-invalid="true" aria-describedby="license_expiry_date_error" @enderror>
                                     @error('license_expiry_date')<small id="license_expiry_date_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
-                            </div>
-                        </section>
 
-                        <section class="info-section-block" aria-labelledby="owner-address-title">
-                            <header class="info-section-heading"><span>03</span><div><h3 id="owner-address-title">العنوان</h3><p>المنطقة والمحافظة والمدينة والعنوان التفصيلي.</p></div></header>
-                            <div class="info-field-grid info-field-grid-three">
                                 <div class="info-field">
                                     <label for="owner_region">المنطقة <b aria-hidden="true">*</b></label>
                                     <select id="owner_region" name="owner_region" required data-info-region @error('owner_region') aria-invalid="true" aria-describedby="owner_region_error" @enderror>
@@ -357,8 +325,7 @@
                                     <input id="owner_address" name="owner_address" value="{{ old('owner_address') }}" maxlength="250" autocomplete="street-address" placeholder="الحي، الشارع، وأقرب معلم" @error('owner_address') aria-invalid="true" aria-describedby="owner_address_error" @enderror>
                                     @error('owner_address')<small id="owner_address_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
-                            </div>
-                        </section>
+                        </div>
                     </div>
 
                     <aside class="info-guidance">
@@ -371,10 +338,6 @@
                 </div>
 
                 <div class="info-actions info-actions-first">
-                    <div class="info-draft-save">
-                        <button class="info-button info-button-secondary" type="button" data-info-save-draft><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12l2 2v14H5V4Zm3 0v6h7V4M8 20v-6h8v6"></path></svg><span>حفظ ومتابعة لاحقاً</span></button>
-                        <small data-info-draft-status aria-live="polite">تُحفظ الحقول في حسابك دون المرفقات</small>
-                    </div>
                     <button class="info-button info-button-primary" type="button" data-info-next><span>التالي: بيانات القارب</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
                 </div>
             </section>
@@ -384,12 +347,10 @@
                     <div class="info-panel-main">
                         <header class="info-panel-heading">
                             <span class="info-panel-index" aria-hidden="true">02</span>
-                            <div><p>السجل والتعريف</p><h2 tabindex="-1">بيانات القارب</h2><span>التسجيل، التصنيف، الهيكل، المحرك، وإشارة النداء.</span></div>
+                            <div><h2 tabindex="-1">بيانات القارب</h2></div>
                         </header>
 
-                        <section class="info-section-block" aria-labelledby="boat-basic-title">
-                            <header class="info-section-heading"><span>01</span><div><h3 id="boat-basic-title">المعلومات الأساسية</h3><p>الأسماء الرسمية وبيانات تسجيل القارب.</p></div></header>
-                            <div class="info-field-grid info-field-grid-three">
+                        <div class="info-field-grid info-field-grid-three">
                                 <div class="info-field">
                                     <label for="boat_name">اسم القارب بالعربية <b aria-hidden="true">*</b></label>
                                     <input id="boat_name" name="boat_name" value="{{ old('boat_name') }}" required minlength="2" maxlength="150" placeholder="مثال: الشاكر" data-info-live-source="boat_name" @error('boat_name') aria-invalid="true" aria-describedby="boat_name_error" @enderror>
@@ -408,7 +369,7 @@
                                     @error('registration_no')<small id="registration_no_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
 
-                                <div class="info-field info-field-span-two">
+                                <div class="info-field">
                                     <label for="port_id">الميناء الأساسي <b aria-hidden="true">*</b></label>
                                     <select id="port_id" name="port_id" required @error('port_id') aria-invalid="true" aria-describedby="port_id_error" @enderror>
                                         <option value="">اختر الميناء</option>
@@ -463,12 +424,7 @@
                                     <input type="date" id="boat_license_expiry_date" name="boat_license_expiry_date" value="{{ old('boat_license_expiry_date') }}" required dir="ltr" @error('boat_license_expiry_date') aria-invalid="true" aria-describedby="boat_license_expiry_date_error" @enderror>
                                     @error('boat_license_expiry_date')<small id="boat_license_expiry_date_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
-                            </div>
-                        </section>
 
-                        <section class="info-section-block" aria-labelledby="boat-engine-title">
-                            <header class="info-section-heading"><span>02</span><div><h3 id="boat-engine-title">معلومات الهيكل والمحرك</h3><p>المعرّفات المحفورة أو المثبتة على القارب والمحرك.</p></div></header>
-                            <div class="info-field-grid info-field-grid-three">
                                 <div class="info-field">
                                     <label for="hull_number">رقم الهيكل <b aria-hidden="true">*</b></label>
                                     <input id="hull_number" name="hull_number" value="{{ old('hull_number') }}" required maxlength="80" dir="ltr" placeholder="HWT-66799-2024" @error('hull_number') aria-invalid="true" aria-describedby="hull_number_error" @enderror>
@@ -487,13 +443,12 @@
                                     @error('engine_serial_number')<small id="engine_serial_number_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
 
-                                <div class="info-field info-field-span-two">
+                                <div class="info-field">
                                     <label for="call_sign">إشارة النداء الدولية (Call Sign)</label>
                                     <input id="call_sign" name="call_sign" value="{{ old('call_sign') }}" maxlength="30" dir="ltr" placeholder="HZ-66799" @error('call_sign') aria-invalid="true" aria-describedby="call_sign_error" @enderror>
                                     @error('call_sign')<small id="call_sign_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
-                            </div>
-                        </section>
+                        </div>
                     </div>
 
                     <aside class="info-guidance info-vessel-card">
@@ -517,13 +472,11 @@
                     <div class="info-panel-main">
                         <header class="info-panel-heading">
                             <span class="info-panel-index" aria-hidden="true">03</span>
-                            <div><p>الطاقم البحري</p><h2 tabindex="-1">القبطان والبحارة</h2><span>بيانات القبطان، مؤهلاته، وقائمة كل بحار على متن القارب.</span></div>
+                            <div><h2 tabindex="-1">القبطان والبحارة</h2></div>
                         </header>
 
-                        <section class="info-section-block" aria-labelledby="captain-title">
-                            <header class="info-section-heading"><span>01</span><div><h3 id="captain-title">بيانات القبطان</h3><p>هوية المسؤول عن قيادة القارب ورخصته البحرية.</p></div></header>
-                            <div class="info-field-grid info-field-grid-three">
-                                <div class="info-field info-field-span-two">
+                        <div class="info-field-grid info-field-grid-three">
+                                <div class="info-field">
                                     <label for="captain_full_name">الاسم الرباعي <b aria-hidden="true">*</b></label>
                                     <input id="captain_full_name" name="captain_full_name" value="{{ old('captain_full_name') }}" required minlength="3" maxlength="150" autocomplete="name" placeholder="الاسم كما يظهر في الهوية" @error('captain_full_name') aria-invalid="true" aria-describedby="captain_full_name_error" @enderror>
                                     @error('captain_full_name')<small id="captain_full_name_error" class="info-field-error">{{ $message }}</small>@enderror
@@ -592,26 +545,24 @@
                                     <input type="number" id="captain_experience_years" name="captain_experience_years" value="{{ old('captain_experience_years') }}" required min="0" max="60" inputmode="numeric" placeholder="20" @error('captain_experience_years') aria-invalid="true" aria-describedby="captain_experience_years_error" @enderror>
                                     @error('captain_experience_years')<small id="captain_experience_years_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
-                            </div>
+                        </div>
 
-                            <div class="info-inline-upload">
-                                <div><strong>صورة القبطان</strong><span>صورة شخصية حديثة وواضحة — اختيارية.</span></div>
-                                <x-information.upload-card
-                                    id="captain_photo"
-                                    name="captain_photo"
-                                    error-name="captain_photo"
-                                    label="صورة القبطان"
-                                    description="JPG أو PNG"
-                                    :compact="true"
-                                    :image-only="true"
-                                />
-                            </div>
-                        </section>
+                        <div class="info-inline-upload">
+                            <div><strong>صورة القبطان</strong><span>صورة شخصية حديثة وواضحة — اختيارية.</span></div>
+                            <x-information.upload-card
+                                id="captain_photo"
+                                name="captain_photo"
+                                error-name="captain_photo"
+                                label="صورة القبطان"
+                                description="JPG أو PNG"
+                                :compact="true"
+                                :image-only="true"
+                            />
+                        </div>
 
-                        <section class="info-section-block" aria-labelledby="crew-title">
-                            <header class="info-section-heading info-section-heading-action">
-                                <span>02</span>
-                                <div><h3 id="crew-title">قائمة البحارة</h3><p>أضف سجلاً مستقلاً لكل بحار يعمل على القارب.</p></div>
+                        <div class="info-list-block" aria-labelledby="crew-title">
+                            <header class="info-list-heading">
+                                <h3 id="crew-title">قائمة البحارة</h3>
                                 <button type="button" class="info-add-button" data-info-add-crew><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg> إضافة بحار</button>
                             </header>
 
@@ -626,7 +577,7 @@
                             <template data-info-crew-template>
                                 <x-information.crew-member index="__INDEX__" :nationalities="$nationalities" :roles="$crewRoles" />
                             </template>
-                        </section>
+                        </div>
                     </div>
 
                     <aside class="info-guidance info-sticky-guidance">
@@ -649,29 +600,25 @@
                     <div class="info-panel-main">
                         <header class="info-panel-heading">
                             <span class="info-panel-index" aria-hidden="true">04</span>
-                            <div><p>معدات النشاط</p><h2 tabindex="-1">أدوات الصيد</h2><span>سجل كل أداة بالعدد والمقاس والمادة والحالة وحدد الأداة الأساسية.</span></div>
+                            <div><h2 tabindex="-1">أدوات الصيد</h2></div>
                         </header>
 
-                        <section class="info-section-block info-section-block-featured" aria-labelledby="fishing-method-title">
-                            <header class="info-section-heading"><span>01</span><div><h3 id="fishing-method-title">أسلوب الصيد الرئيسي</h3><p>اختر النشاط الغالب لهذا القارب.</p></div></header>
-                            <div class="info-field-grid info-field-grid-two">
-                                <div class="info-field info-field-wide">
-                                    <label for="fishing_method">أسلوب الصيد <b aria-hidden="true">*</b></label>
-                                    <select id="fishing_method" name="fishing_method" required @error('fishing_method') aria-invalid="true" aria-describedby="fishing_method_error" @enderror>
-                                        <option value="">اختر الأسلوب</option>
-                                        @foreach(config('information.fishing_methods') as $value => $label)
-                                            <option value="{{ $value }}" @selected(old('fishing_method') === $value)>{{ $label }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('fishing_method')<small id="fishing_method_error" class="info-field-error">{{ $message }}</small>@enderror
-                                </div>
+                        <div class="info-field-grid info-field-grid-three">
+                            <div class="info-field">
+                                <label for="fishing_method">أسلوب الصيد <b aria-hidden="true">*</b></label>
+                                <select id="fishing_method" name="fishing_method" required @error('fishing_method') aria-invalid="true" aria-describedby="fishing_method_error" @enderror>
+                                    <option value="">اختر الأسلوب</option>
+                                    @foreach(config('information.fishing_methods') as $value => $label)
+                                        <option value="{{ $value }}" @selected(old('fishing_method') === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                @error('fishing_method')<small id="fishing_method_error" class="info-field-error">{{ $message }}</small>@enderror
                             </div>
-                        </section>
+                        </div>
 
-                        <section class="info-section-block" aria-labelledby="fishing-tools-title">
-                            <header class="info-section-heading info-section-heading-action">
-                                <span>02</span>
-                                <div><h3 id="fishing-tools-title">سجل الأدوات</h3><p>أضف أداة جديدة أو حدّث حالة الأدوات الموجودة.</p></div>
+                        <div class="info-list-block" aria-labelledby="fishing-tools-title">
+                            <header class="info-list-heading">
+                                <h3 id="fishing-tools-title">سجل الأدوات</h3>
                                 <button type="button" class="info-add-button" data-info-add-tool><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg> إضافة أداة</button>
                             </header>
 
@@ -685,7 +632,7 @@
                             <template data-info-tool-template>
                                 <x-information.fishing-tool index="__INDEX__" :types="$fishingToolTypes" :materials="$fishingToolMaterials" :conditions="$fishingToolConditions" />
                             </template>
-                        </section>
+                        </div>
 
                         <div class="info-metrics" aria-live="polite">
                             <div><span>إجمالي القطع</span><strong data-info-tools-total>0</strong></div>
@@ -714,7 +661,7 @@
                     <div class="info-panel-main">
                         <header class="info-panel-heading">
                             <span class="info-panel-index" aria-hidden="true">05</span>
-                            <div><p>الوثائق الرسمية</p><h2 tabindex="-1">المستندات والمرفقات</h2><span>ثمانية أنواع منفصلة من الملفات دون دمج أو إسقاط أي وثيقة من نموذج العميل.</span></div>
+                            <div><h2 tabindex="-1">المستندات والمرفقات</h2></div>
                         </header>
 
                         <div class="info-upload-notice">
@@ -757,7 +704,7 @@
             <section class="info-panel" data-info-panel="6">
                 <header class="info-panel-heading info-panel-heading-review">
                     <span class="info-panel-index" aria-hidden="true">06</span>
-                    <div><p>التحقق النهائي</p><h2 tabindex="-1">المراجعة النهائية</h2><span>راجع ملخص جميع الأقسام قبل حفظ السجل وإرسال الرقم المرجعي.</span></div>
+                    <div><h2 tabindex="-1">المراجعة النهائية</h2></div>
                 </header>
 
                 <div class="info-review-grid">
