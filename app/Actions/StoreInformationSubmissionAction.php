@@ -24,7 +24,7 @@ class StoreInformationSubmissionAction
      * @param  array<string, UploadedFile>  $documents
      */
     public function handle(
-        User $submitter,
+        ?User $submitter,
         array $attributes,
         array $documents,
         ?UploadedFile $captainPhoto,
@@ -70,7 +70,7 @@ class StoreInformationSubmissionAction
                         'license_expiry_date',
                     ]),
                     'reference_no' => $this->newReference(),
-                    'submitted_by' => $submitter->getKey(),
+                    'submitted_by' => $submitter?->getKey(),
                     'boat_id' => $boat->getKey(),
                     'captain_id' => $captain->getKey(),
                     'boat_data' => Arr::only($attributes, [
@@ -101,8 +101,15 @@ class StoreInformationSubmissionAction
                     ]),
                     'crew_members' => $attributes['crew_members'],
                     'fishing_tools' => $attributes['fishing_tools'],
+                    'status' => InformationSubmission::STATUS_SUBMITTED,
                     'consented_at' => now(),
                     'submitted_at' => now(),
+                ]);
+
+                $submission->events()->create([
+                    'event_type' => 'submitted',
+                    'to_status' => InformationSubmission::STATUS_SUBMITTED,
+                    'actor_user_id' => $submitter?->getKey(),
                 ]);
 
                 $documentPaths = [];

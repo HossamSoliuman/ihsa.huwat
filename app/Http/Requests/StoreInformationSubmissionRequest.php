@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Middleware\EnsureInformationIdentity;
 use App\Models\Governorate;
 use App\Models\Port;
 use App\Models\Region;
@@ -15,13 +16,18 @@ class StoreInformationSubmissionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->role()
-            ->whereIn('code', ['super_admin', 'stat_employee'])
-            ->exists() === true;
+        return EnsureInformationIdentity::verified($this) !== null;
     }
 
     protected function prepareForValidation(): void
     {
+        /**
+         * The owner identity is never taken from the form: it is pinned to the pair
+         * confirmed on the landing page, so nobody can file under someone else's id
+         * and every submission stays reachable from that applicant's tracker.
+         */
+        $identity = EnsureInformationIdentity::verified($this) ?? ['national_id' => '', 'phone' => ''];
+
         $crewMembers = collect((array) $this->input('crew_members', []))
             ->map(function (mixed $crewMember): array {
                 $crewMember = is_array($crewMember) ? $crewMember : [];
@@ -51,9 +57,9 @@ class StoreInformationSubmissionRequest extends FormRequest
             ->all();
 
         $this->merge([
-            'owner_national_id' => $this->normalizeDigits($this->input('owner_national_id')),
+            'owner_national_id' => $identity['national_id'],
+            'owner_phone' => $identity['phone'],
             'captain_national_id' => $this->normalizeDigits($this->input('captain_national_id')),
-            'owner_phone' => $this->normalizePhone($this->input('owner_phone')),
             'captain_phone' => $this->normalizePhone($this->input('captain_phone')),
             'registration_no' => $this->normalizeCode($this->input('registration_no')),
             'license_number' => $this->normalizeCode($this->input('license_number')),

@@ -2,6 +2,15 @@
 
 @section('title', 'تسجيل بيانات القارب')
 
+@section('topbar-actions')
+    <a class="info-button info-button-secondary" href="{{ route('information.status.index') }}">متابعة طلباتي</a>
+
+    <form method="post" action="{{ route('information.identity.destroy') }}">
+        @csrf
+        <button class="info-button info-button-secondary" type="submit">إنهاء الجلسة</button>
+    </form>
+@endsection
+
 @section('content')
 @php
     $workflowSteps = [
@@ -239,7 +248,8 @@
 
                                 <div class="info-field">
                                     <label for="owner_national_id">رقم الهوية / الإقامة <b aria-hidden="true">*</b></label>
-                                    <input id="owner_national_id" name="owner_national_id" value="{{ old('owner_national_id') }}" required inputmode="numeric" pattern="[12١٢][0-9٠-٩۰-۹]{9}" maxlength="10" dir="ltr" placeholder="10 أرقام" @error('owner_national_id') aria-invalid="true" aria-describedby="owner_national_id_error" @enderror>
+                                    <input id="owner_national_id" name="owner_national_id" value="{{ $identity['national_id'] }}" required inputmode="numeric" pattern="[12١٢][0-9٠-٩۰-۹]{9}" maxlength="10" dir="ltr" readonly aria-readonly="true" @error('owner_national_id') aria-invalid="true" aria-describedby="owner_national_id_error" @enderror>
+                                    <small class="info-field-hint">مأخوذ من بيانات الدخول ولا يمكن تعديله.</small>
                                     @error('owner_national_id')<small id="owner_national_id_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
 
@@ -268,7 +278,8 @@
 
                                 <div class="info-field">
                                     <label for="owner_phone">رقم الجوال <b aria-hidden="true">*</b></label>
-                                    <input id="owner_phone" name="owner_phone" value="{{ old('owner_phone') }}" required inputmode="tel" maxlength="15" autocomplete="tel" dir="ltr" placeholder="05xxxxxxxx" @error('owner_phone') aria-invalid="true" aria-describedby="owner_phone_error" @enderror>
+                                    <input id="owner_phone" name="owner_phone" value="{{ $identity['phone'] }}" required inputmode="tel" maxlength="15" autocomplete="tel" dir="ltr" readonly aria-readonly="true" @error('owner_phone') aria-invalid="true" aria-describedby="owner_phone_error" @enderror>
+                                    <small class="info-field-hint">مأخوذ من بيانات الدخول ولا يمكن تعديله.</small>
                                     @error('owner_phone')<small id="owner_phone_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
 

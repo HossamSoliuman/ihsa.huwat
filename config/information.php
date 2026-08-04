@@ -1,6 +1,19 @@
 <?php
 
+$applicationHost = parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST);
+
 return [
+    /*
+     * Dedicated host for the information portal. It defaults to the "info" subdomain
+     * of APP_URL — "hawat.sa" serves the portal from "info.hawat.sa" — so no host is
+     * hard-coded per environment. INFO_PORTAL_DOMAIN overrides it when the portal
+     * lives somewhere else. Should APP_URL carry no host, the portal falls back to
+     * "/info" on the main application.
+     */
+    'domain' => env('INFO_PORTAL_DOMAIN') ?: (is_string($applicationHost) && $applicationHost !== ''
+        ? 'info.'.preg_replace('/^www\./', '', $applicationHost)
+        : null),
+
     'boat_types' => [
         'small' => 'قارب صغير',
         'large' => 'قارب كبير',

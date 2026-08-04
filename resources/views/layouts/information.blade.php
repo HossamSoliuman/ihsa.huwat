@@ -20,7 +20,7 @@
 
     <header class="info-topbar">
         <div class="info-topbar-inner">
-            <a class="info-brand" href="{{ route('information.create') }}" aria-label="بوابة حوات للسجلات البحرية">
+            <a class="info-brand" href="{{ route('information.identity.create') }}" aria-label="بوابة حوات للسجلات البحرية">
                 <span class="info-brand-mark">
                     <img src="{{ asset('assets/img/hud/hawat-logo.png') }}" alt="">
                 </span>
@@ -30,6 +30,13 @@
                 </span>
             </a>
 
+            @guest
+                <div class="info-account">
+                    @yield('topbar-actions')
+                </div>
+            @endguest
+
+            @auth
             <div class="info-account">
                 <div class="info-account-card">
                     <span class="info-account-avatar" aria-hidden="true">{{ mb_substr(auth()->user()->full_name, 0, 1) }}</span>
@@ -54,6 +61,7 @@
                     </button>
                 </form>
             </div>
+            @endauth
         </div>
     </header>
 

@@ -17,6 +17,7 @@ class InformationSubmissionFactory extends Factory
     {
         return [
             'reference_no' => 'INFO-'.now()->format('Ymd').'-'.Str::upper(Str::random(6)),
+            'status' => InformationSubmission::STATUS_SUBMITTED,
             'submitted_by' => User::factory(),
             'port_id' => Port::factory(),
             'boat_id' => Boat::factory(),
@@ -27,7 +28,7 @@ class InformationSubmissionFactory extends Factory
             'owner_birth_date' => fake()->dateTimeBetween('-70 years', '-18 years'),
             'owner_email' => fake()->safeEmail(),
             'owner_phone' => '05'.fake()->numerify('########'),
-            'owner_region' => fake()->state(),
+            'owner_region' => fake()->city().' الإدارية',
             'owner_governorate' => fake()->city(),
             'owner_city' => fake()->city(),
             'owner_address' => fake()->streetAddress(),
@@ -83,5 +84,15 @@ class InformationSubmissionFactory extends Factory
             'consented_at' => now(),
             'submitted_at' => now(),
         ];
+    }
+
+    public function status(string $status, ?User $reviewer = null, ?string $notes = null): static
+    {
+        return $this->state(fn (): array => [
+            'status' => $status,
+            'review_notes' => $notes,
+            'reviewed_by' => $reviewer?->getKey(),
+            'reviewed_at' => now(),
+        ]);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\StoreInformationSubmissionAction;
+use App\Http\Middleware\EnsureInformationIdentity;
 use App\Http\Requests\StoreInformationSubmissionRequest;
 use App\Models\Port;
 use App\Models\Region;
@@ -15,9 +16,10 @@ use Illuminate\View\View;
 
 class InformationPortalController extends Controller
 {
-    public function create(): View
+    public function create(Request $request): View
     {
         return view('information.create', [
+            'identity' => EnsureInformationIdentity::verified($request),
             'ports' => Port::query()->with('governorate')->where('is_active', true)->orderBy('name')->get(),
             'regions' => Region::query()
                 ->with(['governorates' => fn (HasMany $query): HasMany => $query->orderBy('name')])

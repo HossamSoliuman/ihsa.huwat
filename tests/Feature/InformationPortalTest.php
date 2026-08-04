@@ -7,8 +7,6 @@ use App\Models\Captain;
 use App\Models\HarborLicense;
 use App\Models\InformationSubmission;
 use App\Models\Port;
-use App\Models\Role;
-use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -18,39 +16,31 @@ class InformationPortalTest extends TestCase
 {
     use LazilyRefreshDatabase;
 
-    public function test_guests_are_redirected_to_login(): void
+    public function test_the_form_is_closed_until_an_identity_is_confirmed(): void
     {
-        $this->get(route('information.create'))->assertRedirect(route('login'));
+        $this->get(route('information.create'))->assertRedirect(route('information.identity.create'));
+        $this->post(route('information.store'), [])->assertRedirect(route('information.identity.create'));
+
+        $this->assertSame(0, InformationSubmission::query()->count());
     }
 
-    public function test_login_returns_the_user_to_the_information_portal(): void
+    public function test_the_form_opens_for_a_confirmed_visitor_without_logging_in(): void
     {
-        $user = $this->dataEntryUser();
+        $this->confirmIdentity();
 
-        $this->get(route('information.create'))->assertRedirect(route('login'));
+        $this->get(route('information.create'))
+            ->assertOk()
+            ->assertSee('1023456789')
+            ->assertSee('0500000000');
 
-        $this->post(route('login.store'), [
-            'username' => $user->username,
-            'password' => 'password',
-        ])->assertRedirect(route('information.create'));
+        $this->assertGuest();
     }
 
-    public function test_only_data_entry_roles_can_open_the_portal(): void
+    public function test_a_confirmed_visitor_can_open_the_complete_reference_workflow(): void
     {
-        $unauthorizedRole = Role::query()->where('code', 'hr_manager')->firstOrFail();
-        $unauthorizedUser = User::factory()->create(['role_id' => $unauthorizedRole->id]);
+        $this->confirmIdentity();
 
-        $this->actingAs($unauthorizedUser)
-            ->get(route('information.create'))
-            ->assertForbidden();
-    }
-
-    public function test_statistical_employee_can_open_the_complete_reference_workflow(): void
-    {
-        $user = $this->dataEntryUser();
-
-        $this->actingAs($user)
-            ->get(route('information.create'))
+        $this->get(route('information.create'))
             ->assertOk()
             ->assertSee('بيانات المالك')
             ->assertSee('بيانات القارب')
@@ -64,13 +54,14 @@ class InformationPortalTest extends TestCase
     public function test_valid_submission_persists_every_reference_section_and_private_file(): void
     {
         Storage::fake('local');
-        $user = $this->dataEntryUser();
+        $this->confirmIdentity();
         $port = Port::factory()->create();
 
-        $response = $this->actingAs($user)->post(route('information.store'), $this->validSubmissionData($port));
+        $response = $this->post(route('information.store'), $this->validSubmissionData($port));
 
         $submission = InformationSubmission::query()->with(['boat', 'captain', 'port'])->sole();
         $this->assertModelExists($submission);
+        $this->assertNull($submission->submitted_by);
         $this->assertSame('B-2048', $submission->boat->registration_no);
         $this->assertSame('محمد سالم البحري', $submission->captain->full_name);
         $this->assertSame($port->getKey(), $submission->port->getKey());
@@ -97,21 +88,37 @@ class InformationPortalTest extends TestCase
         Storage::disk('local')->assertExists($submission->captain_photo_path);
         $response->assertRedirect(route('information.submitted', $submission->reference_no));
 
-        $this->actingAs($user)
-            ->get(route('information.submitted', $submission->reference_no))
+        $this->get(route('information.submitted', $submission->reference_no))
             ->assertOk()
             ->assertSee($submission->reference_no)
             ->assertSee('تم استلام البيانات بنجاح');
     }
 
+    public function test_the_owner_identity_is_pinned_to_the_confirmed_session(): void
+    {
+        Storage::fake('local');
+        $this->confirmIdentity();
+        $port = Port::factory()->create();
+
+        $this->post(route('information.store'), [
+            ...$this->validSubmissionData($port),
+            'owner_national_id' => '1099999999',
+            'owner_phone' => '0599999999',
+        ]);
+
+        $submission = InformationSubmission::query()->sole();
+        $this->assertSame('1023456789', $submission->owner_national_id);
+        $this->assertSame('0500000000', $submission->owner_phone);
+    }
+
     public function test_existing_boat_and_captain_are_updated_without_duplicates(): void
     {
         Storage::fake('local');
-        $user = $this->dataEntryUser();
+        $this->confirmIdentity();
         $port = Port::factory()->create();
 
-        $this->actingAs($user)->post(route('information.store'), $this->validSubmissionData($port));
-        $this->actingAs($user)->post(route('information.store'), [
+        $this->post(route('information.store'), $this->validSubmissionData($port));
+        $this->post(route('information.store'), [
             ...$this->validSubmissionData($port),
             'boat_name' => 'النورس الجديد',
             'captain_phone' => '0555555555',
@@ -127,13 +134,13 @@ class InformationPortalTest extends TestCase
     public function test_submission_rejects_inactive_ports_and_invalid_identity_numbers(): void
     {
         Storage::fake('local');
-        $user = $this->dataEntryUser();
+        $this->confirmIdentity();
         $inactivePort = Port::factory()->create(['is_active' => false]);
 
-        $this->actingAs($user)->post(route('information.store'), [
+        $this->post(route('information.store'), [
             ...$this->validSubmissionData($inactivePort),
-            'owner_national_id' => '123',
-        ])->assertInvalid(['port_id', 'owner_national_id']);
+            'captain_national_id' => '123',
+        ])->assertInvalid(['port_id', 'captain_national_id']);
 
         $this->assertSame(0, InformationSubmission::query()->count());
     }
@@ -141,7 +148,7 @@ class InformationPortalTest extends TestCase
     public function test_submission_rejects_missing_reference_fields_invalid_tools_and_unsafe_files(): void
     {
         Storage::fake('local');
-        $user = $this->dataEntryUser();
+        $this->confirmIdentity();
         $port = Port::factory()->create();
         $submissionData = $this->validSubmissionData($port);
 
@@ -150,8 +157,7 @@ class InformationPortalTest extends TestCase
         $submissionData['documents']['engine_photo'] = UploadedFile::fake()->create('engine.pdf', 5, 'application/pdf');
         $submissionData['documents']['additional'] = UploadedFile::fake()->create('payload.exe', 5, 'application/octet-stream');
 
-        $this->actingAs($user)
-            ->post(route('information.store'), $submissionData)
+        $this->post(route('information.store'), $submissionData)
             ->assertInvalid([
                 'engine_number',
                 'documents.engine_photo',
@@ -162,11 +168,15 @@ class InformationPortalTest extends TestCase
         $this->assertSame(0, InformationSubmission::query()->count());
     }
 
-    private function dataEntryUser(): User
+    /**
+     * Walk the public gate so the rest of the portal is reachable.
+     */
+    private function confirmIdentity(string $nationalId = '1023456789', string $phone = '0500000000'): void
     {
-        $role = Role::query()->where('code', 'stat_employee')->firstOrFail();
-
-        return User::factory()->create(['role_id' => $role->id]);
+        $this->post(route('information.identity.store'), [
+            'national_id' => $nationalId,
+            'phone' => $phone,
+        ])->assertRedirect(route('information.create'));
     }
 
     /** @return array<string, mixed> */
