@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f4f7f6">
+    <meta name="theme-color" content="#1d2835">
     <meta name="description" content="بوابة حوات لتسجيل بيانات القوارب والصيادين بصورة آمنة ومنظمة.">
     <link rel="icon" type="image/jpeg" href="{{ asset('assets/img/hud/ihsa-logo.jpeg') }}">
     <title>@yield('title', 'بوابة السجلات البحرية') | {{ config('app.name') }}</title>

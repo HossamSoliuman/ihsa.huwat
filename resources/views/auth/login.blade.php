@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#075b9f">
+    <meta name="theme-color" content="#1d2835">
     <meta name="description" content="تسجيل الدخول إلى منصة حوات للخدمات والبيانات البحرية.">
     <link rel="icon" type="image/jpeg" href="{{ asset('assets/img/hud/ihsa-logo.jpeg') }}">
     <title>تسجيل الدخول | {{ config('app.name') }}</title>
