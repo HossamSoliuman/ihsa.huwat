@@ -27,15 +27,14 @@
             </a>
 
             <nav class="info-admin-nav" aria-label="أقسام مركز المعلومات">
-                <p class="info-admin-nav-label">التحليلات</p>
                 <a href="{{ route('information.admin.dashboard') }}"
                    class="info-admin-nav-link @if (request()->routeIs('information.admin.dashboard')) is-active @endif"
                    @if (request()->routeIs('information.admin.dashboard')) aria-current="page" @endif>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3"></path></svg>
-                    <span>لوحة المؤشرات</span>
+                    <span>لوحة التحكم</span>
                 </a>
 
-                <p class="info-admin-nav-label">الطلبات</p>
+                <p class="info-admin-nav-label">طلبات الصيادين والبحارة</p>
                 @php
                     $activeStatus = request()->query('status');
                     $navItems = [
@@ -65,18 +64,6 @@
             </nav>
 
             <div class="info-admin-sidebar-footer">
-                @if (auth()->user()->role->code === 'super_admin')
-                    <a class="info-admin-nav-link" href="{{ route('information.identity.create') }}">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
-                        <span>تسجيل بيانات جديدة</span>
-                    </a>
-                @endif
-
-                <a class="info-admin-nav-link" href="{{ route(auth()->user()->role->dashboard_route) }}">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5.5 10v10h13V10"></path></svg>
-                    <span>لوحة النظام</span>
-                </a>
-
                 <form method="post" action="{{ route('logout') }}">
                     @csrf
                     <button class="info-admin-nav-link" type="submit">

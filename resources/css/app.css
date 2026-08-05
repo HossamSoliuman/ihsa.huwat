@@ -3022,14 +3022,14 @@
         width: 100%;
         border-collapse: collapse;
         font-size: 0.77rem;
-        text-align: start;
+        text-align: center;
     }
 
     .info-chart-table th,
     .info-chart-table td {
         border-bottom: 1px solid var(--info-line);
         padding: 0.45rem 0.5rem;
-        text-align: start;
+        text-align: center;
         white-space: nowrap;
     }
 
@@ -3729,21 +3729,22 @@
     .info-admin-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 0.78rem;
+        font-size: 0.75rem;
     }
 
     .info-admin-table th,
     .info-admin-table td {
         border-bottom: 1px solid var(--info-line);
         padding: 0.6rem 0.7rem;
-        text-align: start;
+        text-align: center;
         vertical-align: middle;
         white-space: nowrap;
     }
 
     .info-admin-table th {
-        color: var(--info-subtle);
-        font-size: 0.7rem;
+        background: var(--info-surface-soft);
+        color: var(--info-ink);
+        font-size: 0.85rem;
         font-weight: 700;
     }
 
@@ -3921,27 +3922,41 @@
         content: '';
     }
 
+    /* Key/value rows rendered as a table. Outlines draw the rules so trailing empty cells stay blank. */
     .info-admin-datagrid {
         display: grid;
-        gap: 0.7rem 1rem;
-        grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+        gap: 1px;
+        grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
+        text-align: start;
     }
 
     .info-admin-datagrid > div {
         display: grid;
         min-width: 0;
-        gap: 0.2rem;
+        grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr);
+        outline: 1px solid var(--info-line);
     }
 
     .info-admin-datagrid dt {
-        color: var(--info-subtle);
-        font-size: 0.68rem;
+        display: flex;
+        align-items: center;
+        border-inline-end: 1px solid var(--info-line);
+        background: var(--info-surface-soft);
+        padding: 0.55rem 0.8rem;
+        color: var(--info-ink);
+        font-size: 0.85rem;
         font-weight: 600;
     }
 
+    /* `right` keeps dir="ltr" values (ids, emails, phones) on the same edge as the Arabic ones. */
     .info-admin-datagrid dd {
+        display: flex;
+        align-items: center;
+        justify-content: right;
+        background: var(--info-surface);
+        padding: 0.55rem 0.8rem;
         color: var(--info-ink);
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         overflow-wrap: anywhere;
     }
 
@@ -4069,14 +4084,14 @@
     }
 
     .info-admin-review-meta dt {
-        color: var(--info-subtle);
-        font-size: 0.7rem;
+        color: var(--info-ink);
+        font-size: 0.82rem;
         font-weight: 600;
     }
 
     .info-admin-review-meta dd {
-        color: var(--info-ink);
-        font-size: 0.75rem;
+        color: var(--info-subtle);
+        font-size: 0.73rem;
         text-align: end;
     }
 
@@ -4473,6 +4488,10 @@
 }
 
 @media (max-width: 47.99rem) {
+    .info-admin-datagrid > div {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .info-admin-filters {
         width: 100%;
     }

@@ -80,8 +80,8 @@
                     <div><dt>تاريخ الميلاد</dt><dd>{{ $submission->owner_birth_date?->format('Y/m/d') ?? '—' }}</dd></div>
                     <div><dt>رقم الجوال</dt><dd dir="ltr">{{ $submission->owner_phone }}</dd></div>
                     <div><dt>البريد الإلكتروني</dt><dd dir="ltr">{{ $submission->owner_email ?? '—' }}</dd></div>
-                    <div><dt>المنطقة</dt><dd>{{ $submission->owner_region ?? '—' }}</dd></div>
                     <div><dt>المحافظة</dt><dd>{{ $submission->owner_governorate ?? '—' }}</dd></div>
+                    <div><dt>المنطقة</dt><dd>{{ $submission->owner_region ?? '—' }}</dd></div>
                     <div><dt>المدينة</dt><dd>{{ $submission->owner_city ?? '—' }}</dd></div>
                     <div class="info-field-wide"><dt>العنوان</dt><dd>{{ $submission->owner_address ?? '—' }}</dd></div>
                     <div><dt>رقم الرخصة</dt><dd dir="ltr">{{ $submission->license_number }}</dd></div>
