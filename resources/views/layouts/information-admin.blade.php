@@ -27,6 +27,15 @@
             </a>
 
             <nav class="info-admin-nav" aria-label="أقسام مركز المعلومات">
+                <p class="info-admin-nav-label">التحليلات</p>
+                <a href="{{ route('information.admin.dashboard') }}"
+                   class="info-admin-nav-link @if (request()->routeIs('information.admin.dashboard')) is-active @endif"
+                   @if (request()->routeIs('information.admin.dashboard')) aria-current="page" @endif>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3"></path></svg>
+                    <span>لوحة المؤشرات</span>
+                </a>
+
+                <p class="info-admin-nav-label">الطلبات</p>
                 @php
                     $activeStatus = request()->query('status');
                     $navItems = [

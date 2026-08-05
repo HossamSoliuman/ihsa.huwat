@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\InformationAdminController;
+use App\Http\Controllers\InformationDashboardController;
 use App\Http\Controllers\InformationIdentityController;
 use App\Http\Controllers\InformationPortalController;
 use App\Http\Controllers\InformationStatusController;
@@ -23,6 +24,7 @@ $informationPortal = function (): void {
         ->middleware(['auth', 'role:super_admin,quality_supervisor'])
         ->group(function (): void {
             Route::get('/', [InformationAdminController::class, 'index'])->name('index');
+            Route::get('/dashboard', InformationDashboardController::class)->name('dashboard');
             Route::get('/{submission}', [InformationAdminController::class, 'show'])->name('show');
             Route::patch('/{submission}/review', [InformationAdminController::class, 'review'])->name('review');
             Route::get('/{submission}/documents/{category}', [InformationAdminController::class, 'document'])->name('documents.show');

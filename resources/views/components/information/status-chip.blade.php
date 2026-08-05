@@ -5,7 +5,7 @@
         'submitted' => 'sea',
         'under_review' => 'blue',
         'needs_edit' => 'gold',
-        'approved' => 'blue',
+        'approved' => 'approved',
         'rejected' => 'danger',
     ];
 @endphp

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\ReviewInformationSubmissionAction;
 use App\Http\Requests\FilterInformationSubmissionsRequest;
 use App\Http\Requests\ReviewInformationSubmissionRequest;
+use App\Models\Governorate;
 use App\Models\InformationSubmission;
 use App\Models\Port;
 use Illuminate\Contracts\View\View;
@@ -23,6 +24,24 @@ class InformationAdminController extends Controller
             ->with(['port:id,name', 'boat:id,name,registration_no', 'reviewer:id,full_name'])
             ->when($filters['status'] ?? null, fn (Builder $query, string $status): Builder => $query->where('status', $status))
             ->when($filters['port_id'] ?? null, fn (Builder $query, int $portId): Builder => $query->where('port_id', $portId))
+            ->when($filters['region_id'] ?? null, fn (Builder $query, int $regionId): Builder => $query->whereIn(
+                'port_id',
+                Port::query()->whereIn(
+                    'governorate_id',
+                    Governorate::query()->where('region_id', $regionId)->select('id'),
+                )->select('id'),
+            ))
+            ->when(($filters['range'] ?? 'all') !== 'all', function (Builder $query) use ($filters): void {
+                $start = ($filters['range'] ?? null) === 'year'
+                    ? today()->startOfYear()
+                    : today()->subDays(((int) ($filters['range'] ?? 30)) - 1);
+
+                $query->where('submitted_at', '>=', $start);
+            })
+            ->when(($filters['expiry'] ?? null) === 'risk', fn (Builder $query): Builder => $query
+                ->where('status', 'approved')
+                ->whereNotNull('license_expiry_date')
+                ->where('license_expiry_date', '<=', today()->addDays(90)))
             ->when($filters['q'] ?? null, function (Builder $query, string $search): void {
                 $query->where(function (Builder $query) use ($search): void {
                     $query->where('reference_no', 'like', "%{$search}%")
