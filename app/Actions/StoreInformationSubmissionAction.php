@@ -22,17 +22,19 @@ class StoreInformationSubmissionAction
     /**
      * @param  array<string, mixed>  $attributes
      * @param  array<string, UploadedFile>  $documents
+     * @param  array<int, UploadedFile>  $crewPhotos  Keyed by the crew member index they belong to.
      */
     public function handle(
         ?User $submitter,
         array $attributes,
         array $documents,
         ?UploadedFile $captainPhoto,
+        array $crewPhotos = [],
     ): InformationSubmission {
         $storedPaths = [];
 
         try {
-            return DB::transaction(function () use ($submitter, $attributes, $documents, $captainPhoto, &$storedPaths): InformationSubmission {
+            return DB::transaction(function () use ($submitter, $attributes, $documents, $captainPhoto, $crewPhotos, &$storedPaths): InformationSubmission {
                 $boat = Boat::query()->updateOrCreate(
                     ['registration_no' => $attributes['registration_no']],
                     [
@@ -86,18 +88,19 @@ class StoreInformationSubmissionAction
                         'engine_number',
                         'engine_serial_number',
                         'call_sign',
+                        'berth_number',
+                        'mooring_number',
                     ]),
                     'captain_data' => Arr::only($attributes, [
                         'captain_full_name',
                         'captain_national_id',
                         'captain_phone',
-                        'captain_passport_number',
-                        'captain_birth_date',
                         'captain_license_number',
                         'captain_license_expiry_date',
+                        'captain_fishing_license_number',
+                        'captain_fishing_license_issue_date',
+                        'captain_fishing_license_expiry_date',
                         'captain_nationality',
-                        'captain_qualification',
-                        'captain_experience_years',
                     ]),
                     'crew_members' => $attributes['crew_members'],
                     'fishing_tools' => $attributes['fishing_tools'],
@@ -131,6 +134,22 @@ class StoreInformationSubmissionAction
                     $storedPaths[] = $captainPhotoPath;
                 }
 
+                /**
+                 * Crew photos arrive keyed by the row index they were filled in on, so the
+                 * stored path is folded back into that member's record.
+                 */
+                $crewMembers = $attributes['crew_members'];
+
+                foreach ($crewPhotos as $index => $crewPhoto) {
+                    if (! $crewPhoto instanceof UploadedFile || ! isset($crewMembers[$index])) {
+                        continue;
+                    }
+
+                    $crewPhotoPath = $this->storeFile($submission, 'crew-photos', $crewPhoto);
+                    $storedPaths[] = $crewPhotoPath;
+                    $crewMembers[$index]['photo_path'] = $crewPhotoPath;
+                }
+
                 $primaryDocumentPath = Arr::get($documentPaths, 'fishing_license')
                     ?? Arr::get($documentPaths, 'boat_license');
 
@@ -138,6 +157,7 @@ class StoreInformationSubmissionAction
                     'document_path' => $primaryDocumentPath,
                     'document_paths' => $documentPaths,
                     'captain_photo_path' => $captainPhotoPath,
+                    'crew_members' => $crewMembers,
                 ]);
 
                 $licenseAttributes = [

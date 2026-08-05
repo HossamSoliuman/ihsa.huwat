@@ -279,13 +279,20 @@ function initializeInformationPortal() {
         updateSteps();
     }
 
-    function reindexRows(list, rowSelector, collectionName, idPrefix) {
-        const namePattern = new RegExp(`${collectionName}\\[(?:\\d+|__INDEX__)\\]`, 'g');
+    function reindexRows(list, rowSelector, collectionNames, idPrefix) {
+        // A row can carry more than one collection: crew fields and the crew photo travel together.
+        const collections = [].concat(collectionNames).map((name) => ({
+            name,
+            pattern: new RegExp(`${name}\\[(?:\\d+|__INDEX__)\\]`, 'g'),
+        }));
         const idPattern = new RegExp(`${idPrefix}_(?:\\d+|__INDEX__)_`, 'g');
 
         Array.from(list.querySelectorAll(rowSelector)).forEach((row, index) => {
             row.querySelectorAll('[name]').forEach((control) => {
-                control.name = control.name.replace(namePattern, `${collectionName}[${index}]`);
+                control.name = collections.reduce(
+                    (name, collection) => name.replace(collection.pattern, `${collection.name}[${index}]`),
+                    control.name,
+                );
             });
 
             row.querySelectorAll('[id]').forEach((element) => {
@@ -315,7 +322,7 @@ function initializeInformationPortal() {
             return;
         }
 
-        reindexRows(crewList, '[data-info-crew-row]', 'crew_members', 'crew');
+        reindexRows(crewList, '[data-info-crew-row]', ['crew_members', 'crew_photos'], 'crew');
         const rows = Array.from(crewList.querySelectorAll('[data-info-crew-row]'));
 
         rows.forEach((row) => {
@@ -346,6 +353,7 @@ function initializeInformationPortal() {
         updateCrewCollection();
         hasUnsavedChanges = true;
         const newRow = crewList.lastElementChild;
+        newRow?.querySelectorAll('[data-info-upload]').forEach(initializeUploadCard);
         focusTarget(newRow);
         announce(`تمت إضافة البحار رقم ${index + 1}.`);
     });
@@ -558,14 +566,16 @@ function initializeInformationPortal() {
         }
     }
 
-    uploadCards.forEach((upload) => {
+    function initializeUploadCard(upload) {
         const fileInput = upload.querySelector('[data-info-file]');
         const fileName = upload.querySelector('[data-info-file-name]');
         const fileRemove = upload.querySelector('[data-info-file-remove]');
 
-        if (!(fileInput instanceof HTMLInputElement)) {
+        if (!(fileInput instanceof HTMLInputElement) || upload.dataset.infoUploadReady === '1') {
             return;
         }
+
+        upload.dataset.infoUploadReady = '1';
 
         const imageOnly = !fileInput.accept.includes('application/pdf');
         const allowedExtensions = imageOnly ? ['jpg', 'jpeg', 'png'] : ['pdf', 'jpg', 'jpeg', 'png'];
@@ -639,7 +649,9 @@ function initializeInformationPortal() {
             fileInput.focus();
             announce('تمت إزالة الملف.');
         });
-    });
+    }
+
+    uploadCards.forEach(initializeUploadCard);
 
     function updateCollectionSummaries() {
         updateCrewCollection();

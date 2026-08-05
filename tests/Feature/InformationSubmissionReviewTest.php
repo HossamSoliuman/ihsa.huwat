@@ -163,6 +163,27 @@ class InformationSubmissionReviewTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_crew_photos_are_streamed_per_member(): void
+    {
+        Storage::fake('local');
+        $reviewer = $this->reviewer();
+        Storage::disk('local')->put('information/crew-one.jpg', 'jpg-bytes');
+        $submission = InformationSubmission::factory()->create([
+            'crew_members' => [
+                ['full_name' => 'سالم علي الصياد', 'photo_path' => 'information/crew-one.jpg'],
+                ['full_name' => 'ناصر حسن البحار'],
+            ],
+        ]);
+
+        $this->actingAs($reviewer)
+            ->get(route('information.admin.documents.show', [$submission, 'crew_photo_0']))
+            ->assertOk();
+
+        $this->actingAs($reviewer)
+            ->get(route('information.admin.documents.show', [$submission, 'crew_photo_1']))
+            ->assertNotFound();
+    }
+
     private function reviewer(): User
     {
         return $this->userWithRole('super_admin');

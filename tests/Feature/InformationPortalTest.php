@@ -46,6 +46,10 @@ class InformationPortalTest extends TestCase
             ->assertSee('بيانات القارب')
             ->assertSee('القبطان والبحارة')
             ->assertSee('قائمة البحارة')
+            ->assertSee('رقم الرصيف')
+            ->assertSee('رقم الموقف')
+            ->assertSee('رقم رخصة الصيد')
+            ->assertSee('صورة البحار')
             ->assertSee('أدوات الصيد')
             ->assertSee('سجل الأدوات')
             ->assertSee('المستندات والمرفقات');
@@ -69,7 +73,15 @@ class InformationPortalTest extends TestCase
         $this->assertSame('owner@example.test', $submission->owner_email);
         $this->assertSame(today()->subMonth()->format('Y-m-d'), $submission->license_issue_date?->format('Y-m-d'));
         $this->assertSame('ENG-2048', $submission->boat_data['engine_number']);
-        $this->assertSame('A12345678', $submission->captain_data['captain_passport_number']);
+        $this->assertSame('12', $submission->boat_data['berth_number']);
+        $this->assertSame('B-07', $submission->boat_data['mooring_number']);
+        $this->assertSame('FSH-4455', $submission->captain_data['captain_fishing_license_number']);
+        $this->assertSame(today()->subMonths(6)->format('Y-m-d'), $submission->captain_data['captain_fishing_license_issue_date']);
+        $this->assertSame(today()->addYears(2)->format('Y-m-d'), $submission->captain_data['captain_fishing_license_expiry_date']);
+        $this->assertSame('FSH-1122', $submission->crew_members[0]['fishing_license_number']);
+        $this->assertNull($submission->crew_members[1]['fishing_license_number']);
+        $this->assertArrayNotHasKey('photo_path', $submission->crew_members[1]);
+        Storage::disk('local')->assertExists($submission->crew_members[0]['photo_path']);
         $this->assertCount(2, $submission->crew_members);
         $this->assertCount(3, $submission->fishing_tools);
         $this->assertCount(8, $submission->document_paths);
@@ -209,39 +221,43 @@ class InformationPortalTest extends TestCase
             'engine_number' => 'ENG-2048',
             'engine_serial_number' => 'SER-2048',
             'call_sign' => 'HZ-2048',
+            'berth_number' => '12',
+            'mooring_number' => 'B-07',
             'captain_full_name' => 'محمد سالم البحري',
             'captain_national_id' => '1123456789',
             'captain_phone' => '0511111111',
-            'captain_passport_number' => 'A12345678',
-            'captain_birth_date' => today()->subYears(39)->format('Y-m-d'),
             'captain_license_number' => 'MAR-7788',
             'captain_license_expiry_date' => today()->addYears(2)->format('Y-m-d'),
+            'captain_fishing_license_number' => 'FSH-4455',
+            'captain_fishing_license_issue_date' => today()->subMonths(6)->format('Y-m-d'),
+            'captain_fishing_license_expiry_date' => today()->addYears(2)->format('Y-m-d'),
             'captain_nationality' => 'saudi',
-            'captain_qualification' => 'master_fisher',
-            'captain_experience_years' => 18,
             'captain_photo' => UploadedFile::fake()->image('captain.jpg'),
             'crew_count' => 2,
             'crew_members' => [
                 [
                     'full_name' => 'سالم علي الصياد',
                     'identity_number' => '2123456789',
-                    'passport_number' => 'P12345678',
                     'phone' => '0522222222',
-                    'birth_date' => today()->subYears(31)->format('Y-m-d'),
                     'nationality' => 'saudi',
                     'role' => 'fisher',
-                    'experience_years' => 9,
+                    'fishing_license_number' => 'FSH-1122',
+                    'fishing_license_issue_date' => today()->subYear()->format('Y-m-d'),
+                    'fishing_license_expiry_date' => today()->addYear()->format('Y-m-d'),
                 ],
                 [
                     'full_name' => 'ناصر حسن البحار',
                     'identity_number' => '2234567890',
-                    'passport_number' => 'P87654321',
                     'phone' => '0533333333',
-                    'birth_date' => today()->subYears(29)->format('Y-m-d'),
                     'nationality' => 'saudi',
                     'role' => 'deckhand',
-                    'experience_years' => 6,
+                    'fishing_license_number' => null,
+                    'fishing_license_issue_date' => null,
+                    'fishing_license_expiry_date' => null,
                 ],
+            ],
+            'crew_photos' => [
+                0 => UploadedFile::fake()->image('crew-one.jpg'),
             ],
             'fishing_method' => 'nets',
             'fishing_tools' => [

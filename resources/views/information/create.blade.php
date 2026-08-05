@@ -24,7 +24,7 @@
 
     $stepPrefixes = [
         1 => ['owner_', 'license_'],
-        2 => ['port_id', 'boat_', 'registration_no', 'hull_', 'engine_', 'call_sign'],
+        2 => ['port_id', 'boat_', 'registration_no', 'hull_', 'engine_', 'call_sign', 'berth_number', 'mooring_number'],
         3 => ['captain_', 'crew_'],
         4 => ['fishing_'],
         5 => ['documents'],
@@ -58,16 +58,17 @@
         'engine_number' => 'رقم المحرك',
         'engine_serial_number' => 'الرقم التسلسلي للمحرك',
         'call_sign' => 'إشارة النداء الدولية',
+        'berth_number' => 'رقم الرصيف',
+        'mooring_number' => 'رقم الموقف',
         'captain_full_name' => 'اسم القبطان',
         'captain_national_id' => 'هوية القبطان',
         'captain_phone' => 'جوال القبطان',
-        'captain_passport_number' => 'جواز القبطان',
-        'captain_birth_date' => 'تاريخ ميلاد القبطان',
         'captain_license_number' => 'رخصة القيادة البحرية',
         'captain_license_expiry_date' => 'انتهاء رخصة القيادة',
+        'captain_fishing_license_number' => 'رقم رخصة صيد القبطان',
+        'captain_fishing_license_issue_date' => 'تاريخ إصدار رخصة صيد القبطان',
+        'captain_fishing_license_expiry_date' => 'تاريخ انتهاء رخصة صيد القبطان',
         'captain_nationality' => 'جنسية القبطان',
-        'captain_qualification' => 'مؤهل القبطان',
-        'captain_experience_years' => 'خبرة القبطان',
         'captain_photo' => 'صورة القبطان',
         'crew_members' => 'قائمة البحارة',
         'fishing_method' => 'أسلوب الصيد الرئيسي',
@@ -89,12 +90,12 @@
         $crewMembers = [[
             'full_name' => '',
             'identity_number' => '',
-            'passport_number' => '',
             'phone' => '',
-            'birth_date' => '',
             'nationality' => 'saudi',
             'role' => 'fisher',
-            'experience_years' => '',
+            'fishing_license_number' => '',
+            'fishing_license_issue_date' => '',
+            'fishing_license_expiry_date' => '',
         ]];
     }
 
@@ -113,6 +114,10 @@
     $errorTargetId = static function (string $field): string {
         if (preg_match('/^crew_members\.(\d+)\.([^.]+)$/', $field, $matches) === 1) {
             return "crew_{$matches[1]}_{$matches[2]}";
+        }
+
+        if (preg_match('/^crew_photos\.(\d+)$/', $field, $matches) === 1) {
+            return "crew_{$matches[1]}_photo";
         }
 
         if (preg_match('/^fishing_tools\.(\d+)\.([^.]+)$/', $field, $matches) === 1) {
@@ -134,6 +139,10 @@
     $errorLabel = static function (string $field) use ($fieldLabels, $documentTypes): string {
         if (preg_match('/^crew_members\.(\d+)\./', $field, $matches) === 1) {
             return 'بيانات البحار رقم '.((int) $matches[1] + 1);
+        }
+
+        if (preg_match('/^crew_photos\.(\d+)$/', $field, $matches) === 1) {
+            return 'صورة البحار رقم '.((int) $matches[1] + 1);
         }
 
         if (preg_match('/^fishing_tools\.(\d+)\./', $field, $matches) === 1) {
@@ -459,6 +468,18 @@
                                     <input id="call_sign" name="call_sign" value="{{ old('call_sign') }}" maxlength="30" dir="ltr" placeholder="HZ-66799" @error('call_sign') aria-invalid="true" aria-describedby="call_sign_error" @enderror>
                                     @error('call_sign')<small id="call_sign_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
+
+                                <div class="info-field">
+                                    <label for="berth_number">رقم الرصيف</label>
+                                    <input id="berth_number" name="berth_number" value="{{ old('berth_number') }}" maxlength="30" dir="ltr" placeholder="مثال: 12" @error('berth_number') aria-invalid="true" aria-describedby="berth_number_error" @enderror>
+                                    @error('berth_number')<small id="berth_number_error" class="info-field-error">{{ $message }}</small>@enderror
+                                </div>
+
+                                <div class="info-field">
+                                    <label for="mooring_number">رقم الموقف</label>
+                                    <input id="mooring_number" name="mooring_number" value="{{ old('mooring_number') }}" maxlength="30" dir="ltr" placeholder="مثال: B-07" @error('mooring_number') aria-invalid="true" aria-describedby="mooring_number_error" @enderror>
+                                    @error('mooring_number')<small id="mooring_number_error" class="info-field-error">{{ $message }}</small>@enderror
+                                </div>
                         </div>
                     </div>
 
@@ -506,18 +527,6 @@
                                 </div>
 
                                 <div class="info-field">
-                                    <label for="captain_passport_number">رقم الجواز <b aria-hidden="true">*</b></label>
-                                    <input id="captain_passport_number" name="captain_passport_number" value="{{ old('captain_passport_number') }}" required maxlength="30" dir="ltr" placeholder="A12345678" @error('captain_passport_number') aria-invalid="true" aria-describedby="captain_passport_number_error" @enderror>
-                                    @error('captain_passport_number')<small id="captain_passport_number_error" class="info-field-error">{{ $message }}</small>@enderror
-                                </div>
-
-                                <div class="info-field">
-                                    <label for="captain_birth_date">تاريخ الميلاد <b aria-hidden="true">*</b></label>
-                                    <input type="date" id="captain_birth_date" name="captain_birth_date" value="{{ old('captain_birth_date') }}" required max="{{ today()->format('Y-m-d') }}" dir="ltr" @error('captain_birth_date') aria-invalid="true" aria-describedby="captain_birth_date_error" @enderror>
-                                    @error('captain_birth_date')<small id="captain_birth_date_error" class="info-field-error">{{ $message }}</small>@enderror
-                                </div>
-
-                                <div class="info-field">
                                     <label for="captain_nationality">الجنسية <b aria-hidden="true">*</b></label>
                                     <select id="captain_nationality" name="captain_nationality" required @error('captain_nationality') aria-invalid="true" aria-describedby="captain_nationality_error" @enderror>
                                         <option value="">اختر الجنسية</option>
@@ -541,20 +550,21 @@
                                 </div>
 
                                 <div class="info-field">
-                                    <label for="captain_qualification">نوع المؤهل / الصفة <b aria-hidden="true">*</b></label>
-                                    <select id="captain_qualification" name="captain_qualification" required @error('captain_qualification') aria-invalid="true" aria-describedby="captain_qualification_error" @enderror>
-                                        <option value="">اختر المؤهل</option>
-                                        @foreach(config('information.captain_qualifications') as $value => $label)
-                                            <option value="{{ $value }}" @selected(old('captain_qualification') === $value)>{{ $label }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('captain_qualification')<small id="captain_qualification_error" class="info-field-error">{{ $message }}</small>@enderror
+                                    <label for="captain_fishing_license_number">رقم رخصة الصيد <b aria-hidden="true">*</b></label>
+                                    <input id="captain_fishing_license_number" name="captain_fishing_license_number" value="{{ old('captain_fishing_license_number') }}" required minlength="2" maxlength="80" dir="ltr" placeholder="LIC-2026-77" @error('captain_fishing_license_number') aria-invalid="true" aria-describedby="captain_fishing_license_number_error" @enderror>
+                                    @error('captain_fishing_license_number')<small id="captain_fishing_license_number_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
 
                                 <div class="info-field">
-                                    <label for="captain_experience_years">سنوات الخبرة <b aria-hidden="true">*</b></label>
-                                    <input type="number" id="captain_experience_years" name="captain_experience_years" value="{{ old('captain_experience_years') }}" required min="0" max="60" inputmode="numeric" placeholder="20" @error('captain_experience_years') aria-invalid="true" aria-describedby="captain_experience_years_error" @enderror>
-                                    @error('captain_experience_years')<small id="captain_experience_years_error" class="info-field-error">{{ $message }}</small>@enderror
+                                    <label for="captain_fishing_license_issue_date">تاريخ إصدار رخصة الصيد <b aria-hidden="true">*</b></label>
+                                    <input type="date" id="captain_fishing_license_issue_date" name="captain_fishing_license_issue_date" value="{{ old('captain_fishing_license_issue_date') }}" required max="{{ today()->format('Y-m-d') }}" dir="ltr" @error('captain_fishing_license_issue_date') aria-invalid="true" aria-describedby="captain_fishing_license_issue_date_error" @enderror>
+                                    @error('captain_fishing_license_issue_date')<small id="captain_fishing_license_issue_date_error" class="info-field-error">{{ $message }}</small>@enderror
+                                </div>
+
+                                <div class="info-field">
+                                    <label for="captain_fishing_license_expiry_date">تاريخ انتهاء رخصة الصيد <b aria-hidden="true">*</b></label>
+                                    <input type="date" id="captain_fishing_license_expiry_date" name="captain_fishing_license_expiry_date" value="{{ old('captain_fishing_license_expiry_date') }}" required dir="ltr" @error('captain_fishing_license_expiry_date') aria-invalid="true" aria-describedby="captain_fishing_license_expiry_date_error" @enderror>
+                                    @error('captain_fishing_license_expiry_date')<small id="captain_fishing_license_expiry_date_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
                         </div>
 
@@ -596,7 +606,7 @@
                         <p class="info-guidance-kicker">الطاقم المسجل</p>
                         <h3><span data-info-crew-total>{{ count($crewMembers) }}</span> بحّار</h3>
                         <p>العدد يُحدّث تلقائياً مع إضافة أو حذف السجلات، ويُحفظ كل عضو بكامل بياناته.</p>
-                        <ul><li>هوية مختلفة عن هوية القبطان</li><li>رقم جوال متاح لكل بحار</li><li>الدور والخبرة موضحان</li></ul>
+                        <ul><li>هوية مختلفة عن هوية القبطان</li><li>رقم جوال متاح لكل بحار</li><li>الدور ورخصة الصيد موضحان</li></ul>
                     </aside>
                 </div>
 
@@ -754,6 +764,8 @@
                             <div><dt>رقم المحرك</dt><dd data-info-review="engine_number" dir="ltr">—</dd></div>
                             <div><dt>تسلسل المحرك</dt><dd data-info-review="engine_serial_number" dir="ltr">—</dd></div>
                             <div><dt>إشارة النداء</dt><dd data-info-review="call_sign" dir="ltr">—</dd></div>
+                            <div><dt>رقم الرصيف</dt><dd data-info-review="berth_number" dir="ltr">—</dd></div>
+                            <div><dt>رقم الموقف</dt><dd data-info-review="mooring_number" dir="ltr">—</dd></div>
                         </dl>
                     </article>
 
@@ -763,13 +775,12 @@
                             <div><dt>اسم القبطان</dt><dd data-info-review="captain_full_name">—</dd></div>
                             <div><dt>هوية القبطان</dt><dd data-info-review="captain_national_id" data-info-mask="identity" dir="ltr">—</dd></div>
                             <div><dt>جوال القبطان</dt><dd data-info-review="captain_phone" dir="ltr">—</dd></div>
-                            <div><dt>رقم الجواز</dt><dd data-info-review="captain_passport_number" dir="ltr">—</dd></div>
-                            <div><dt>تاريخ الميلاد</dt><dd data-info-review="captain_birth_date" dir="ltr">—</dd></div>
                             <div><dt>رخصة القيادة</dt><dd data-info-review="captain_license_number" dir="ltr">—</dd></div>
-                            <div><dt>انتهاء الرخصة</dt><dd data-info-review="captain_license_expiry_date" dir="ltr">—</dd></div>
+                            <div><dt>انتهاء رخصة القيادة</dt><dd data-info-review="captain_license_expiry_date" dir="ltr">—</dd></div>
+                            <div><dt>رخصة الصيد</dt><dd data-info-review="captain_fishing_license_number" dir="ltr">—</dd></div>
+                            <div><dt>إصدار رخصة الصيد</dt><dd data-info-review="captain_fishing_license_issue_date" dir="ltr">—</dd></div>
+                            <div><dt>انتهاء رخصة الصيد</dt><dd data-info-review="captain_fishing_license_expiry_date" dir="ltr">—</dd></div>
                             <div><dt>الجنسية</dt><dd data-info-review="captain_nationality">—</dd></div>
-                            <div><dt>المؤهل</dt><dd data-info-review="captain_qualification">—</dd></div>
-                            <div><dt>سنوات الخبرة</dt><dd data-info-review="captain_experience_years">—</dd></div>
                             <div><dt>صورة القبطان</dt><dd data-info-review="captain_photo">غير مرفقة</dd></div>
                             <div><dt>عدد البحارة</dt><dd data-info-review-crew-count>{{ count($crewMembers) }}</dd></div>
                         </dl>

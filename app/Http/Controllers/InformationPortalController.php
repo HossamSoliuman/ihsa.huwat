@@ -34,12 +34,14 @@ class InformationPortalController extends Controller
     ): RedirectResponse {
         $documents = $request->file('documents', []);
         $captainPhoto = $request->file('captain_photo');
+        $crewPhotos = $request->file('crew_photos', []);
 
         $submission = $storeInformationSubmission->handle(
             $request->user(),
-            Arr::except($request->validated(), ['website', 'documents', 'captain_photo', 'consent']),
+            Arr::except($request->validated(), ['website', 'documents', 'captain_photo', 'crew_photos', 'consent']),
             is_array($documents) ? $documents : [],
             $captainPhoto instanceof UploadedFile ? $captainPhoto : null,
+            is_array($crewPhotos) ? $crewPhotos : [],
         );
 
         $request->session()->put('information_receipts.'.$submission->reference_no, [

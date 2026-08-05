@@ -38,25 +38,11 @@
             @error($field)<small id="{{ $idPrefix }}_identity_number_error" class="info-field-error">{{ $message }}</small>@enderror
         </div>
 
-        @php($field = "{$prefix}.passport_number")
-        <div class="info-field">
-            <label for="{{ $idPrefix }}_passport_number">رقم الجواز</label>
-            <input id="{{ $idPrefix }}_passport_number" name="crew_members[{{ $index }}][passport_number]" value="{{ data_get($member, 'passport_number') }}" maxlength="30" dir="ltr" placeholder="اختياري" @error($field) aria-invalid="true" aria-describedby="{{ $idPrefix }}_passport_number_error" @enderror>
-            @error($field)<small id="{{ $idPrefix }}_passport_number_error" class="info-field-error">{{ $message }}</small>@enderror
-        </div>
-
         @php($field = "{$prefix}.phone")
         <div class="info-field">
             <label for="{{ $idPrefix }}_phone">رقم الجوال <b aria-hidden="true">*</b></label>
             <input id="{{ $idPrefix }}_phone" name="crew_members[{{ $index }}][phone]" value="{{ data_get($member, 'phone') }}" required inputmode="tel" maxlength="15" dir="ltr" placeholder="05xxxxxxxx" @error($field) aria-invalid="true" aria-describedby="{{ $idPrefix }}_phone_error" @enderror>
             @error($field)<small id="{{ $idPrefix }}_phone_error" class="info-field-error">{{ $message }}</small>@enderror
-        </div>
-
-        @php($field = "{$prefix}.birth_date")
-        <div class="info-field">
-            <label for="{{ $idPrefix }}_birth_date">تاريخ الميلاد <b aria-hidden="true">*</b></label>
-            <input type="date" id="{{ $idPrefix }}_birth_date" name="crew_members[{{ $index }}][birth_date]" value="{{ data_get($member, 'birth_date') }}" required max="{{ today()->format('Y-m-d') }}" dir="ltr" @error($field) aria-invalid="true" aria-describedby="{{ $idPrefix }}_birth_date_error" @enderror>
-            @error($field)<small id="{{ $idPrefix }}_birth_date_error" class="info-field-error">{{ $message }}</small>@enderror
         </div>
 
         @php($field = "{$prefix}.nationality")
@@ -83,11 +69,38 @@
             @error($field)<small id="{{ $idPrefix }}_role_error" class="info-field-error">{{ $message }}</small>@enderror
         </div>
 
-        @php($field = "{$prefix}.experience_years")
+        @php($field = "{$prefix}.fishing_license_number")
         <div class="info-field">
-            <label for="{{ $idPrefix }}_experience_years">سنوات الخبرة <b aria-hidden="true">*</b></label>
-            <input type="number" id="{{ $idPrefix }}_experience_years" name="crew_members[{{ $index }}][experience_years]" value="{{ data_get($member, 'experience_years') }}" required min="0" max="60" inputmode="numeric" placeholder="0" @error($field) aria-invalid="true" aria-describedby="{{ $idPrefix }}_experience_years_error" @enderror>
-            @error($field)<small id="{{ $idPrefix }}_experience_years_error" class="info-field-error">{{ $message }}</small>@enderror
+            <label for="{{ $idPrefix }}_fishing_license_number">رقم رخصة الصيد</label>
+            <input id="{{ $idPrefix }}_fishing_license_number" name="crew_members[{{ $index }}][fishing_license_number]" value="{{ data_get($member, 'fishing_license_number') }}" maxlength="80" dir="ltr" placeholder="اختياري" @error($field) aria-invalid="true" aria-describedby="{{ $idPrefix }}_fishing_license_number_error" @enderror>
+            @error($field)<small id="{{ $idPrefix }}_fishing_license_number_error" class="info-field-error">{{ $message }}</small>@enderror
         </div>
+
+        @php($field = "{$prefix}.fishing_license_issue_date")
+        <div class="info-field">
+            <label for="{{ $idPrefix }}_fishing_license_issue_date">تاريخ إصدار رخصة الصيد</label>
+            <input type="date" id="{{ $idPrefix }}_fishing_license_issue_date" name="crew_members[{{ $index }}][fishing_license_issue_date]" value="{{ data_get($member, 'fishing_license_issue_date') }}" max="{{ today()->format('Y-m-d') }}" dir="ltr" @error($field) aria-invalid="true" aria-describedby="{{ $idPrefix }}_fishing_license_issue_date_error" @enderror>
+            @error($field)<small id="{{ $idPrefix }}_fishing_license_issue_date_error" class="info-field-error">{{ $message }}</small>@enderror
+        </div>
+
+        @php($field = "{$prefix}.fishing_license_expiry_date")
+        <div class="info-field">
+            <label for="{{ $idPrefix }}_fishing_license_expiry_date">تاريخ انتهاء رخصة الصيد</label>
+            <input type="date" id="{{ $idPrefix }}_fishing_license_expiry_date" name="crew_members[{{ $index }}][fishing_license_expiry_date]" value="{{ data_get($member, 'fishing_license_expiry_date') }}" dir="ltr" @error($field) aria-invalid="true" aria-describedby="{{ $idPrefix }}_fishing_license_expiry_date_error" @enderror>
+            @error($field)<small id="{{ $idPrefix }}_fishing_license_expiry_date_error" class="info-field-error">{{ $message }}</small>@enderror
+        </div>
+    </div>
+
+    <div class="info-inline-upload">
+        <div><strong>صورة البحار</strong><span>صورة شخصية حديثة وواضحة — اختيارية.</span></div>
+        <x-information.upload-card
+            :id="$idPrefix.'_photo'"
+            :name="'crew_photos['.$index.']'"
+            :error-name="'crew_photos.'.$index"
+            label="صورة البحار"
+            description="JPG أو PNG"
+            :compact="true"
+            :image-only="true"
+        />
     </div>
 </article>

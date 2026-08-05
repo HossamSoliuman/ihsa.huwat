@@ -99,9 +99,12 @@ class InformationAdminController extends Controller
 
     public function document(InformationSubmission $submission, string $category): StreamedResponse
     {
-        $path = $category === 'captain_photo'
-            ? $submission->captain_photo_path
-            : data_get($submission->document_paths, $category);
+        /** Crew photos live on the member record itself, addressed as `crew_photo_{index}`. */
+        $path = match (true) {
+            $category === 'captain_photo' => $submission->captain_photo_path,
+            preg_match('/^crew_photo_(\d+)$/', $category, $matches) === 1 => data_get($submission->crew_members, $matches[1].'.photo_path'),
+            default => data_get($submission->document_paths, $category),
+        };
 
         abort_unless(is_string($path) && $path !== '', 404);
         abort_unless(Storage::disk('local')->exists($path), 404);

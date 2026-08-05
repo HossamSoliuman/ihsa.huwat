@@ -13,7 +13,6 @@
     $toolTypes = config('information.fishing_tool_types');
     $toolMaterials = config('information.fishing_tool_materials');
     $toolConditions = config('information.fishing_tool_conditions');
-    $qualifications = config('information.captain_qualifications');
     $fishingMethods = config('information.fishing_methods');
     $boat = $submission->boat_data ?? [];
     $captain = $submission->captain_data ?? [];
@@ -105,6 +104,8 @@
                     <div><dt>رقم المحرك</dt><dd dir="ltr">{{ $boat['engine_number'] ?? '—' }}</dd></div>
                     <div><dt>الرقم التسلسلي للمحرك</dt><dd dir="ltr">{{ $boat['engine_serial_number'] ?? '—' }}</dd></div>
                     <div><dt>نداء الإشارة</dt><dd dir="ltr">{{ $boat['call_sign'] ?? '—' }}</dd></div>
+                    <div><dt>رقم الرصيف</dt><dd dir="ltr">{{ ($boat['berth_number'] ?? null) ?: '—' }}</dd></div>
+                    <div><dt>رقم الموقف</dt><dd dir="ltr">{{ ($boat['mooring_number'] ?? null) ?: '—' }}</dd></div>
                     <div><dt>الميناء</dt><dd>{{ $submission->port?->name ?? '—' }}</dd></div>
                     <div><dt>طريقة الصيد</dt><dd>{{ $fishingMethods[$submission->fishing_method] ?? $submission->fishing_method }}</dd></div>
                 </dl>
@@ -115,14 +116,13 @@
                 <dl class="info-admin-datagrid">
                     <div><dt>الاسم</dt><dd>{{ $captain['captain_full_name'] ?? $submission->captain?->full_name ?? '—' }}</dd></div>
                     <div><dt>رقم الهوية</dt><dd dir="ltr">{{ $captain['captain_national_id'] ?? '—' }}</dd></div>
-                    <div><dt>رقم الجواز</dt><dd dir="ltr">{{ $captain['captain_passport_number'] ?? '—' }}</dd></div>
                     <div><dt>رقم الجوال</dt><dd dir="ltr">{{ $captain['captain_phone'] ?? '—' }}</dd></div>
-                    <div><dt>تاريخ الميلاد</dt><dd>{{ $captain['captain_birth_date'] ?? '—' }}</dd></div>
                     <div><dt>الجنسية</dt><dd>{{ $nationalities[$captain['captain_nationality'] ?? ''] ?? '—' }}</dd></div>
                     <div><dt>رخصة القيادة البحرية</dt><dd dir="ltr">{{ $captain['captain_license_number'] ?? '—' }}</dd></div>
-                    <div><dt>انتهاء الرخصة</dt><dd>{{ $captain['captain_license_expiry_date'] ?? '—' }}</dd></div>
-                    <div><dt>المؤهل</dt><dd>{{ $qualifications[$captain['captain_qualification'] ?? ''] ?? '—' }}</dd></div>
-                    <div><dt>سنوات الخبرة</dt><dd>{{ $captain['captain_experience_years'] ?? '—' }}</dd></div>
+                    <div><dt>انتهاء رخصة القيادة</dt><dd>{{ $captain['captain_license_expiry_date'] ?? '—' }}</dd></div>
+                    <div><dt>رقم رخصة الصيد</dt><dd dir="ltr">{{ $captain['captain_fishing_license_number'] ?? '—' }}</dd></div>
+                    <div><dt>إصدار رخصة الصيد</dt><dd>{{ $captain['captain_fishing_license_issue_date'] ?? '—' }}</dd></div>
+                    <div><dt>انتهاء رخصة الصيد</dt><dd>{{ $captain['captain_fishing_license_expiry_date'] ?? '—' }}</dd></div>
                 </dl>
 
                 <h2>قائمة البحارة ({{ count($crewMembers) }})</h2>
@@ -136,7 +136,10 @@
                                 <th scope="col">الجوال</th>
                                 <th scope="col">الجنسية</th>
                                 <th scope="col">الدور</th>
-                                <th scope="col">الخبرة</th>
+                                <th scope="col">رخصة الصيد</th>
+                                <th scope="col">إصدارها</th>
+                                <th scope="col">انتهاؤها</th>
+                                <th scope="col">الصورة</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -148,10 +151,19 @@
                                     <td dir="ltr">{{ $crewMember['phone'] ?? '—' }}</td>
                                     <td>{{ $nationalities[$crewMember['nationality'] ?? ''] ?? '—' }}</td>
                                     <td>{{ $crewRoles[$crewMember['role'] ?? ''] ?? '—' }}</td>
-                                    <td>{{ $crewMember['experience_years'] ?? '—' }}</td>
+                                    <td dir="ltr">{{ ($crewMember['fishing_license_number'] ?? null) ?: '—' }}</td>
+                                    <td>{{ ($crewMember['fishing_license_issue_date'] ?? null) ?: '—' }}</td>
+                                    <td>{{ ($crewMember['fishing_license_expiry_date'] ?? null) ?: '—' }}</td>
+                                    <td>
+                                        @if (filled($crewMember['photo_path'] ?? null))
+                                            <a class="info-admin-row-action" href="{{ route('information.admin.documents.show', [$submission, 'crew_photo_'.$index]) }}">تنزيل</a>
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="7" class="info-admin-empty">لم يُسجَّل بحارة في هذا الطلب.</td></tr>
+                                <tr><td colspan="10" class="info-admin-empty">لم يُسجَّل بحارة في هذا الطلب.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

@@ -49,14 +49,6 @@ return [
         'other' => 'أخرى',
     ],
 
-    'captain_qualifications' => [
-        'master_fisher' => 'قبطان صيد',
-        'experienced_fisher' => 'صياد ذو خبرة',
-        'marine_captain' => 'قبطان بحري',
-        'assistant_captain' => 'مساعد قبطان',
-        'other' => 'أخرى',
-    ],
-
     'crew_roles' => [
         'fisher' => 'صياد',
         'deckhand' => 'بحار سطح',
