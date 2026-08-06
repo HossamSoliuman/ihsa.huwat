@@ -186,3 +186,25 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>
+
+# Project Conventions
+
+## Reference Data
+
+- Every list a user picks from is a real table with its own migration, model, factory and
+  seeder — `boat_types` → `App\Models\BoatType` → `BoatTypeSeeder`. There is no shared
+  key/value lookup table, and no new one is to be introduced: the old `lookup_options`
+  table was replaced precisely because logic gets built on these lists.
+- Option lists extend `App\Models\LookupList`, which carries the shared `code`/`name`/
+  `sort_order`/`is_active` shape, the cached `options()` and `labels()` reads, and the
+  `LISTS` registry the reference desk and its routes address a list by. A new list means
+  a new migration, a model extending that base, a factory, a seeder registered in
+  `DatabaseSeeder`, and an entry in `LookupList::LISTS`.
+- Submissions store the `code`, never the Arabic name, so a renamed option stays readable
+  on records already filed under it. Codes are derived, never typed at the desk.
+- `config/information.php` holds shipped defaults for seeding only; the tables are what
+  the portal and the desk read at runtime.
+- Fish species follow the national catch coding sheet: `fish_families` (codes ending in
+  00) and `fish_species` beneath them, keyed by `code`, seeded from the workbook data in
+  `FishFamilySeeder` and `FishSpeciesSeeder`. `name_ar` is a display name and is not
+  unique; the code carries identity.

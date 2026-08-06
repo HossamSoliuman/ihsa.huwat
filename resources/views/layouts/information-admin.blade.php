@@ -61,6 +61,13 @@
                         @endisset
                     </a>
                 @endforeach
+
+                <a href="{{ route('information.admin.lookups.index') }}"
+                   class="info-admin-nav-link is-standalone @if (request()->routeIs('information.admin.lookups.*')) is-active @endif"
+                   @if (request()->routeIs('information.admin.lookups.*')) aria-current="page" @endif>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg>
+                    <span>الإعدادات</span>
+                </a>
             </nav>
 
             <div class="info-admin-sidebar-footer">

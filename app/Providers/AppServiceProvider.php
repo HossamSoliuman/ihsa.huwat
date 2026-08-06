@@ -27,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
         Model::preventLazyLoading(! app()->isProduction());
 
         Gate::define('manage-master-data', fn ($user): bool => $user->role->code === 'super_admin');
+        Gate::define('manage-information-lookups', fn ($user): bool => in_array($user->role->code, ['super_admin', 'quality_supervisor'], true));
 
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
         RateLimiter::for('government-login', fn (Request $request) => Limit::perMinute(5)->by(

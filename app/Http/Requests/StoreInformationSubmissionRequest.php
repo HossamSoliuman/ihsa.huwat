@@ -3,7 +3,16 @@
 namespace App\Http\Requests;
 
 use App\Http\Middleware\EnsureInformationIdentity;
+use App\Models\BoatClassification;
+use App\Models\BoatType;
+use App\Models\CrewRole;
+use App\Models\FishingMethod;
+use App\Models\FishingToolCondition;
+use App\Models\FishingToolMaterial;
+use App\Models\FishingToolType;
 use App\Models\Governorate;
+use App\Models\HullMaterial;
+use App\Models\Nationality;
 use App\Models\Port;
 use App\Models\Region;
 use Illuminate\Foundation\Http\FormRequest;
@@ -87,7 +96,7 @@ class StoreInformationSubmissionRequest extends FormRequest
             'website' => ['nullable', 'size:0'],
             'owner_full_name' => ['required', 'string', 'min:3', 'max:150'],
             'owner_national_id' => ['required', 'regex:/^[12][0-9]{9}$/'],
-            'owner_nationality' => ['required', Rule::in(array_keys(config('information.nationalities')))],
+            'owner_nationality' => ['required', Rule::in(array_keys(Nationality::options()))],
             'owner_birth_date' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
             'owner_email' => ['nullable', 'email:rfc', 'max:190'],
             'owner_phone' => ['required', 'regex:/^\+?[0-9]{8,15}$/'],
@@ -102,9 +111,9 @@ class StoreInformationSubmissionRequest extends FormRequest
             'boat_name' => ['required', 'string', 'min:2', 'max:150'],
             'boat_name_en' => ['required', 'string', 'min:2', 'max:150', 'regex:/^[A-Za-z0-9 .\'\-]+$/'],
             'registration_no' => ['required', 'regex:/^[\pL\pN\-\/]{2,50}$/u'],
-            'boat_type' => ['required', Rule::in(array_keys(config('information.boat_types')))],
-            'boat_classification' => ['required', Rule::in(array_keys(config('information.boat_classifications')))],
-            'hull_material' => ['required', Rule::in(array_keys(config('information.hull_materials')))],
+            'boat_type' => ['required', Rule::in(array_keys(BoatType::options()))],
+            'boat_classification' => ['required', Rule::in(array_keys(BoatClassification::options()))],
+            'hull_material' => ['required', Rule::in(array_keys(HullMaterial::options()))],
             'boat_build_date' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
             'boat_license_expiry_date' => ['required', 'date_format:Y-m-d'],
             'hull_number' => ['required', 'regex:/^[\pL\pN\-\/]{2,80}$/u'],
@@ -121,7 +130,7 @@ class StoreInformationSubmissionRequest extends FormRequest
             'captain_fishing_license_number' => ['required', 'regex:/^[\pL\pN\-\/]{2,80}$/u'],
             'captain_fishing_license_issue_date' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
             'captain_fishing_license_expiry_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:captain_fishing_license_issue_date'],
-            'captain_nationality' => ['required', Rule::in(array_keys(config('information.nationalities')))],
+            'captain_nationality' => ['required', Rule::in(array_keys(Nationality::options()))],
             'captain_photo' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'extensions:jpg,jpeg,png', 'max:10240'],
             'crew_count' => ['required', 'integer', 'between:1,50'],
             'crew_members' => ['required', 'array', 'min:1', 'max:50'],
@@ -129,21 +138,21 @@ class StoreInformationSubmissionRequest extends FormRequest
             'crew_members.*.full_name' => ['required', 'string', 'min:3', 'max:150'],
             'crew_members.*.identity_number' => ['required', 'regex:/^[12][0-9]{9}$/', 'distinct'],
             'crew_members.*.phone' => ['required', 'regex:/^\+?[0-9]{8,15}$/'],
-            'crew_members.*.nationality' => ['required', Rule::in(array_keys(config('information.nationalities')))],
-            'crew_members.*.role' => ['required', Rule::in(array_keys(config('information.crew_roles')))],
+            'crew_members.*.nationality' => ['required', Rule::in(array_keys(Nationality::options()))],
+            'crew_members.*.role' => ['required', Rule::in(array_keys(CrewRole::options()))],
             'crew_members.*.fishing_license_number' => ['nullable', 'regex:/^[\pL\pN\-\/]{2,80}$/u', 'distinct'],
             'crew_members.*.fishing_license_issue_date' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
             'crew_members.*.fishing_license_expiry_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:crew_members.*.fishing_license_issue_date'],
             'crew_photos' => ['nullable', 'array', 'max:50'],
             'crew_photos.*' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'extensions:jpg,jpeg,png', 'max:10240'],
-            'fishing_method' => ['required', Rule::in(array_keys(config('information.fishing_methods')))],
+            'fishing_method' => ['required', Rule::in(array_keys(FishingMethod::options()))],
             'fishing_tools' => ['required', 'array', 'min:1', 'max:50'],
             'fishing_tools.*' => ['array:type,quantity,size,material,condition,is_primary'],
-            'fishing_tools.*.type' => ['required', Rule::in(array_keys(config('information.fishing_tool_types')))],
+            'fishing_tools.*.type' => ['required', Rule::in(array_keys(FishingToolType::options()))],
             'fishing_tools.*.quantity' => ['required', 'integer', 'between:1,10000'],
             'fishing_tools.*.size' => ['nullable', 'string', 'max:50'],
-            'fishing_tools.*.material' => ['required', Rule::in(array_keys(config('information.fishing_tool_materials')))],
-            'fishing_tools.*.condition' => ['required', Rule::in(array_keys(config('information.fishing_tool_conditions')))],
+            'fishing_tools.*.material' => ['required', Rule::in(array_keys(FishingToolMaterial::options()))],
+            'fishing_tools.*.condition' => ['required', Rule::in(array_keys(FishingToolCondition::options()))],
             'fishing_tools.*.is_primary' => ['required', 'boolean'],
             'documents' => ['required', 'array:'.implode(',', array_keys($documentTypes))],
             'consent' => ['accepted'],
@@ -171,13 +180,15 @@ class StoreInformationSubmissionRequest extends FormRequest
         return [
             function (Validator $validator): void {
                 if (! $validator->errors()->has('owner_region') && ! $validator->errors()->has('owner_governorate')) {
-                    $governorateBelongsToRegion = Governorate::query()
+                    $governorate = Governorate::query()
                         ->where('name', $this->input('owner_governorate'))
                         ->whereRelation('region', 'name', $this->input('owner_region'))
-                        ->exists();
+                        ->first();
 
-                    if (! $governorateBelongsToRegion) {
+                    if ($governorate === null) {
                         $validator->errors()->add('owner_governorate', 'المحافظة المحددة لا تتبع المنطقة المختارة.');
+                    } elseif ($this->cityIsOffList($governorate) && ! $validator->errors()->has('owner_city')) {
+                        $validator->errors()->add('owner_city', 'اختر مدينة أو مركزاً من القائمة المعتمدة لهذه المحافظة.');
                     }
                 }
 
@@ -278,6 +289,17 @@ class StoreInformationSubmissionRequest extends FormRequest
             'fishing_tools' => 'أدوات الصيد',
             'documents' => 'المستندات',
         ];
+    }
+
+    /**
+     * Only governorates with a maintained city list constrain the field. Everywhere else
+     * the applicant keeps typing the city, so the portal never blocks on a list nobody
+     * has filled in yet.
+     */
+    private function cityIsOffList(Governorate $governorate): bool
+    {
+        return $governorate->cities()->exists()
+            && ! $governorate->cities()->where('name', $this->input('owner_city'))->exists();
     }
 
     private function normalizeDigits(mixed $value): string

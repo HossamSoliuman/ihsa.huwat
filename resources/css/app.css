@@ -758,7 +758,7 @@
 
     .info-field label {
         color: var(--info-muted);
-        font-size: 0.74rem;
+        font-size: 0.84rem;
         font-weight: 600;
     }
 
@@ -773,13 +773,13 @@
         width: 100%;
         min-width: 0;
         max-width: 100%;
-        min-height: 2.3rem;
+        min-height: 2.5rem;
         border: 1px solid var(--info-line);
         border-radius: 0;
         background-color: var(--info-field);
-        padding: 0.4rem 0.65rem;
+        padding: 0.45rem 0.7rem;
         color: var(--info-ink);
-        font-size: 0.84rem;
+        font-size: 0.95rem;
         outline: none;
         transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
     }
@@ -829,7 +829,7 @@
 
     .info-field-hint,
     .info-field-error {
-        font-size: 0.7rem;
+        font-size: 0.78rem;
         line-height: 1.5;
     }
 
@@ -1782,7 +1782,7 @@
 
     .info-field-label {
         color: var(--info-muted);
-        font-size: 0.74rem;
+        font-size: 0.84rem;
         font-weight: 600;
     }
 
@@ -2634,7 +2634,7 @@
         padding-inline: 0.65rem;
         color: var(--info-subtle);
         font-family: var(--font-mono);
-        font-size: 0.58rem;
+        font-size: 0.66rem;
         font-weight: 700;
         letter-spacing: 0.1em;
     }
@@ -2695,7 +2695,7 @@
         display: block;
         margin-bottom: 0.25rem;
         color: var(--info-subtle);
-        font-size: 0.72rem;
+        font-size: 0.8rem;
         font-weight: 600;
     }
 
@@ -3468,9 +3468,9 @@
         border: 1px solid transparent;
         border-radius: 0;
         background: transparent;
-        padding: 0.5rem 0.6rem;
+        padding: 0.55rem 0.6rem;
         color: var(--info-muted);
-        font-size: 0.78rem;
+        font-size: 0.86rem;
         font-weight: 600;
         text-align: start;
         text-decoration: none;
@@ -3504,8 +3504,13 @@
         margin-inline-start: auto;
         color: inherit;
         font-family: var(--font-mono);
-        font-size: 0.7rem;
+        font-size: 0.78rem;
         font-weight: 700;
+    }
+
+    /* The lone settings entry has no group label, so a gap keeps it off the request list. */
+    .info-admin-nav-link.is-standalone {
+        margin-top: 0.85rem;
     }
 
     .info-admin-nav-dot {
@@ -3568,9 +3573,9 @@
         gap: 0.55rem;
         border: 1px solid var(--info-blue);
         background: var(--info-blue-pale);
-        padding: 0.65rem 0.9rem;
+        padding: 0.7rem 0.9rem;
         color: var(--info-blue);
-        font-size: 0.78rem;
+        font-size: 0.85rem;
         font-weight: 600;
     }
 
@@ -3608,7 +3613,7 @@
         gap: 0.45rem;
         margin-top: 0.4rem;
         color: var(--info-subtle);
-        font-size: 0.74rem;
+        font-size: 0.82rem;
     }
 
     .info-admin-back {
@@ -3616,7 +3621,7 @@
         align-items: center;
         gap: 0.4rem;
         color: var(--info-muted);
-        font-size: 0.74rem;
+        font-size: 0.82rem;
         font-weight: 600;
         text-decoration: none;
     }
@@ -3656,7 +3661,7 @@
     }
 
     .info-admin-tile span {
-        font-size: 0.73rem;
+        font-size: 0.81rem;
         font-weight: 600;
     }
 
@@ -3693,7 +3698,7 @@
 
     .info-admin-panel h2 {
         color: var(--info-ink);
-        font-size: 0.95rem;
+        font-size: 1.05rem;
         font-weight: 700;
     }
 
@@ -3729,7 +3734,7 @@
     .info-admin-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 0.75rem;
+        font-size: 0.85rem;
     }
 
     .info-admin-table th,
@@ -3744,7 +3749,7 @@
     .info-admin-table th {
         background: var(--info-surface-soft);
         color: var(--info-ink);
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         font-weight: 700;
     }
 
@@ -3756,7 +3761,7 @@
         display: block;
         color: var(--info-subtle);
         font-family: var(--font-mono);
-        font-size: 0.66rem;
+        font-size: 0.74rem;
     }
 
     .info-admin-table tbody tr:hover td {
@@ -3775,9 +3780,9 @@
         align-items: center;
         gap: 0.35rem;
         border: 1px solid var(--info-line);
-        padding: 0.3rem 0.6rem;
+        padding: 0.32rem 0.6rem;
         color: var(--info-muted);
-        font-size: 0.7rem;
+        font-size: 0.78rem;
         font-weight: 600;
         text-decoration: none;
         transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
@@ -3797,14 +3802,14 @@
     .info-admin-empty {
         padding: 1.75rem 0.7rem;
         color: var(--info-subtle);
-        font-size: 0.76rem;
+        font-size: 0.84rem;
         text-align: center;
         white-space: normal;
     }
 
     .info-admin-pagination {
         margin-top: 1rem;
-        font-size: 0.75rem;
+        font-size: 0.82rem;
     }
 
     .info-status-chip {
@@ -3812,9 +3817,9 @@
         align-items: center;
         gap: 0.35rem;
         border: 1px solid currentColor;
-        padding: 0.2rem 0.5rem;
+        padding: 0.22rem 0.55rem;
         color: var(--info-subtle);
-        font-size: 0.68rem;
+        font-size: 0.76rem;
         font-weight: 700;
         white-space: nowrap;
     }
@@ -3872,7 +3877,7 @@
         background: transparent;
         padding: 0.55rem 0.8rem;
         color: var(--info-muted);
-        font-size: 0.76rem;
+        font-size: 0.85rem;
         font-weight: 600;
         white-space: nowrap;
         cursor: pointer;
@@ -4448,6 +4453,138 @@
         color: var(--info-subtle);
         font-size: 0.7rem;
         line-height: 1.7;
+    }
+
+    /* Reference list desk — the dropdowns the portal form is built from. */
+    .info-lookup-tablist {
+        margin-bottom: 1.25rem;
+    }
+
+    .info-lookup-tablist .info-admin-tab {
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+    }
+
+    .info-lookup-stack {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .info-lookup-panel .info-admin-panel-head {
+        align-items: center;
+    }
+
+    .info-lookup-count {
+        color: var(--info-subtle);
+        font-family: var(--font-mono);
+        font-size: 0.76rem;
+        white-space: nowrap;
+    }
+
+    .info-lookup-form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        justify-content: start;
+        gap: 0.6rem 0.75rem;
+        border: 1px solid var(--info-line);
+        background: var(--info-surface-soft);
+        padding: 0.85rem;
+    }
+
+    /* A single-column list would otherwise stretch one input across the whole desk. */
+    .info-lookup-form .info-field {
+        min-width: 10rem;
+        max-width: 17rem;
+        flex: 0 1 15rem;
+    }
+
+    .info-lookup-form .info-field label small {
+        color: var(--info-subtle);
+        font-weight: 500;
+    }
+
+    .info-lookup-check {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding-bottom: 0.65rem;
+        color: var(--info-subtle);
+        font-size: 0.82rem;
+        white-space: nowrap;
+    }
+
+    .info-lookup-table td {
+        vertical-align: middle;
+    }
+
+    /* A retired option stays legible but visibly out of the form. */
+    .info-lookup-table tr.is-retired td:not(:last-child) {
+        opacity: 0.62;
+    }
+
+    .info-lookup-input {
+        width: 100%;
+        min-width: 8rem;
+        max-width: 17rem;
+        border: 1px solid transparent;
+        background: transparent;
+        padding: 0.35rem 0.5rem;
+        color: var(--info-ink);
+        font-family: inherit;
+        font-size: 0.86rem;
+    }
+
+    .info-lookup-input.is-narrow {
+        width: 4.5rem;
+        min-width: 0;
+        font-family: var(--font-mono);
+    }
+
+    .info-lookup-input:hover {
+        border-color: var(--info-line);
+    }
+
+    .info-lookup-input:focus {
+        border-color: var(--info-blue);
+        background: var(--info-surface);
+        outline: none;
+    }
+
+    .info-lookup-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .info-lookup-action {
+        border: 1px solid var(--info-line);
+        background: transparent;
+        padding: 0.3rem 0.6rem;
+        color: var(--info-subtle);
+        font-family: inherit;
+        font-size: 0.78rem;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: color 160ms ease, border-color 160ms ease;
+    }
+
+    .info-lookup-action:hover {
+        border-color: var(--info-blue);
+        color: var(--info-blue);
+    }
+
+    .info-lookup-action.is-danger:hover {
+        border-color: var(--info-danger);
+        color: var(--info-danger);
+    }
+
+    .info-lookup-action:focus-visible {
+        outline: 2px solid var(--info-blue);
+        outline-offset: 1px;
     }
 }
 

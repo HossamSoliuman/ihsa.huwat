@@ -20,6 +20,11 @@ class Governorate extends Model
         return $this->belongsTo(Region::class);
     }
 
+    public function cities(): HasMany
+    {
+        return $this->hasMany(City::class);
+    }
+
     public function ports(): HasMany
     {
         return $this->hasMany(Port::class);

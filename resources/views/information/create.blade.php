@@ -79,11 +79,11 @@
 
     $documentTypes = config('information.document_types');
     $requiredDocumentCount = collect($documentTypes)->where('required', true)->count();
-    $nationalities = config('information.nationalities');
-    $crewRoles = config('information.crew_roles');
-    $fishingToolTypes = config('information.fishing_tool_types');
-    $fishingToolMaterials = config('information.fishing_tool_materials');
-    $fishingToolConditions = config('information.fishing_tool_conditions');
+    $nationalities = \App\Models\Nationality::options();
+    $crewRoles = \App\Models\CrewRole::options();
+    $fishingToolTypes = \App\Models\FishingToolType::options();
+    $fishingToolMaterials = \App\Models\FishingToolMaterial::options();
+    $fishingToolConditions = \App\Models\FishingToolCondition::options();
 
     $crewMembers = old('crew_members');
     if (! is_array($crewMembers) || $crewMembers === []) {
@@ -334,9 +334,20 @@
                                     @error('owner_governorate')<small id="owner_governorate_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
 
-                                <div class="info-field">
-                                    <label for="owner_city">المدينة / المركز <b aria-hidden="true">*</b></label>
-                                    <input id="owner_city" name="owner_city" value="{{ old('owner_city') }}" required maxlength="150" placeholder="اسم المدينة أو المركز" @error('owner_city') aria-invalid="true" aria-describedby="owner_city_error" @enderror>
+                                {{--
+                                    Two controls share the name: the select takes over once the chosen
+                                    governorate has a maintained city list, otherwise the text input stays
+                                    as it has always been. The idle one is disabled so it never submits.
+                                --}}
+                                <div class="info-field" data-info-city-field>
+                                    <label for="owner_city_text">المدينة / المركز <b aria-hidden="true">*</b></label>
+                                    <select id="owner_city" name="owner_city" data-info-city hidden disabled @error('owner_city') aria-invalid="true" aria-describedby="owner_city_error" @enderror>
+                                        <option value="">اختر المدينة أو المركز</option>
+                                        @foreach($cities as $city)
+                                            <option value="{{ $city->name }}" data-governorate="{{ $city->governorate->name }}" @selected(old('owner_city') === $city->name)>{{ $city->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <input id="owner_city_text" name="owner_city" value="{{ old('owner_city') }}" required maxlength="150" data-info-city-fallback placeholder="اسم المدينة أو المركز" @error('owner_city') aria-invalid="true" aria-describedby="owner_city_error" @enderror>
                                     @error('owner_city')<small id="owner_city_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
 
@@ -404,7 +415,7 @@
                                     <label for="boat_classification">تصنيف القارب <b aria-hidden="true">*</b></label>
                                     <select id="boat_classification" name="boat_classification" required @error('boat_classification') aria-invalid="true" aria-describedby="boat_classification_error" @enderror>
                                         <option value="">اختر التصنيف</option>
-                                        @foreach(config('information.boat_classifications') as $value => $label)
+                                        @foreach(\App\Models\BoatClassification::options() as $value => $label)
                                             <option value="{{ $value }}" @selected(old('boat_classification') === $value)>{{ $label }}</option>
                                         @endforeach
                                     </select>
@@ -415,7 +426,7 @@
                                     <label for="boat_type">نوع القارب <b aria-hidden="true">*</b></label>
                                     <select id="boat_type" name="boat_type" required @error('boat_type') aria-invalid="true" aria-describedby="boat_type_error" @enderror>
                                         <option value="">اختر النوع</option>
-                                        @foreach(config('information.boat_types') as $value => $label)
+                                        @foreach(\App\Models\BoatType::options() as $value => $label)
                                             <option value="{{ $value }}" @selected(old('boat_type') === $value)>{{ $label }}</option>
                                         @endforeach
                                     </select>
@@ -426,7 +437,7 @@
                                     <label for="hull_material">مادة الهيكل <b aria-hidden="true">*</b></label>
                                     <select id="hull_material" name="hull_material" required @error('hull_material') aria-invalid="true" aria-describedby="hull_material_error" @enderror>
                                         <option value="">اختر المادة</option>
-                                        @foreach(config('information.hull_materials') as $value => $label)
+                                        @foreach(\App\Models\HullMaterial::options() as $value => $label)
                                             <option value="{{ $value }}" @selected(old('hull_material') === $value)>{{ $label }}</option>
                                         @endforeach
                                     </select>
@@ -629,7 +640,7 @@
                                 <label for="fishing_method">أسلوب الصيد <b aria-hidden="true">*</b></label>
                                 <select id="fishing_method" name="fishing_method" required @error('fishing_method') aria-invalid="true" aria-describedby="fishing_method_error" @enderror>
                                     <option value="">اختر الأسلوب</option>
-                                    @foreach(config('information.fishing_methods') as $value => $label)
+                                    @foreach(\App\Models\FishingMethod::options() as $value => $label)
                                         <option value="{{ $value }}" @selected(old('fishing_method') === $value)>{{ $label }}</option>
                                     @endforeach
                                 </select>

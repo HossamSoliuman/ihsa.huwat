@@ -14,6 +14,14 @@ return [
         ? 'info.'.preg_replace('/^www\./', '', $applicationHost)
         : null),
 
+    /*
+     * The option lists below are shipped defaults only: each one has a table, a model
+     * and a seeder of its own (boat_types → App\Models\BoatType), and the table is what
+     * the portal form and the reference desk read at runtime. Edit a list here and it
+     * reaches an environment the first time that list's seeder runs; after that the
+     * information centre owns it.
+     */
+
     'boat_types' => [
         'small' => 'قارب صغير',
         'large' => 'قارب كبير',

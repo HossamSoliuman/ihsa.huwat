@@ -66,8 +66,68 @@ function initializeInformationAdminTabs() {
     activate(initialTab.dataset.infoTab);
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeInformationAdminTabs);
-} else {
+/**
+ * A governorate list runs to a hundred-odd entries, so the region picker in front of it
+ * narrows the choices first. The filter itself carries no `name`, so it never submits.
+ */
+function initializeInformationLookupFilters() {
+    document.querySelectorAll('[data-lookup-region-filter]').forEach((regionFilter) => {
+        const governorate = document.getElementById(regionFilter.dataset.lookupRegionFilter);
+
+        if (!governorate) {
+            return;
+        }
+
+        function filterGovernorates() {
+            const selectedRegion = regionFilter.value;
+            const selectedOption = governorate.selectedOptions[0];
+
+            Array.from(governorate.options).forEach((option, index) => {
+                if (index === 0) {
+                    return;
+                }
+
+                const isVisible = !selectedRegion || option.dataset.region === selectedRegion;
+                option.hidden = !isVisible;
+                option.disabled = !isVisible;
+            });
+
+            if (selectedOption?.disabled) {
+                governorate.value = '';
+            }
+        }
+
+        /** A rejected submission comes back with a governorate picked, so the region follows it. */
+        const restoredRegion = governorate.selectedOptions[0]?.dataset.region;
+
+        if (restoredRegion) {
+            regionFilter.value = restoredRegion;
+        }
+
+        regionFilter.addEventListener('change', filterGovernorates);
+        filterGovernorates();
+    });
+}
+
+/** Deleting a reference record is irreversible, so every such form asks first. */
+function initializeInformationAdminConfirmations() {
+    document.querySelectorAll('form[data-confirm]').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+            if (!window.confirm(form.dataset.confirm)) {
+                event.preventDefault();
+            }
+        });
+    });
+}
+
+function initializeInformationAdmin() {
     initializeInformationAdminTabs();
+    initializeInformationLookupFilters();
+    initializeInformationAdminConfirmations();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeInformationAdmin);
+} else {
+    initializeInformationAdmin();
 }

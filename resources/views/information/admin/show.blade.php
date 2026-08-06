@@ -5,15 +5,15 @@
 @section('content')
 @php
     $documentTypes = config('information.document_types');
-    $nationalities = config('information.nationalities');
-    $boatTypes = config('information.boat_types');
-    $boatClassifications = config('information.boat_classifications');
-    $hullMaterials = config('information.hull_materials');
-    $crewRoles = config('information.crew_roles');
-    $toolTypes = config('information.fishing_tool_types');
-    $toolMaterials = config('information.fishing_tool_materials');
-    $toolConditions = config('information.fishing_tool_conditions');
-    $fishingMethods = config('information.fishing_methods');
+    $nationalities = \App\Models\Nationality::labels();
+    $boatTypes = \App\Models\BoatType::labels();
+    $boatClassifications = \App\Models\BoatClassification::labels();
+    $hullMaterials = \App\Models\HullMaterial::labels();
+    $crewRoles = \App\Models\CrewRole::labels();
+    $toolTypes = \App\Models\FishingToolType::labels();
+    $toolMaterials = \App\Models\FishingToolMaterial::labels();
+    $toolConditions = \App\Models\FishingToolCondition::labels();
+    $fishingMethods = \App\Models\FishingMethod::labels();
     $boat = $submission->boat_data ?? [];
     $captain = $submission->captain_data ?? [];
     $crewMembers = $submission->crew_members ?? [];

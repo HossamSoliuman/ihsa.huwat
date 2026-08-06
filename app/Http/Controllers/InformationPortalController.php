@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\StoreInformationSubmissionAction;
 use App\Http\Middleware\EnsureInformationIdentity;
 use App\Http\Requests\StoreInformationSubmissionRequest;
+use App\Models\City;
 use App\Models\Port;
 use App\Models\Region;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -25,6 +26,7 @@ class InformationPortalController extends Controller
                 ->with(['governorates' => fn (HasMany $query): HasMany => $query->orderBy('name')])
                 ->orderBy('name')
                 ->get(),
+            'cities' => City::query()->with('governorate:id,name')->orderBy('name')->get(),
         ]);
     }
 

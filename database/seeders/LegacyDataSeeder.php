@@ -100,10 +100,9 @@ class LegacyDataSeeder extends Seeder
     /** @param list<array<string, mixed>> $fishSpecies */
     private function seedFishSpecies(array $fishSpecies): void
     {
+        /** The name is no longer unique in the table — the coding sheet repeats plenty of them — so the check is made here. */
         foreach ($fishSpecies as $species) {
-            DB::table('fish_species')->insertOrIgnore([
-                'name_ar' => $species['name_ar'],
-            ]);
+            DB::table('fish_species')->updateOrInsert(['name_ar' => $species['name_ar']]);
         }
     }
 

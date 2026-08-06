@@ -13,7 +13,18 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
             ShiftSeeder::class,
+            /** Families first: the species seeder files each code under the family it belongs to. */
+            FishFamilySeeder::class,
             FishSpeciesSeeder::class,
+            NationalitySeeder::class,
+            BoatTypeSeeder::class,
+            BoatClassificationSeeder::class,
+            HullMaterialSeeder::class,
+            CrewRoleSeeder::class,
+            FishingMethodSeeder::class,
+            FishingToolTypeSeeder::class,
+            FishingToolMaterialSeeder::class,
+            FishingToolConditionSeeder::class,
         ]);
     }
 }
