@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Http\Middleware\EnsureInformationIdentity;
+use App\Http\Requests\Concerns\NormalizesEnteredValues;
 use App\Models\BoatClassification;
 use App\Models\BoatType;
 use App\Models\CrewRole;
@@ -17,12 +18,13 @@ use App\Models\Port;
 use App\Models\Region;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreInformationSubmissionRequest extends FormRequest
 {
+    use NormalizesEnteredValues;
+
     public function authorize(): bool
     {
         return EnsureInformationIdentity::verified($this) !== null;
@@ -300,29 +302,5 @@ class StoreInformationSubmissionRequest extends FormRequest
     {
         return $governorate->cities()->exists()
             && ! $governorate->cities()->where('name', $this->input('owner_city'))->exists();
-    }
-
-    private function normalizeDigits(mixed $value): string
-    {
-        return strtr((string) $value, [
-            '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4',
-            '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9',
-            '۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4',
-            '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9',
-        ]);
-    }
-
-    private function normalizePhone(mixed $value): string
-    {
-        return (string) preg_replace('/[\s()\-]+/', '', $this->normalizeDigits($value));
-    }
-
-    private function normalizeCode(mixed $value): string
-    {
-        return Str::of((string) $value)
-            ->trim()
-            ->replaceMatches('/\s+/u', '')
-            ->upper()
-            ->toString();
     }
 }

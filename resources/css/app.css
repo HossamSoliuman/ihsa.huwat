@@ -2629,20 +2629,6 @@
         --info-glass-line: rgb(255 255 255 / 16%);
     }
 
-    .info-admin-nav-label {
-        margin-top: 0.65rem;
-        padding-inline: 0.65rem;
-        color: var(--info-subtle);
-        font-family: var(--font-mono);
-        font-size: 0.66rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-    }
-
-    .info-admin-nav-label:first-child {
-        margin-top: 0;
-    }
-
     .info-status-chip[data-tone="approved"] {
         background: rgb(0 161 126 / 12%);
         color: var(--info-chart-status-approved);
@@ -3511,6 +3497,53 @@
     /* The lone settings entry has no group label, so a gap keeps it off the request list. */
     .info-admin-nav-link.is-standalone {
         margin-top: 0.85rem;
+    }
+
+    /*
+     * الصيادين والبحارة is a parent item holding the six statuses. A native disclosure
+     * carries the group so the nesting needs no script to open and close.
+     */
+    .info-admin-nav-group > summary.info-admin-nav-parent {
+        list-style: none;
+    }
+
+    .info-admin-nav-group > summary.info-admin-nav-parent::-webkit-details-marker {
+        display: none;
+    }
+
+    .info-admin-nav-caret {
+        display: block;
+        width: 0.42rem;
+        height: 0.42rem;
+        flex: 0 0 auto;
+        margin-inline-start: 0.35rem;
+        border-bottom: 1.5px solid currentcolor;
+        border-inline-start: 1.5px solid currentcolor;
+        rotate: -45deg;
+        transition: rotate 160ms ease;
+    }
+
+    .info-admin-nav-group[open] > summary .info-admin-nav-caret {
+        rotate: 135deg;
+    }
+
+    /* Without a count beside it the caret still has to sit at the far edge. */
+    .info-admin-nav-group > summary > span:last-of-type + .info-admin-nav-caret {
+        margin-inline-start: auto;
+    }
+
+    .info-admin-nav-children {
+        display: grid;
+        gap: 0.15rem;
+        border-inline-start: 1px solid var(--info-line);
+        margin-block: 0.15rem;
+        margin-inline-start: 0.85rem;
+        padding-inline-start: 0.3rem;
+    }
+
+    .info-admin-nav-link.is-child {
+        font-size: 0.82rem;
+        font-weight: 500;
     }
 
     .info-admin-nav-dot {
@@ -4519,8 +4552,8 @@
         vertical-align: middle;
     }
 
-    /* A retired option stays legible but visibly out of the form. */
-    .info-lookup-table tr.is-retired td:not(:last-child) {
+    /* A retired option or a switched-off record stays legible but visibly out of use. */
+    .info-admin-table tr.is-retired td:not(:last-child) {
         opacity: 0.62;
     }
 
@@ -4585,6 +4618,144 @@
     .info-lookup-action:focus-visible {
         outline: 2px solid var(--info-blue);
         outline-offset: 1px;
+    }
+
+    /*
+     * أسواق السمك and الدلالين. A market page stacks the market, its two kinds of unit and
+     * its brokers, and every unit opens onto its own عمالة — so the panels nest one level
+     * and each level keeps its own drawer.
+     */
+    .info-admin-stack {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .info-admin-form {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .info-admin-fieldset {
+        border: 1px solid var(--info-line);
+        padding: 0.9rem 0.95rem 1.05rem;
+    }
+
+    .info-admin-fieldset > legend {
+        padding-inline: 0.4rem;
+        color: var(--info-ink);
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .info-admin-form-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: end;
+        gap: 0.75rem;
+    }
+
+    .info-admin-form-actions .info-lookup-check {
+        margin-inline-end: auto;
+        padding-bottom: 0;
+    }
+
+    .info-admin-drawer,
+    .info-admin-record {
+        border: 1px solid var(--info-line);
+        background: var(--info-surface-soft);
+    }
+
+    .info-admin-drawer + .info-admin-record,
+    .info-admin-record + .info-admin-record {
+        margin-top: 0.5rem;
+    }
+
+    .info-admin-drawer > summary,
+    .info-admin-record > summary {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.7rem 0.85rem;
+        color: var(--info-ink);
+        font-size: 0.86rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .info-admin-drawer > summary:hover,
+    .info-admin-record > summary:hover {
+        background: var(--info-surface-strong);
+    }
+
+    .info-admin-drawer > summary:focus-visible,
+    .info-admin-record > summary:focus-visible {
+        outline: 2px solid var(--info-blue);
+        outline-offset: -2px;
+    }
+
+    .info-admin-record-title {
+        display: grid;
+        gap: 0.15rem;
+        margin-inline-end: auto;
+    }
+
+    .info-admin-record-title small {
+        color: var(--info-subtle);
+        font-size: 0.74rem;
+        font-weight: 500;
+    }
+
+    .info-admin-drawer[open] > summary,
+    .info-admin-record[open] > summary {
+        border-bottom: 1px solid var(--info-line);
+    }
+
+    .info-admin-drawer > .info-admin-form,
+    .info-admin-record-body {
+        display: grid;
+        gap: 1rem;
+        padding: 0.95rem 0.85rem;
+    }
+
+    .info-admin-subhead {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        border-top: 1px solid var(--info-line);
+        padding-top: 0.85rem;
+    }
+
+    .info-admin-subhead:first-child {
+        border-top: 0;
+        padding-top: 0;
+    }
+
+    .info-admin-subhead h3 {
+        color: var(--info-ink);
+        font-size: 0.92rem;
+        font-weight: 700;
+    }
+
+    /* The per-worker editor is a row of its own so the table above it stays scannable. */
+    .info-admin-inline-row > td {
+        padding: 0 0.7rem 0.6rem;
+        text-align: start;
+        white-space: normal;
+    }
+
+    .info-admin-inline-row summary {
+        color: var(--info-subtle);
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .info-admin-inline-row summary:hover {
+        color: var(--info-blue);
     }
 }
 

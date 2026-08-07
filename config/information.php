@@ -66,6 +66,21 @@ return [
         'other' => 'أخرى',
     ],
 
+    /*
+     * PLACEHOLDER. The real job titles inside a fish market shop or auction stall are
+     * still with the client; the desk can edit the list, and the seeder leaves edited
+     * rows alone, so replacing these values later costs nothing.
+     */
+    'market_job_titles' => [
+        'seller' => 'بائع',
+        'cashier' => 'أمين صندوق',
+        'accountant' => 'محاسب',
+        'supervisor' => 'مشرف',
+        'handler' => 'عامل مناولة',
+        'cleaner' => 'عامل نظافة',
+        'other' => 'أخرى',
+    ],
+
     'fishing_methods' => [
         'nets' => 'الشباك',
         'lines' => 'السنارة والخيوط',

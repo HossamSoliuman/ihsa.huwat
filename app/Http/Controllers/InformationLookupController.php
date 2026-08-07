@@ -20,6 +20,7 @@ use App\Models\FishSpecies;
 use App\Models\Governorate;
 use App\Models\HullMaterial;
 use App\Models\LookupList;
+use App\Models\MarketJobTitle;
 use App\Models\Nationality;
 use App\Models\Port;
 use App\Models\Region;
@@ -45,6 +46,7 @@ class InformationLookupController extends Controller
         'crew' => 'المالك والطاقم',
         'fishing' => 'الصيد والأدوات',
         'species' => 'أنواع الأسماك',
+        'markets' => 'الأسواق والدلالين',
     ];
 
     /**
@@ -56,6 +58,7 @@ class InformationLookupController extends Controller
         'boats' => [BoatType::class, BoatClassification::class, HullMaterial::class],
         'crew' => [Nationality::class, CrewRole::class],
         'fishing' => [FishingMethod::class, FishingToolType::class, FishingToolMaterial::class, FishingToolCondition::class],
+        'markets' => [MarketJobTitle::class],
     ];
 
     /**

@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             BoatClassificationSeeder::class,
             HullMaterialSeeder::class,
             CrewRoleSeeder::class,
+            MarketJobTitleSeeder::class,
             FishingMethodSeeder::class,
             FishingToolTypeSeeder::class,
             FishingToolMaterialSeeder::class,

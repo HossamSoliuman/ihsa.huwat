@@ -36,7 +36,7 @@ class InformationSubmissionReviewTest extends TestCase
         $this->actingAs($reviewer)
             ->get(route('information.admin.index'))
             ->assertOk()
-            ->assertSee('الطلبات الواردة')
+            ->assertSee('الصيادين والبحارة')
             ->assertSee($submitted->reference_no)
             ->assertSee('عبدالله أحمد البحري')
             ->assertSee('معتمد')

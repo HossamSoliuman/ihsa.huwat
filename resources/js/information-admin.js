@@ -120,10 +120,36 @@ function initializeInformationAdminConfirmations() {
     });
 }
 
+/**
+ * A دلال is either a فرد or a منشأة, and each branch asks its own questions. Both fieldsets
+ * are in the markup so the form still works with no script — the server clears whichever
+ * branch was not chosen — and this only narrows the page to the branch in play.
+ */
+function initializeInformationBrokerBranches() {
+    document.querySelectorAll('[data-broker-form]').forEach((form) => {
+        const entityType = form.querySelector('[data-broker-entity-type]');
+        const branches = Array.from(form.querySelectorAll('[data-broker-branch]'));
+
+        if (!entityType || branches.length === 0) {
+            return;
+        }
+
+        function showSelectedBranch() {
+            branches.forEach((branch) => {
+                branch.hidden = branch.dataset.brokerBranch !== entityType.value;
+            });
+        }
+
+        entityType.addEventListener('change', showSelectedBranch);
+        showSelectedBranch();
+    });
+}
+
 function initializeInformationAdmin() {
     initializeInformationAdminTabs();
     initializeInformationLookupFilters();
     initializeInformationAdminConfirmations();
+    initializeInformationBrokerBranches();
 }
 
 if (document.readyState === 'loading') {

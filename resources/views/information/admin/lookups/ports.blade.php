@@ -1,27 +1,6 @@
 <x-information.reference-list type="ports" title="الموانئ" :count="$records->count()">
     <x-slot:form>
-        <div class="info-field">
-            <label for="port-region">المنطقة</label>
-            <select id="port-region" data-lookup-region-filter="port-governorate">
-                <option value="">كل المناطق</option>
-                @foreach ($regions as $region)
-                    <option value="{{ $region->id }}">{{ $region->name }}</option>
-                @endforeach
-            </select>
-        </div>
-
-        <div class="info-field">
-            <label for="port-governorate">المحافظة</label>
-            <select id="port-governorate" name="governorate_id" required
-                    @error('governorate_id') aria-invalid="true" aria-describedby="port_governorate_error" @enderror>
-                <option value="">اختر المحافظة</option>
-                @foreach ($governorates as $governorate)
-                    <option value="{{ $governorate->id }}" data-region="{{ $governorate->region_id }}"
-                            @selected((string) old('governorate_id') === (string) $governorate->id)>{{ $governorate->name }}</option>
-                @endforeach
-            </select>
-            @error('governorate_id')<small id="port_governorate_error" class="info-field-error">{{ $message }}</small>@enderror
-        </div>
+        <x-information.region-governorate-select id-prefix="port" :regions="$regions" :governorates="$governorates" />
 
         <div class="info-field">
             <label for="port-name">اسم الميناء</label>

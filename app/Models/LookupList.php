@@ -28,6 +28,7 @@ abstract class LookupList extends Model
         'boat_classifications' => BoatClassification::class,
         'hull_materials' => HullMaterial::class,
         'crew_roles' => CrewRole::class,
+        'market_job_titles' => MarketJobTitle::class,
         'fishing_methods' => FishingMethod::class,
         'fishing_tool_types' => FishingToolType::class,
         'fishing_tool_materials' => FishingToolMaterial::class,

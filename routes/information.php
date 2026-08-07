@@ -1,9 +1,13 @@
 <?php
 
 use App\Http\Controllers\InformationAdminController;
+use App\Http\Controllers\InformationBrokerController;
 use App\Http\Controllers\InformationDashboardController;
 use App\Http\Controllers\InformationIdentityController;
 use App\Http\Controllers\InformationLookupController;
+use App\Http\Controllers\InformationMarketController;
+use App\Http\Controllers\InformationMarketUnitController;
+use App\Http\Controllers\InformationMarketWorkerController;
 use App\Http\Controllers\InformationPortalController;
 use App\Http\Controllers\InformationStatusController;
 use App\Models\LookupList;
@@ -52,6 +56,44 @@ $informationPortal = function (): void {
                         Route::delete('/{record}', [InformationLookupController::class, 'destroyReference'])->whereNumber('record')->name('destroy');
                     });
             });
+
+            /**
+             * أسواق السمك. The unit is scoped to its market and the worker to its unit, so a
+             * mismatched pair 404s instead of reaching another market's records.
+             */
+            Route::prefix('/markets')
+                ->name('markets.')
+                ->scopeBindings()
+                ->whereNumber(['market', 'unit', 'worker'])
+                ->group(function (): void {
+                    Route::get('/', [InformationMarketController::class, 'index'])->name('index');
+                    Route::get('/create', [InformationMarketController::class, 'create'])->name('create');
+                    Route::post('/', [InformationMarketController::class, 'store'])->name('store');
+                    Route::get('/{market}', [InformationMarketController::class, 'show'])->name('show');
+                    Route::patch('/{market}', [InformationMarketController::class, 'update'])->name('update');
+                    Route::delete('/{market}', [InformationMarketController::class, 'destroy'])->name('destroy');
+
+                    Route::post('/{market}/units', [InformationMarketUnitController::class, 'store'])->name('units.store');
+                    Route::patch('/{market}/units/{unit}', [InformationMarketUnitController::class, 'update'])->name('units.update');
+                    Route::delete('/{market}/units/{unit}', [InformationMarketUnitController::class, 'destroy'])->name('units.destroy');
+
+                    Route::post('/{market}/units/{unit}/workers', [InformationMarketWorkerController::class, 'store'])->name('units.workers.store');
+                    Route::patch('/{market}/units/{unit}/workers/{worker}', [InformationMarketWorkerController::class, 'update'])->name('units.workers.update');
+                    Route::delete('/{market}/units/{unit}/workers/{worker}', [InformationMarketWorkerController::class, 'destroy'])->name('units.workers.destroy');
+                });
+
+            /** الدلالين — flat records, each attached to one market. */
+            Route::prefix('/brokers')
+                ->name('brokers.')
+                ->whereNumber('broker')
+                ->group(function (): void {
+                    Route::get('/', [InformationBrokerController::class, 'index'])->name('index');
+                    Route::get('/create', [InformationBrokerController::class, 'create'])->name('create');
+                    Route::post('/', [InformationBrokerController::class, 'store'])->name('store');
+                    Route::get('/{broker}', [InformationBrokerController::class, 'show'])->name('show');
+                    Route::patch('/{broker}', [InformationBrokerController::class, 'update'])->name('update');
+                    Route::delete('/{broker}', [InformationBrokerController::class, 'destroy'])->name('destroy');
+                });
 
             Route::get('/{submission}', [InformationAdminController::class, 'show'])->name('show');
             Route::patch('/{submission}/review', [InformationAdminController::class, 'review'])->name('review');

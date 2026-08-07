@@ -6,7 +6,7 @@
 <header class="info-admin-header">
     <div>
         <p class="info-eyebrow"><span></span>لوحة مركز المعلومات<span></span></p>
-        <h1>الطلبات الواردة</h1>
+        <h1>الصيادين والبحارة</h1>
     </div>
 </header>
 
