@@ -5,7 +5,6 @@ return [
         ['route' => 'dashboard.admin', 'active' => 'dashboard.admin', 'label' => 'الرئيسية', 'icon' => 'home', 'group' => 'نظرة عامة', 'roles' => ['super_admin']],
         ['route' => 'dashboard.harbors.index', 'active' => 'dashboard.harbors.*', 'label' => 'المرافئ', 'icon' => 'anchor', 'group' => 'نظرة عامة', 'roles' => ['super_admin', 'region_manager', 'gov_supervisor', 'port_supervisor']],
         ['route' => 'dashboard.profile.show', 'active' => 'dashboard.profile.*', 'label' => 'ملفي', 'icon' => 'id-card', 'group' => 'حسابي', 'roles' => ['employee_portal']],
-        ['route' => 'information.create', 'active' => 'information.*', 'label' => 'إدخال سجل بحري', 'icon' => 'clipboard', 'group' => 'العمل اليومي', 'roles' => ['super_admin', 'stat_employee']],
         ['route' => 'dashboard.employee-operations.index', 'active' => 'dashboard.employee-operations.*', 'label' => 'الإحصاء', 'icon' => 'clipboard', 'group' => 'العمل اليومي', 'roles' => ['stat_employee']],
         ['route' => 'dashboard.trips.index', 'active' => 'dashboard.trips.*', 'label' => 'الرحلات', 'icon' => 'ship', 'group' => 'العمل اليومي', 'roles' => ['super_admin', 'gov_supervisor', 'port_supervisor', 'stat_employee']],
         ['route' => 'dashboard.reports.index', 'active' => 'dashboard.reports.*', 'label' => 'التقارير', 'icon' => 'file-text', 'group' => 'المتابعة', 'roles' => ['super_admin', 'region_manager', 'gov_supervisor']],
