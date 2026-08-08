@@ -60,4 +60,13 @@ class FishMarketUnit extends Model
     {
         return self::TYPE_LABELS[$this->unit_type] ?? $this->unit_type;
     }
+
+    /**
+     * A record laid out by the market's opening counts and not yet filled in. Its عمالة may
+     * still be registered on it, so the state is worth showing rather than hiding.
+     */
+    public function awaitsDetails(): bool
+    {
+        return $this->entity_name === null || $this->commercial_registration_no === null;
+    }
 }

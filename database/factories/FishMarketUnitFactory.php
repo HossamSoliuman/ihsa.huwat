@@ -40,4 +40,16 @@ class FishMarketUnitFactory extends Factory
             'label' => 'دكة '.fake()->unique()->numberBetween(1, 400),
         ]);
     }
+
+    /** A record laid out by the market's opening counts, numbered but not yet filled in. */
+    public function awaitingDetails(): static
+    {
+        return $this->state(fn (): array => [
+            'entity_name' => null,
+            'commercial_registration_no' => null,
+            'municipality_licence_no' => null,
+            'national_address' => null,
+            'tax_number' => null,
+        ]);
+    }
 }

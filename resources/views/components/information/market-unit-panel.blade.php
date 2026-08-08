@@ -12,12 +12,17 @@
     $typeLabel = \App\Models\FishMarketUnit::TYPE_LABELS[$type];
     $title = $type === \App\Models\FishMarketUnit::TYPE_SHOP ? 'محلات بيع السمك' : 'دكات الحراجات';
     $workerCount = $units->sum(fn (\App\Models\FishMarketUnit $unit): int => $unit->workers->count());
+    /** Records opened by the market's counts and still waiting for their paperwork. */
+    $pendingCount = $units->filter(fn (\App\Models\FishMarketUnit $unit): bool => $unit->awaitsDetails())->count();
 @endphp
 
 <section class="info-form-card info-admin-panel" aria-labelledby="units-{{ $type }}">
     <div class="info-admin-panel-head">
         <h2 id="units-{{ $type }}">{{ $title }}</h2>
-        <small class="info-lookup-count">{{ $units->count() }} سجل · {{ $workerCount }} عامل</small>
+        <small class="info-lookup-count">
+            {{ $units->count() }} سجل · {{ $workerCount }} عامل
+            @if ($pendingCount) · {{ $pendingCount }} بانتظار استكمال البيانات @endif
+        </small>
     </div>
 
     <details class="info-admin-drawer" {{ old('form_key') === 'unit-new-'.$type ? 'open' : '' }}>
@@ -36,7 +41,11 @@
             <summary>
                 <span class="info-admin-record-title">
                     <strong>{{ $unit->label ?? $typeLabel }}</strong>
-                    <small>{{ $unit->entity_name }} · سجل تجاري <span dir="ltr">{{ $unit->commercial_registration_no }}</span></small>
+                    @if ($unit->awaitsDetails())
+                        <small>بانتظار استكمال البيانات</small>
+                    @else
+                        <small>{{ $unit->entity_name }} · سجل تجاري <span dir="ltr">{{ $unit->commercial_registration_no }}</span></small>
+                    @endif
                 </span>
                 <span class="info-status-chip" data-tone="{{ $unit->is_active ? 'sea' : 'gold' }}">
                     <i aria-hidden="true"></i>{{ $unit->is_active ? 'نشط' : 'متوقف' }}

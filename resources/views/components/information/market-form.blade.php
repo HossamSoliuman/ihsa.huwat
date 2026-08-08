@@ -8,7 +8,9 @@
 @php
     /**
      * One form for both جديد and تعديل: the market and its investor are a single POST, and
-     * the units and their عمالة are added from the market page afterwards.
+     * the units and their عمالة are added from the market page afterwards. Only the new
+     * market is asked how many محلات ودكات it opens with — an existing market counts them
+     * from the records themselves.
      */
     $isEdit = $market !== null;
     $formKey = $isEdit ? 'market-'.$market->id : 'market-new';
@@ -21,6 +23,11 @@
     $isActive = $active && $errors->any()
         ? (bool) old('is_active')
         : (bool) (data_get($values, 'is_active') ?? true);
+
+    $unitCounts = [
+        ['shops_count', 'عدد المحلات', 'محلات بيع السمك'],
+        ['auction_stalls_count', 'عدد الدكات', 'دكات الحراجات'],
+    ];
 @endphp
 
 <form class="info-admin-form" method="post"
@@ -55,10 +62,36 @@
         </div>
     </fieldset>
 
+    @unless ($isEdit)
+        <fieldset class="info-admin-fieldset">
+            <legend>محتويات السوق</legend>
+
+            <div class="info-field-grid info-field-grid-three">
+                @foreach ($unitCounts as [$field, $label, $hint])
+                    @php $countError = $active ? $errors->first($field) : null; @endphp
+
+                    <div class="info-field">
+                        <label for="{{ $idPrefix }}_{{ $field }}">{{ $label }}</label>
+                        <input id="{{ $idPrefix }}_{{ $field }}" name="{{ $field }}" type="number" dir="ltr"
+                               value="{{ $active ? old($field) : null }}" min="0" max="200" step="1" inputmode="numeric"
+                               placeholder="0"
+                               @if ($countError) aria-invalid="true" aria-describedby="{{ $idPrefix }}_{{ $field }}_error" @endif>
+                        @if ($countError)
+                            <small id="{{ $idPrefix }}_{{ $field }}_error" class="info-field-error">{{ $countError }}</small>
+                        @else
+                            <small class="info-field-hint">تُفتح بهذا العدد سجلات {{ $hint }} وتُستكمل بياناتها من صفحة السوق.</small>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </fieldset>
+    @endunless
+
     <fieldset class="info-admin-fieldset">
         <legend>معلومات المستثمر</legend>
 
         <div class="info-field-grid info-field-grid-three">
+            {{-- The investor is usually settled after the market opens, so nothing here is demanded. --}}
             <x-information.commercial-entity
                 prefix="investor"
                 :id-prefix="$idPrefix.'_investor'"
@@ -66,6 +99,7 @@
                 :active="$active"
                 entity-name-field="name"
                 :with-contact="true"
+                :required="false"
             />
         </div>
     </fieldset>

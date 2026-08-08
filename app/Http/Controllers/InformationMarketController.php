@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\CreateFishMarketAction;
 use App\Actions\DeleteMasterDataRecordAction;
 use App\Http\Requests\FilterFishMarketsRequest;
 use App\Http\Requests\ManageFishMarketRequest;
@@ -18,9 +19,10 @@ use Illuminate\Http\RedirectResponse;
 
 /**
  * أسواق السمك. A market carries its investor inline and hosts two kinds of unit —
- * محلات بيع السمك and دكات الحراجات — each with its own عمالة. The market is created on its
- * own screen, then its units and their workers are added from the market page, so a
- * mistake in one worker never discards the whole tree.
+ * محلات بيع السمك and دكات الحراجات — each with its own عمالة. The create screen asks only
+ * for the market's location, name and how many of each unit it holds; the investor and the
+ * details of every unit are completed from the market page, so a mistake in one record
+ * never discards the whole tree.
  */
 class InformationMarketController extends Controller
 {
@@ -68,12 +70,12 @@ class InformationMarketController extends Controller
         return view('information.admin.markets.create', $this->geography());
     }
 
-    public function store(StoreFishMarketRequest $request): RedirectResponse
+    public function store(StoreFishMarketRequest $request, CreateFishMarketAction $createFishMarket): RedirectResponse
     {
-        $market = FishMarket::query()->create($request->validated());
+        $market = $createFishMarket->execute($request->validated());
 
         return to_route('information.admin.markets.show', $market)
-            ->with('status', 'تم إنشاء السوق. أضف المحلات ودكات الحراجات وعمالتها من هذه الصفحة.');
+            ->with('status', 'تم إنشاء السوق. أكمل بيانات المحلات ودكات الحراجات وعمالتها من هذه الصفحة.');
     }
 
     public function show(ManageFishMarketRequest $request, FishMarket $market): View

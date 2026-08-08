@@ -145,17 +145,72 @@ class FishMarketManagementTest extends TestCase
         $this->assertSame(2, FishMarket::query()->count());
     }
 
-    public function test_a_market_without_investor_registration_details_is_refused(): void
+    public function test_a_market_opens_without_an_investor_and_lays_out_its_shops_and_stalls(): void
     {
         $this->actingAs($this->supervisor())
             ->post(route('information.admin.markets.store'), [
                 'governorate_id' => Governorate::factory()->create()->id,
                 'name' => 'سوق بلا مستثمر',
-                'investor_email' => 'not-an-email',
+                'shops_count' => 3,
+                'auction_stalls_count' => 2,
+                'is_active' => '1',
             ])
-            ->assertInvalid(['investor_name', 'investor_commercial_registration_no', 'investor_email']);
+            ->assertValid();
+
+        $market = FishMarket::query()->sole();
+
+        $this->assertNull($market->investor_name);
+        $this->assertNull($market->investor_commercial_registration_no);
+        $this->assertSame(3, $market->shops()->count());
+        $this->assertSame(2, $market->auctionStalls()->count());
+        /** Numbered but blank: the details are filled in from the market page. */
+        $this->assertSame(['محل 1', 'محل 2', 'محل 3'], $market->shops()->orderBy('id')->pluck('label')->all());
+        $this->assertTrue($market->shops()->first()->awaitsDetails());
+    }
+
+    public function test_an_investor_entered_at_creation_is_still_validated(): void
+    {
+        $this->actingAs($this->supervisor())
+            ->post(route('information.admin.markets.store'), [
+                'governorate_id' => Governorate::factory()->create()->id,
+                'name' => 'سوق ببريد خاطئ',
+                'investor_email' => 'not-an-email',
+                'shops_count' => 500,
+            ])
+            ->assertInvalid(['investor_email', 'shops_count']);
 
         $this->assertSame(0, FishMarket::query()->count());
+    }
+
+    public function test_the_market_page_marks_records_still_waiting_for_their_details(): void
+    {
+        $market = FishMarket::factory()->create();
+        FishMarketUnit::factory()->shop()->awaitingDetails()->create([
+            'fish_market_id' => $market->id,
+            'label' => 'محل 1',
+        ]);
+
+        $this->actingAs($this->supervisor())
+            ->get(route('information.admin.markets.show', $market))
+            ->assertOk()
+            ->assertSee('محل 1')
+            ->assertSee('بانتظار استكمال البيانات');
+    }
+
+    public function test_editing_a_market_never_rebuilds_the_units_underneath_it(): void
+    {
+        $market = FishMarket::factory()->create();
+        FishMarketUnit::factory()->shop()->create(['fish_market_id' => $market->id]);
+
+        $this->actingAs($this->supervisor())
+            ->patch(route('information.admin.markets.update', $market), [
+                ...$this->marketPayload($market->governorate_id, $market->name),
+                'shops_count' => 9,
+                'auction_stalls_count' => 4,
+            ])
+            ->assertRedirect(route('information.admin.markets.show', $market));
+
+        $this->assertSame(1, $market->units()->count());
     }
 
     public function test_a_market_can_be_renamed_and_switched_off(): void

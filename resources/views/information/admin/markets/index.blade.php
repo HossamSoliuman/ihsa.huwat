@@ -86,7 +86,7 @@
                         <td>{{ $market->governorate->region->name }}</td>
                         <td>{{ $market->governorate->name }}</td>
                         <td>
-                            {{ $market->investor_name }}
+                            {{ $market->investor_name ?? '—' }}
                             <small dir="ltr">{{ $market->investor_commercial_registration_no }}</small>
                         </td>
                         <td>{{ $market->shops_count }}</td>

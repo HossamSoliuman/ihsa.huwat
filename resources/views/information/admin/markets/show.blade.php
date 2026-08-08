@@ -28,7 +28,7 @@
             <span aria-hidden="true">·</span>
             <span>{{ $market->governorate->name }}</span>
             <span aria-hidden="true">·</span>
-            <span>{{ $market->investor_name }}</span>
+            <span>{{ $market->investor_name ?? 'المستثمر غير مسجل' }}</span>
         </p>
     </div>
 

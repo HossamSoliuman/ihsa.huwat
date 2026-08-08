@@ -13,9 +13,9 @@ class StoreFishMarketRequest extends ManageFishMarketRequest
     {
         $this->merge([
             'name' => $this->normalizeText($this->input('name')),
-            'investor_name' => $this->normalizeText($this->input('investor_name')),
-            'investor_commercial_registration_no' => $this->normalizeReference($this->input('investor_commercial_registration_no')),
             /** Kept null when blank so an optional field never lands as an empty string. */
+            'investor_name' => $this->normalizeText($this->input('investor_name')) ?: null,
+            'investor_commercial_registration_no' => $this->normalizeReference($this->input('investor_commercial_registration_no')) ?: null,
             'investor_phone' => $this->normalizePhone($this->input('investor_phone')) ?: null,
             'investor_tax_number' => $this->normalizeReference($this->input('investor_tax_number')) ?: null,
             'investor_national_address' => $this->normalizeText($this->input('investor_national_address')) ?: null,
@@ -32,13 +32,30 @@ class StoreFishMarketRequest extends ManageFishMarketRequest
                 'required', 'string', 'min:2', 'max:150',
                 $this->nameIsUniqueInGovernorate(),
             ],
-            'investor_name' => ['required', 'string', 'min:3', 'max:190'],
-            'investor_commercial_registration_no' => ['required', 'regex:/^[\pL\pN\-\/]{2,60}$/u'],
+            /** The investor is often settled after the market opens, so none of it is demanded here. */
+            'investor_name' => ['nullable', 'string', 'min:3', 'max:190'],
+            'investor_commercial_registration_no' => ['nullable', 'regex:/^[\pL\pN\-\/]{2,60}$/u'],
             'investor_phone' => ['nullable', 'regex:/^\+?[0-9]{8,15}$/'],
             'investor_email' => ['nullable', 'email:rfc', 'max:190'],
             'investor_tax_number' => ['nullable', 'regex:/^[\pL\pN\-\/]{2,60}$/u'],
             'investor_national_address' => ['nullable', 'string', 'max:190'],
             'is_active' => ['required', 'boolean'],
+            ...$this->plannedUnitRules(),
+        ];
+    }
+
+    /**
+     * How many محلات and دكات the market opens with. They are asked once, on the create
+     * screen, and lay out that many blank records for the market page to fill in; editing a
+     * market never repeats the question, since by then the records themselves are the count.
+     *
+     * @return array<string, mixed>
+     */
+    protected function plannedUnitRules(): array
+    {
+        return [
+            'shops_count' => ['nullable', 'integer', 'min:0', 'max:200'],
+            'auction_stalls_count' => ['nullable', 'integer', 'min:0', 'max:200'],
         ];
     }
 
@@ -67,6 +84,8 @@ class StoreFishMarketRequest extends ManageFishMarketRequest
             'investor_tax_number' => 'الرقم الضريبي للمستثمر',
             'investor_national_address' => 'العنوان الوطني للمستثمر',
             'is_active' => 'حالة السوق',
+            'shops_count' => 'عدد المحلات',
+            'auction_stalls_count' => 'عدد الدكات',
         ];
     }
 
