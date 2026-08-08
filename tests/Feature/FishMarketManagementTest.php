@@ -75,7 +75,7 @@ class FishMarketManagementTest extends TestCase
             ->get(route('information.admin.markets.create'))
             ->assertOk()
             ->assertSee('سوق سمك جديد')
-            ->assertSee('معلومات المستثمر')
+            ->assertSee('name="investor_commercial_registration_no"', false)
             ->assertSee($governorate->name)
             ->assertSee($governorate->region->name)
             /** The same client-side filter the ports desk uses, so no new script is needed. */
