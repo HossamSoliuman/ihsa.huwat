@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Actions\StoreInformationSubmissionAction;
 use App\Http\Middleware\EnsureInformationIdentity;
 use App\Http\Requests\StoreInformationSubmissionRequest;
-use App\Models\City;
 use App\Models\Port;
 use App\Models\Region;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -21,12 +20,13 @@ class InformationPortalController extends Controller
     {
         return view('information.create', [
             'identity' => EnsureInformationIdentity::verified($request),
-            'ports' => Port::query()->with('governorate')->where('is_active', true)->orderBy('name')->get(),
+            /** Retired geography stays out of the pickers, so nobody files under a region the desk switched off. */
+            'ports' => Port::query()->selectable()->with('governorate')->orderBy('name')->get(),
             'regions' => Region::query()
-                ->with(['governorates' => fn (HasMany $query): HasMany => $query->orderBy('name')])
+                ->where('is_active', true)
+                ->with(['governorates' => fn (HasMany $query): HasMany => $query->where('is_active', true)->orderBy('name')])
                 ->orderBy('name')
                 ->get(),
-            'cities' => City::query()->with('governorate:id,name')->orderBy('name')->get(),
         ]);
     }
 

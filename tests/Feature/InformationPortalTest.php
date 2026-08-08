@@ -203,7 +203,6 @@ class InformationPortalTest extends TestCase
             'owner_phone' => '0500000000',
             'owner_region' => $port->governorate->region->name,
             'owner_governorate' => $port->governorate->name,
-            'owner_city' => 'القنفذة',
             'owner_address' => 'حي الشاطئ، شارع الميناء',
             'license_number' => 'LIC-2026-77',
             'license_issue_date' => today()->subMonth()->format('Y-m-d'),

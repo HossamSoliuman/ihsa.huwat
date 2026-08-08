@@ -50,14 +50,15 @@
         </thead>
         <tbody>
             @forelse ($records as $record)
-                <tr @class(['is-retired' => ! $record->is_active])>
+                @php($isLive = $record->is_active && $record->governorate->is_active && $record->governorate->region->is_active)
+                <tr @class(['is-retired' => ! $isLive])>
                     <td><strong>{{ $record->name }}</strong></td>
                     <td>{{ $record->governorate->name }}</td>
                     <td>{{ $record->governorate->region->name }}</td>
                     <td>{{ $record->location_name ?? '—' }}</td>
                     <td>
-                        <span class="info-status-chip" data-tone="{{ $record->is_active ? 'sea' : 'gold' }}">
-                            <i aria-hidden="true"></i>{{ $record->is_active ? 'نشط' : 'متوقف' }}
+                        <span class="info-status-chip" data-tone="{{ $isLive ? 'sea' : 'gold' }}">
+                            <i aria-hidden="true"></i>{{ $isLive ? 'نشط' : ($record->is_active ? 'متوقف مع المحافظة' : 'متوقف') }}
                         </span>
                     </td>
                     <td><x-information.reference-actions type="ports" :record="$record->id" :active="$record->is_active" /></td>

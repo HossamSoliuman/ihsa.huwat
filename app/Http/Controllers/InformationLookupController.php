@@ -10,7 +10,6 @@ use App\Http\Requests\UpdateInformationLookupOptionRequest;
 use App\Http\Requests\ViewInformationLookupsRequest;
 use App\Models\BoatClassification;
 use App\Models\BoatType;
-use App\Models\City;
 use App\Models\CrewRole;
 use App\Models\FishingMethod;
 use App\Models\FishingToolCondition;
@@ -31,8 +30,8 @@ use Illuminate\Http\RedirectResponse;
 
 /**
  * Maintenance desk for every list an applicant picks from on the portal form —
- * the geography records behind المنطقة/المحافظة/المدينة/الميناء, the option lists
- * seeded from `config/information.php`, and the fish species catalogue.
+ * the geography records behind المنطقة/المحافظة/الميناء, the option lists seeded
+ * from `config/information.php`, and the fish species catalogue.
  */
 class InformationLookupController extends Controller
 {
@@ -40,7 +39,6 @@ class InformationLookupController extends Controller
     public const TABS = [
         'regions' => 'المناطق',
         'governorates' => 'المحافظات',
-        'cities' => 'المدن',
         'ports' => 'الموانئ',
         'boats' => 'بيانات القوارب',
         'crew' => 'المالك والطاقم',
@@ -62,6 +60,14 @@ class InformationLookupController extends Controller
     ];
 
     /**
+     * Reference records carrying an `is_active` flag, so the desk retires one instead of
+     * deleting it and the portal form stops offering it.
+     *
+     * @var list<string>
+     */
+    public const ACTIVATABLE = ['regions', 'governorates', 'ports'];
+
+    /**
      * Reference records addressed by their tab key: the model behind them, the Arabic
      * noun used in messages, and everything that must be clear before one can be deleted.
      *
@@ -77,14 +83,8 @@ class InformationLookupController extends Controller
         'governorates' => [
             'model' => Governorate::class,
             'label' => 'المحافظة',
-            'dependencies' => ['cities' => 'governorate_id', 'ports' => 'governorate_id', 'users' => 'governorate_id'],
+            'dependencies' => ['ports' => 'governorate_id', 'users' => 'governorate_id', 'fish_markets' => 'governorate_id'],
             'values' => [['information_submissions', 'owner_governorate', 'name']],
-        ],
-        'cities' => [
-            'model' => City::class,
-            'label' => 'المدينة',
-            'dependencies' => [],
-            'values' => [['information_submissions', 'owner_city', 'name']],
         ],
         'ports' => [
             'model' => Port::class,
@@ -169,12 +169,16 @@ class InformationLookupController extends Controller
 
     public function toggleReference(ManageInformationLookupRequest $request, string $type, int $record): RedirectResponse
     {
-        abort_unless($type === 'ports', 404);
+        abort_unless(in_array($type, self::ACTIVATABLE, true), 404);
 
-        $port = Port::query()->findOrFail($record);
-        $port->update(['is_active' => ! $port->is_active]);
+        $reference = self::REFERENCES[$type];
+        $model = $reference['model']::query()->findOrFail($record);
+        $model->update(['is_active' => ! $model->is_active]);
 
-        return $this->back($type, $port->is_active ? 'تم تفعيل الميناء.' : 'تم تعطيل الميناء.');
+        return $this->back(
+            $type,
+            ($model->is_active ? 'تم تفعيل ' : 'تم تعطيل ').$reference['label'].'.',
+        );
     }
 
     public function destroyReference(
@@ -218,23 +222,19 @@ class InformationLookupController extends Controller
     /** @return array<string, mixed> */
     private function references(string $tab): array
     {
+        /** Live records first on every table: the retired ones sink to the bottom, still editable. */
         return match ($tab) {
             'governorates' => [
-                'records' => Governorate::query()->with('region')->withCount(['cities', 'ports'])->orderBy('name')->get(),
-                'regions' => Region::query()->orderBy('name')->get(),
-            ],
-            'cities' => [
-                'records' => City::query()->with('governorate.region')->orderBy('name')->get(),
-                'governorates' => Governorate::query()->orderBy('name')->get(),
-                'regions' => Region::query()->orderBy('name')->get(),
+                'records' => Governorate::query()->with('region')->withCount('ports')->ordered()->get(),
+                'regions' => Region::query()->ordered()->get(),
             ],
             'ports' => [
-                'records' => Port::query()->with('governorate.region')->orderBy('name')->get(),
-                'governorates' => Governorate::query()->orderBy('name')->get(),
-                'regions' => Region::query()->orderBy('name')->get(),
+                'records' => Port::query()->with('governorate.region')->ordered()->get(),
+                'governorates' => Governorate::query()->ordered()->get(),
+                'regions' => Region::query()->ordered()->get(),
             ],
             'species' => ['records' => FishSpecies::query()->with('family')->withCount('catchDetails')->ordered()->get()],
-            'regions' => ['records' => Region::query()->withCount(['governorates'])->orderBy('name')->get()],
+            'regions' => ['records' => Region::query()->withCount(['governorates'])->ordered()->get()],
             default => [],
         };
     }

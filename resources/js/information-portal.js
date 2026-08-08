@@ -492,9 +492,6 @@ function initializeInformationPortal() {
 
     const region = form.querySelector('[data-info-region]');
     const governorate = form.querySelector('[data-info-governorate]');
-    const cityField = form.querySelector('[data-info-city-field]');
-    const citySelect = form.querySelector('[data-info-city]');
-    const cityFallback = form.querySelector('[data-info-city-fallback]');
 
     function filterGovernorates() {
         if (!region || !governorate) {
@@ -517,59 +514,10 @@ function initializeInformationPortal() {
         if (selectedOption?.disabled) {
             governorate.value = '';
         }
-
-        filterCities();
-    }
-
-    /**
-     * The city dropdown only takes over for governorates that have a maintained list;
-     * anywhere else the original free-text input stays in charge. Whichever control is
-     * idle gets disabled so the two never submit `owner_city` twice.
-     */
-    function filterCities() {
-        if (!citySelect || !cityFallback) {
-            return;
-        }
-
-        const selectedGovernorate = governorate?.value ?? '';
-        let matches = 0;
-
-        Array.from(citySelect.options).forEach((option, index) => {
-            if (index === 0) {
-                return;
-            }
-
-            const isVisible = Boolean(selectedGovernorate) && option.dataset.governorate === selectedGovernorate;
-            option.hidden = !isVisible;
-            option.disabled = !isVisible;
-
-            if (isVisible) {
-                matches += 1;
-            }
-        });
-
-        const usesList = matches > 0;
-
-        if (usesList && citySelect.selectedOptions[0]?.disabled) {
-            citySelect.value = '';
-        }
-
-        [[citySelect, usesList], [cityFallback, !usesList]].forEach(([control, isActive]) => {
-            control.hidden = !isActive;
-            control.disabled = !isActive;
-            control.required = isActive;
-        });
-
-        const label = cityField?.querySelector('label');
-
-        if (label) {
-            label.htmlFor = usesList ? citySelect.id : cityFallback.id;
-        }
     }
 
     region?.addEventListener('change', filterGovernorates);
-    governorate?.addEventListener('change', filterCities);
-    filterCities();
+    filterGovernorates();
 
     const uploadCards = Array.from(form.querySelectorAll('[data-info-upload]'));
 

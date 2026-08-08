@@ -3,14 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\BoatType;
-use App\Models\City;
 use App\Models\CrewRole;
 use App\Models\FishingMethod;
+use App\Models\FishSpecies;
 use App\Models\Governorate;
 use App\Models\HullMaterial;
 use App\Models\InformationSubmission;
 use App\Models\Nationality;
 use App\Models\Port;
+use App\Models\Region;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
@@ -38,7 +39,7 @@ class InformationLookupManagementTest extends TestCase
             ->assertOk()
             ->assertSee('الإعدادات')
             ->assertSee('المناطق')
-            ->assertSee('المدن')
+            ->assertSee('المحافظات')
             ->assertSee('أنواع الأسماك');
 
         $this->actingAs($supervisor)
@@ -170,16 +171,17 @@ class InformationLookupManagementTest extends TestCase
     public function test_reference_records_can_be_added_from_the_desk(): void
     {
         $supervisor = $this->supervisor();
-        $governorate = Governorate::factory()->create();
+        $region = Region::factory()->create();
 
         $this->actingAs($supervisor)
-            ->post(route('information.admin.lookups.references.store', 'cities'), [
-                'governorate_id' => $governorate->id,
-                'name' => 'ثول',
+            ->post(route('information.admin.lookups.references.store', 'governorates'), [
+                'region_id' => $region->id,
+                'name' => 'خليص',
+                'is_active' => '1',
             ])
-            ->assertRedirect(route('information.admin.lookups.index', ['tab' => 'cities']));
+            ->assertRedirect(route('information.admin.lookups.index', ['tab' => 'governorates']));
 
-        $this->assertDatabaseHas('cities', ['governorate_id' => $governorate->id, 'name' => 'ثول']);
+        $this->assertDatabaseHas('governorates', ['region_id' => $region->id, 'name' => 'خليص', 'is_active' => true]);
 
         $this->actingAs($supervisor)
             ->post(route('information.admin.lookups.references.store', 'species'), ['name_ar' => 'شعري مرجاني'])
@@ -188,86 +190,165 @@ class InformationLookupManagementTest extends TestCase
         $this->assertDatabaseHas('fish_species', ['name_ar' => 'شعري مرجاني']);
     }
 
-    public function test_a_port_is_switched_off_rather_than_lost(): void
+    public function test_a_region_a_governorate_and_a_port_are_switched_off_rather_than_lost(): void
     {
+        $supervisor = $this->supervisor();
         $port = Port::factory()->create();
+        $governorate = $port->governorate;
+        $region = $governorate->region;
+
+        foreach (['regions' => $region, 'governorates' => $governorate, 'ports' => $port] as $type => $record) {
+            $this->actingAs($supervisor)
+                ->patch(route('information.admin.lookups.references.toggle', [$type, $record->id]))
+                ->assertRedirect(route('information.admin.lookups.index', ['tab' => $type]));
+
+            $this->assertFalse($record->fresh()->is_active);
+
+            $this->actingAs($supervisor)
+                ->get(route('information.admin.lookups.index', ['tab' => $type]))
+                ->assertOk()
+                ->assertSee('متوقف')
+                ->assertSee('تفعيل');
+        }
+    }
+
+    public function test_the_desk_lists_live_records_before_retired_ones(): void
+    {
+        Region::factory()->create(['name' => 'منطقة تعمل']);
+        Region::factory()->create(['name' => 'منطقة متقاعدة', 'is_active' => false]);
 
         $this->actingAs($this->supervisor())
-            ->patch(route('information.admin.lookups.references.toggle', ['ports', $port->id]))
-            ->assertRedirect(route('information.admin.lookups.index', ['tab' => 'ports']));
+            ->get(route('information.admin.lookups.index', ['tab' => 'regions']))
+            ->assertOk()
+            ->assertSeeInOrder(['منطقة تعمل', 'منطقة متقاعدة']);
+    }
 
-        $this->assertFalse($port->fresh()->is_active);
+    public function test_a_record_stopped_with_the_geography_above_it_sorts_below_the_live_ones(): void
+    {
+        $liveRegion = Region::factory()->create(['name' => 'منطقة قائمة للترتيب']);
+        $retiredRegion = Region::factory()->create(['name' => 'منطقة متقاعدة للترتيب', 'is_active' => false]);
+
+        /** Named so the alphabet alone would invert the order: only the status sort can produce it. */
+        $stoppedWithRegion = Governorate::factory()->create(['region_id' => $retiredRegion->id, 'name' => 'ألف تابعة']);
+        $retiredGovernorate = Governorate::factory()->create(['region_id' => $liveRegion->id, 'name' => 'باء موقوفة', 'is_active' => false]);
+        $liveGovernorate = Governorate::factory()->create(['region_id' => $liveRegion->id, 'name' => 'ياء قائمة']);
+
+        $supervisor = $this->supervisor();
+
+        $this->actingAs($supervisor)
+            ->get(route('information.admin.lookups.index', ['tab' => 'governorates']))
+            ->assertOk()
+            ->assertSeeInOrder(['ياء قائمة', 'ألف تابعة', 'باء موقوفة']);
+
+        Port::factory()->for($stoppedWithRegion, 'governorate')->create(['name' => 'ألف ميناء تابع']);
+        Port::factory()->for($retiredGovernorate, 'governorate')->create(['name' => 'باء ميناء تابع لمحافظة موقوفة']);
+        Port::factory()->for($liveGovernorate, 'governorate')->create(['name' => 'تاء ميناء موقوف', 'is_active' => false]);
+        Port::factory()->for($liveGovernorate, 'governorate')->create(['name' => 'ياء ميناء قائم']);
+
+        $this->actingAs($supervisor)
+            ->get(route('information.admin.lookups.index', ['tab' => 'ports']))
+            ->assertOk()
+            ->assertSeeInOrder(['ياء ميناء قائم', 'ألف ميناء تابع', 'باء ميناء تابع لمحافظة موقوفة', 'تاء ميناء موقوف']);
     }
 
     public function test_a_reference_record_already_used_by_a_submission_cannot_be_deleted(): void
     {
         $supervisor = $this->supervisor();
         $submission = InformationSubmission::factory()->create();
-        $usedCity = City::factory()->create(['name' => $submission->owner_city]);
-        /** Named outright so the faker cannot hand it the same city as the submission. */
-        $unusedCity = City::factory()->create(['name' => 'مدينة بلا طلبات']);
+        $usedGovernorate = Governorate::factory()->create(['name' => $submission->owner_governorate]);
+        /** Named outright so the faker cannot hand it the same name as the submission. */
+        $unusedGovernorate = Governorate::factory()->create(['name' => 'محافظة بلا طلبات']);
 
         $this->actingAs($supervisor)
-            ->delete(route('information.admin.lookups.references.destroy', ['cities', $usedCity->id]))
+            ->delete(route('information.admin.lookups.references.destroy', ['governorates', $usedGovernorate->id]))
             ->assertInvalid(['delete']);
 
-        $this->assertModelExists($usedCity);
+        $this->assertModelExists($usedGovernorate);
 
         $this->actingAs($supervisor)
-            ->delete(route('information.admin.lookups.references.destroy', ['cities', $unusedCity->id]))
-            ->assertRedirect(route('information.admin.lookups.index', ['tab' => 'cities']));
+            ->delete(route('information.admin.lookups.references.destroy', ['governorates', $unusedGovernorate->id]))
+            ->assertRedirect(route('information.admin.lookups.index', ['tab' => 'governorates']));
 
-        $this->assertModelMissing($unusedCity);
+        $this->assertModelMissing($unusedGovernorate);
     }
 
-    public function test_only_ports_expose_the_activation_toggle(): void
+    public function test_a_record_without_an_activation_flag_has_no_toggle(): void
     {
-        $city = City::factory()->create();
+        $species = FishSpecies::query()->firstOrFail();
 
         $this->actingAs($this->supervisor())
-            ->patch(route('information.admin.lookups.references.toggle', ['cities', $city->id]))
+            ->patch(route('information.admin.lookups.references.toggle', ['species', $species->id]))
             ->assertNotFound();
     }
 
-    public function test_the_city_field_offers_the_maintained_list_for_its_governorate(): void
+    public function test_a_retired_region_and_governorate_leave_the_portal_form(): void
     {
-        $port = Port::factory()->create();
-        City::factory()->create(['governorate_id' => $port->governorate_id, 'name' => 'ثول']);
+        $retiredRegion = Region::factory()->create(['name' => 'منطقة موقوفة']);
+        /** Retiring the region has to take its governorates off the form with it. */
+        Governorate::factory()->create(['region_id' => $retiredRegion->id, 'name' => 'محافظة يتيمة']);
+
+        $liveRegion = Region::factory()->create(['name' => 'منطقة قائمة']);
+        $retiredGovernorate = Governorate::factory()->create(['region_id' => $liveRegion->id, 'name' => 'محافظة موقوفة']);
+        Governorate::factory()->create(['region_id' => $liveRegion->id, 'name' => 'محافظة قائمة']);
 
         $this->confirmIdentity();
 
-        $this->get(route('information.create'))->assertOk()->assertSee('ثول');
+        $this->get(route('information.create'))->assertOk()->assertSee('منطقة موقوفة')->assertSee('محافظة موقوفة');
+
+        $retiredRegion->update(['is_active' => false]);
+        $retiredGovernorate->update(['is_active' => false]);
+
+        $this->get(route('information.create'))
+            ->assertOk()
+            ->assertSee('منطقة قائمة')
+            ->assertSee('محافظة قائمة')
+            ->assertDontSee('منطقة موقوفة')
+            ->assertDontSee('محافظة موقوفة')
+            ->assertDontSee('محافظة يتيمة');
     }
 
-    public function test_a_city_outside_the_maintained_list_is_refused(): void
+    public function test_a_port_under_retired_geography_is_offered_no_more_than_its_region(): void
     {
-        $port = Port::factory()->create();
-        City::factory()->create(['governorate_id' => $port->governorate_id, 'name' => 'ثول']);
+        $port = Port::factory()->create(['name' => 'ميناء تابع']);
+        $governorate = $port->governorate;
+        $region = $governorate->region;
         $this->confirmIdentity();
 
-        $this->post(route('information.store'), [
-            'owner_region' => $port->governorate->region->name,
-            'owner_governorate' => $port->governorate->name,
-            'owner_city' => 'مدينة غير مدرجة',
-        ])->assertInvalid(['owner_city']);
+        $this->get(route('information.create'))->assertOk()->assertSee('ميناء تابع');
+        $this->post(route('information.store'), ['port_id' => $port->id])->assertValid(['port_id']);
 
-        $this->post(route('information.store'), [
-            'owner_region' => $port->governorate->region->name,
-            'owner_governorate' => $port->governorate->name,
-            'owner_city' => 'ثول',
-        ])->assertValid(['owner_city']);
+        $region->update(['is_active' => false]);
+
+        $this->get(route('information.create'))->assertOk()->assertDontSee('ميناء تابع');
+        $this->post(route('information.store'), ['port_id' => $port->id])->assertInvalid(['port_id']);
+
+        $region->update(['is_active' => true]);
+        $governorate->update(['is_active' => false]);
+
+        $this->get(route('information.create'))->assertOk()->assertDontSee('ميناء تابع');
+        $this->post(route('information.store'), ['port_id' => $port->id])->assertInvalid(['port_id']);
     }
 
-    public function test_a_governorate_without_a_city_list_keeps_the_free_text_field(): void
+    public function test_a_retired_region_or_governorate_is_refused_on_submission(): void
     {
-        $port = Port::factory()->create();
+        /** Named outright: the factory draws real Saudi city names, which the seeded geography already carries. */
+        $region = Region::factory()->create(['name' => 'منطقة الطلبات']);
+        $governorate = Governorate::factory()->create(['region_id' => $region->id, 'name' => 'محافظة الطلبات']);
         $this->confirmIdentity();
 
-        $this->post(route('information.store'), [
-            'owner_region' => $port->governorate->region->name,
-            'owner_governorate' => $port->governorate->name,
-            'owner_city' => 'مدينة يكتبها المتقدم',
-        ])->assertValid(['owner_city']);
+        $payload = [
+            'owner_region' => $region->name,
+            'owner_governorate' => $governorate->name,
+        ];
+
+        $this->post(route('information.store'), $payload)->assertValid(['owner_region', 'owner_governorate']);
+
+        $region->update(['is_active' => false]);
+        $this->post(route('information.store'), $payload)->assertInvalid(['owner_region']);
+
+        $region->update(['is_active' => true]);
+        $governorate->update(['is_active' => false]);
+        $this->post(route('information.store'), $payload)->assertInvalid(['owner_governorate']);
     }
 
     /** Walk the public gate so the portal form is reachable. */

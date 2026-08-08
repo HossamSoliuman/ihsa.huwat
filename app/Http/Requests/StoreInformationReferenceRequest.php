@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\City;
+use App\Http\Controllers\InformationLookupController;
 use App\Models\FishSpecies;
 use App\Models\Governorate;
 use App\Models\Region;
@@ -12,7 +12,7 @@ class StoreInformationReferenceRequest extends ManageInformationLookupRequest
 {
     protected function prepareForValidation(): void
     {
-        if ($this->route('type') === 'ports') {
+        if (in_array($this->route('type'), InformationLookupController::ACTIVATABLE, true)) {
             $this->merge(['is_active' => $this->boolean('is_active')]);
         }
     }
@@ -27,13 +27,7 @@ class StoreInformationReferenceRequest extends ManageInformationLookupRequest
                     'required', 'string', 'max:150',
                     Rule::unique(Governorate::class, 'name')->where('region_id', $this->integer('region_id')),
                 ],
-            ],
-            'cities' => [
-                'governorate_id' => ['required', 'integer', 'exists:governorates,id'],
-                'name' => [
-                    'required', 'string', 'max:150',
-                    Rule::unique(City::class, 'name')->where('governorate_id', $this->integer('governorate_id')),
-                ],
+                'is_active' => ['required', 'boolean'],
             ],
             'ports' => [
                 'governorate_id' => ['required', 'integer', 'exists:governorates,id'],
@@ -45,7 +39,10 @@ class StoreInformationReferenceRequest extends ManageInformationLookupRequest
                 'is_active' => ['required', 'boolean'],
             ],
             'species' => ['name_ar' => ['required', 'string', 'max:150', Rule::unique(FishSpecies::class, 'name_ar')]],
-            default => ['name' => ['required', 'string', 'max:150', Rule::unique(Region::class, 'name')]],
+            default => [
+                'name' => ['required', 'string', 'max:150', Rule::unique(Region::class, 'name')],
+                'is_active' => ['required', 'boolean'],
+            ],
         };
     }
 

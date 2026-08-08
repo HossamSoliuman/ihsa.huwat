@@ -40,7 +40,6 @@
         'owner_phone' => 'رقم جوال المالك',
         'owner_region' => 'منطقة المالك',
         'owner_governorate' => 'محافظة المالك',
-        'owner_city' => 'مدينة المالك',
         'owner_address' => 'العنوان التفصيلي',
         'license_number' => 'رقم رخصة الصيد',
         'license_issue_date' => 'تاريخ إصدار رخصة الصيد',
@@ -332,23 +331,6 @@
                                         @endforeach
                                     </select>
                                     @error('owner_governorate')<small id="owner_governorate_error" class="info-field-error">{{ $message }}</small>@enderror
-                                </div>
-
-                                {{--
-                                    Two controls share the name: the select takes over once the chosen
-                                    governorate has a maintained city list, otherwise the text input stays
-                                    as it has always been. The idle one is disabled so it never submits.
-                                --}}
-                                <div class="info-field" data-info-city-field>
-                                    <label for="owner_city_text">المدينة / المركز <b aria-hidden="true">*</b></label>
-                                    <select id="owner_city" name="owner_city" data-info-city hidden disabled @error('owner_city') aria-invalid="true" aria-describedby="owner_city_error" @enderror>
-                                        <option value="">اختر المدينة أو المركز</option>
-                                        @foreach($cities as $city)
-                                            <option value="{{ $city->name }}" data-governorate="{{ $city->governorate->name }}" @selected(old('owner_city') === $city->name)>{{ $city->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <input id="owner_city_text" name="owner_city" value="{{ old('owner_city') }}" required maxlength="150" data-info-city-fallback placeholder="اسم المدينة أو المركز" @error('owner_city') aria-invalid="true" aria-describedby="owner_city_error" @enderror>
-                                    @error('owner_city')<small id="owner_city_error" class="info-field-error">{{ $message }}</small>@enderror
                                 </div>
 
                                 <div class="info-field info-field-wide">
@@ -754,7 +736,6 @@
                             <div><dt>انتهاء الرخصة</dt><dd data-info-review="license_expiry_date" dir="ltr">—</dd></div>
                             <div><dt>المنطقة</dt><dd data-info-review="owner_region">—</dd></div>
                             <div><dt>المحافظة</dt><dd data-info-review="owner_governorate">—</dd></div>
-                            <div><dt>المدينة</dt><dd data-info-review="owner_city">—</dd></div>
                             <div><dt>العنوان</dt><dd data-info-review="owner_address">—</dd></div>
                         </dl>
                     </article>

@@ -55,7 +55,6 @@ class InformationSubmission extends Model
         'owner_phone',
         'owner_region',
         'owner_governorate',
-        'owner_city',
         'owner_address',
         'crew_count',
         'fishing_method',

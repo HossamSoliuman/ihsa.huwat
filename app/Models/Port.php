@@ -23,6 +23,13 @@ class Port extends Model
         return ['is_active' => 'boolean', 'latitude' => 'decimal:6', 'longitude' => 'decimal:6'];
     }
 
+    /** A port is only offered while its governorate — and the region above it — are live too. */
+    public function scopeSelectable(Builder $query): Builder
+    {
+        return $query->where('is_active', true)
+            ->whereIn('governorate_id', Governorate::query()->selectable()->select('id'));
+    }
+
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
         return match ($user->role->code) {
@@ -31,6 +38,23 @@ class Port extends Model
             'port_supervisor' => $query->whereKey($user->port_id),
             default => $query,
         };
+    }
+
+    /**
+     * Desk order, following the status the row actually shows: live first, then the ones
+     * stopped with the geography above them, then the ones retired on their own.
+     */
+    public function scopeOrdered(Builder $query): Builder
+    {
+        return $query
+            ->orderByDesc('is_active')
+            ->orderByDesc(
+                Governorate::query()
+                    ->join('regions', 'regions.id', '=', 'governorates.region_id')
+                    ->whereColumn('governorates.id', 'ports.governorate_id')
+                    ->selectRaw('governorates.is_active and regions.is_active')
+            )
+            ->orderBy('name');
     }
 
     public function jobs(): HasMany

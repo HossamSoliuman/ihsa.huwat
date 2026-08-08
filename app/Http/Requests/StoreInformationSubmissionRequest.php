@@ -16,6 +16,7 @@ use App\Models\HullMaterial;
 use App\Models\Nationality;
 use App\Models\Port;
 use App\Models\Region;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
@@ -102,14 +103,17 @@ class StoreInformationSubmissionRequest extends FormRequest
             'owner_birth_date' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
             'owner_email' => ['nullable', 'email:rfc', 'max:190'],
             'owner_phone' => ['required', 'regex:/^\+?[0-9]{8,15}$/'],
-            'owner_region' => ['required', 'string', 'max:150', Rule::exists(Region::class, 'name')],
-            'owner_governorate' => ['required', 'string', 'max:150', Rule::exists(Governorate::class, 'name')],
-            'owner_city' => ['required', 'string', 'max:150'],
+            'owner_region' => ['required', 'string', 'max:150', Rule::exists(Region::class, 'name')->where('is_active', true)],
+            'owner_governorate' => ['required', 'string', 'max:150', Rule::exists(Governorate::class, 'name')->where('is_active', true)],
             'owner_address' => ['nullable', 'string', 'max:250'],
             'license_number' => ['required', 'regex:/^[\pL\pN\-\/]{2,80}$/u'],
             'license_issue_date' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
             'license_expiry_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:license_issue_date'],
-            'port_id' => ['required', 'integer', Rule::exists(Port::class, 'id')->where('is_active', true)],
+            'port_id' => ['required', 'integer', function (string $attribute, mixed $value, Closure $fail): void {
+                if (! Port::query()->selectable()->whereKey($value)->exists()) {
+                    $fail('الميناء المحدد غير متاح.');
+                }
+            }],
             'boat_name' => ['required', 'string', 'min:2', 'max:150'],
             'boat_name_en' => ['required', 'string', 'min:2', 'max:150', 'regex:/^[A-Za-z0-9 .\'\-]+$/'],
             'registration_no' => ['required', 'regex:/^[\pL\pN\-\/]{2,50}$/u'],
@@ -181,17 +185,13 @@ class StoreInformationSubmissionRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
-                if (! $validator->errors()->has('owner_region') && ! $validator->errors()->has('owner_governorate')) {
-                    $governorate = Governorate::query()
-                        ->where('name', $this->input('owner_governorate'))
-                        ->whereRelation('region', 'name', $this->input('owner_region'))
-                        ->first();
+                $pairIsUnchecked = ! $validator->errors()->has('owner_region') && ! $validator->errors()->has('owner_governorate');
 
-                    if ($governorate === null) {
-                        $validator->errors()->add('owner_governorate', 'المحافظة المحددة لا تتبع المنطقة المختارة.');
-                    } elseif ($this->cityIsOffList($governorate) && ! $validator->errors()->has('owner_city')) {
-                        $validator->errors()->add('owner_city', 'اختر مدينة أو مركزاً من القائمة المعتمدة لهذه المحافظة.');
-                    }
+                if ($pairIsUnchecked && ! Governorate::query()
+                    ->where('name', $this->input('owner_governorate'))
+                    ->whereRelation('region', 'name', $this->input('owner_region'))
+                    ->exists()) {
+                    $validator->errors()->add('owner_governorate', 'المحافظة المحددة لا تتبع المنطقة المختارة.');
                 }
 
                 $crewMembers = collect((array) $this->input('crew_members', []));
@@ -226,7 +226,6 @@ class StoreInformationSubmissionRequest extends FormRequest
             'license_expiry_date.after_or_equal' => 'يجب أن يكون انتهاء رخصة الصيد بعد تاريخ إصدارها.',
             'captain_fishing_license_expiry_date.after_or_equal' => 'يجب أن يكون انتهاء رخصة صيد القبطان بعد تاريخ إصدارها.',
             'crew_members.*.fishing_license_expiry_date.after_or_equal' => 'يجب أن يكون انتهاء رخصة صيد البحار بعد تاريخ إصدارها.',
-            'port_id.exists' => 'الميناء المحدد غير متاح.',
             'owner_email.email' => 'أدخل بريداً إلكترونياً صحيحاً.',
             'crew_members.min' => 'أضف بحاراً واحداً على الأقل.',
             'crew_members.*.identity_number.distinct' => 'هوية كل بحار يجب أن تكون فريدة.',
@@ -262,7 +261,6 @@ class StoreInformationSubmissionRequest extends FormRequest
             'owner_phone' => 'جوال المالك',
             'owner_region' => 'منطقة المالك',
             'owner_governorate' => 'محافظة المالك',
-            'owner_city' => 'مدينة المالك',
             'owner_address' => 'عنوان المالك',
             'license_number' => 'رقم رخصة الصيد',
             'license_issue_date' => 'تاريخ إصدار رخصة الصيد',
@@ -291,16 +289,5 @@ class StoreInformationSubmissionRequest extends FormRequest
             'fishing_tools' => 'أدوات الصيد',
             'documents' => 'المستندات',
         ];
-    }
-
-    /**
-     * Only governorates with a maintained city list constrain the field. Everywhere else
-     * the applicant keeps typing the city, so the portal never blocks on a list nobody
-     * has filled in yet.
-     */
-    private function cityIsOffList(Governorate $governorate): bool
-    {
-        return $governorate->cities()->exists()
-            && ! $governorate->cities()->where('name', $this->input('owner_city'))->exists();
     }
 }
