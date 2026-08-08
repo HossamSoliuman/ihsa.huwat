@@ -2,9 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Models\FishMarket;
+use App\Models\FishMarketBroker;
+use App\Models\FishMarketUnit;
+use App\Models\FishMarketWorker;
+use App\Models\Governorate;
 use App\Models\InformationSubmission;
 use App\Models\InformationSubmissionEvent;
 use App\Models\Port;
+use App\Models\Region;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
@@ -173,20 +179,97 @@ class InformationDashboardTest extends TestCase
                 && str_contains($hero['href'], 'port_id='.$port->id));
     }
 
-    public function test_dashboard_stays_within_the_query_budget(): void
+    public function test_census_counts_every_information_registry(): void
     {
-        InformationSubmission::factory()->count(2)->create();
+        $market = FishMarket::factory()->create();
+        $unit = FishMarketUnit::factory()->for($market, 'market')->create();
+        FishMarketWorker::factory()->for($unit, 'unit')->create();
+        FishMarketBroker::factory()->individual()->for($market, 'market')->create();
+        InformationSubmission::factory()->status('approved', $this->reviewer())->create(['crew_count' => 4]);
+
+        $this->actingAs($this->reviewer())
+            ->get(route('information.admin.dashboard'))
+            ->assertOk()
+            ->assertViewHas('census', function (array $census): bool {
+                $values = collect($census)->pluck('value', 'label');
+
+                return $values['الطلبات'] === 1
+                    && $values['المراكب المسجّلة'] === 1
+                    && $values['البحارة'] === 4
+                    && $values['أسواق السمك'] === 1
+                    && $values['محلات ودكات'] === 1
+                    && $values['عمالة الأسواق'] === 1
+                    && $values['الدلالين'] === 1;
+            });
+    }
+
+    public function test_governorate_filter_narrows_submissions_and_markets(): void
+    {
+        $region = Region::factory()->create();
+        $selected = Governorate::factory()->for($region)->create();
+        $other = Governorate::factory()->for($region)->create();
+        $selectedPort = Port::factory()->for($selected)->create();
+        $otherPort = Port::factory()->for($other)->create();
+        InformationSubmission::factory()->create(['port_id' => $selectedPort->id]);
+        InformationSubmission::factory()->create(['port_id' => $otherPort->id]);
+        FishMarket::factory()->for($selected)->create();
+        FishMarket::factory()->for($other)->create();
+
+        $this->actingAs($this->reviewer())
+            ->get(route('information.admin.dashboard', [
+                'region_id' => $region->id,
+                'governorate_id' => $selected->id,
+            ]))
+            ->assertOk()
+            ->assertViewHas('hero', fn (array $hero): bool => $hero['value'] === 1)
+            ->assertViewHas('census', fn (array $census): bool => collect($census)->firstWhere('label', 'أسواق السمك')['value'] === 1);
+    }
+
+    public function test_market_and_broker_writes_invalidate_cached_panels(): void
+    {
+        $market = FishMarket::factory()->create();
         $reviewer = $this->reviewer();
-        $queryCount = 0;
-        DB::listen(function () use (&$queryCount): void {
-            $queryCount++;
-        });
 
         $this->actingAs($reviewer)
             ->get(route('information.admin.dashboard'))
-            ->assertOk();
+            ->assertViewHas('census', fn (array $census): bool => collect($census)->firstWhere('label', 'الدلالين')['value'] === 0);
 
-        $this->assertLessThanOrEqual(12, $queryCount);
+        FishMarketBroker::factory()->for($market, 'market')->create();
+
+        $this->get(route('information.admin.dashboard'))
+            ->assertOk()
+            ->assertViewHas('census', fn (array $census): bool => collect($census)->firstWhere('label', 'الدلالين')['value'] === 1);
+    }
+
+    public function test_dashboard_query_count_is_constant_with_data_volume(): void
+    {
+        $port = Port::factory()->create();
+        InformationSubmission::factory()->count(5)->create(['port_id' => $port->id]);
+        $reviewer = $this->reviewer();
+        $activeCounter = null;
+        $smallDataQueryCount = 0;
+        $largeDataQueryCount = 0;
+        DB::listen(function () use (&$activeCounter, &$smallDataQueryCount, &$largeDataQueryCount): void {
+            if ($activeCounter === 'small') {
+                $smallDataQueryCount++;
+            } elseif ($activeCounter === 'large') {
+                $largeDataQueryCount++;
+            }
+        });
+
+        $activeCounter = 'small';
+        $this->actingAs($reviewer)
+            ->get(route('information.admin.dashboard'))
+            ->assertOk();
+        $activeCounter = null;
+
+        InformationSubmission::factory()->count(50)->create(['port_id' => $port->id]);
+
+        $activeCounter = 'large';
+        $this->get(route('information.admin.dashboard'))->assertOk();
+        $activeCounter = null;
+
+        $this->assertSame($smallDataQueryCount, $largeDataQueryCount);
     }
 
     private function recordEvent(InformationSubmission $submission, string $toStatus, Carbon $createdAt, User $actor): InformationSubmissionEvent

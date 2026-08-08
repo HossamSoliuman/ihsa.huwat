@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Actions\Information\Dashboard\Support\DashboardCache;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -83,6 +84,24 @@ class InformationSubmission extends Model
         'document_paths',
         'captain_photo_path',
     ];
+
+    protected static function booted(): void
+    {
+        $forgetDashboard = static function (): void {
+            DashboardCache::forget([
+                DashboardCache::REGISTRY,
+                DashboardCache::REVIEW,
+                DashboardCache::GEOGRAPHY,
+                DashboardCache::FLEET,
+                DashboardCache::LICENCE,
+                DashboardCache::COMPLETENESS,
+                DashboardCache::ATTENTION,
+            ]);
+        };
+
+        static::saved($forgetDashboard);
+        static::deleted($forgetDashboard);
+    }
 
     protected function casts(): array
     {

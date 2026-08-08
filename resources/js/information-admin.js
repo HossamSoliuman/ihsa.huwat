@@ -94,6 +94,7 @@ function initializeInformationLookupFilters() {
 
             if (selectedOption?.disabled) {
                 governorate.value = '';
+                governorate.dispatchEvent(new Event('change'));
             }
         }
 
@@ -106,6 +107,45 @@ function initializeInformationLookupFilters() {
 
         regionFilter.addEventListener('change', filterGovernorates);
         filterGovernorates();
+    });
+}
+
+function initializeInformationPortFilters() {
+    document.querySelectorAll('[data-lookup-governorate-filter]').forEach((governorateFilter) => {
+        const port = document.getElementById(governorateFilter.dataset.lookupGovernorateFilter);
+
+        if (!port) {
+            return;
+        }
+
+        function filterPorts() {
+            const selectedGovernorate = governorateFilter.value;
+            const selectedOption = port.selectedOptions[0];
+
+            Array.from(port.options).forEach((option, index) => {
+                if (index === 0) {
+                    return;
+                }
+
+                const isVisible = !selectedGovernorate || option.dataset.governorate === selectedGovernorate;
+                option.hidden = !isVisible;
+                option.disabled = !isVisible;
+            });
+
+            if (selectedOption?.disabled) {
+                port.value = '';
+            }
+        }
+
+        const restoredGovernorate = port.selectedOptions[0]?.dataset.governorate;
+
+        if (restoredGovernorate && !governorateFilter.value) {
+            governorateFilter.value = restoredGovernorate;
+            governorateFilter.dispatchEvent(new Event('change'));
+        }
+
+        governorateFilter.addEventListener('change', filterPorts);
+        filterPorts();
     });
 }
 
@@ -148,6 +188,7 @@ function initializeInformationBrokerBranches() {
 function initializeInformationAdmin() {
     initializeInformationAdminTabs();
     initializeInformationLookupFilters();
+    initializeInformationPortFilters();
     initializeInformationAdminConfirmations();
     initializeInformationBrokerBranches();
 }

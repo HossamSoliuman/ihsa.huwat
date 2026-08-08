@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Actions\Information\Dashboard\Support\DashboardCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,6 +41,20 @@ class FishMarketUnit extends Model
     ];
 
     protected $attributes = ['is_active' => true];
+
+    protected static function booted(): void
+    {
+        $forgetDashboard = static function (): void {
+            DashboardCache::forget([
+                DashboardCache::REGISTRY,
+                DashboardCache::MARKET,
+                DashboardCache::COMPLETENESS,
+            ]);
+        };
+
+        static::saved($forgetDashboard);
+        static::deleted($forgetDashboard);
+    }
 
     protected function casts(): array
     {
