@@ -15,6 +15,13 @@ return [
         : null),
 
     /*
+     * Roles that reach the reference desk. Signing in on the portal host lands these
+     * roles on the desk's own dashboard rather than on the role's dashboard in the
+     * main application.
+     */
+    'desk_roles' => ['super_admin', 'quality_supervisor'],
+
+    /*
      * The option lists below are shipped defaults only: each one has a table, a model
      * and a seeder of its own (boat_types → App\Models\BoatType), and the table is what
      * the portal form and the reference desk read at runtime. Edit a list here and it

@@ -25,8 +25,8 @@
         : (bool) (data_get($values, 'is_active') ?? true);
 
     $unitCounts = [
-        ['shops_count', 'عدد المحلات', 'محلات بيع السمك'],
-        ['auction_stalls_count', 'عدد الدكات', 'دكات الحراجات'],
+        ['shops_count', 'عدد المحلات'],
+        ['auction_stalls_count', 'عدد الدكات'],
     ];
 @endphp
 
@@ -40,69 +40,57 @@
     {{-- Marks which form on the page was submitted, so only it repopulates and shows errors. --}}
     <input type="hidden" name="form_key" value="{{ $formKey }}">
 
-    <fieldset class="info-admin-fieldset">
-        <legend>موقع السوق</legend>
+    <div class="info-field-grid info-field-grid-three">
+        <x-information.region-governorate-select
+            :id-prefix="$idPrefix"
+            :regions="$regions"
+            :governorates="$governorates"
+            :selected="data_get($values, 'governorate_id')"
+            :show-required-mark="true"
+        />
 
-        <div class="info-field-grid info-field-grid-three">
-            <x-information.region-governorate-select
-                :id-prefix="$idPrefix"
-                :regions="$regions"
-                :governorates="$governorates"
-                :selected="data_get($values, 'governorate_id')"
-                :show-required-mark="true"
-            />
-
-            <div class="info-field">
-                <label for="{{ $idPrefix }}_name">اسم السوق <b aria-hidden="true">*</b></label>
-                <input id="{{ $idPrefix }}_name" name="name" value="{{ $nameValue }}" required minlength="2" maxlength="150"
-                       placeholder="مثال: سوق السمك المركزي بجدة"
-                       @if ($nameError) aria-invalid="true" aria-describedby="{{ $idPrefix }}_name_error" @endif>
-                @if ($nameError)<small id="{{ $idPrefix }}_name_error" class="info-field-error">{{ $nameError }}</small>@endif
-            </div>
+        <div class="info-field">
+            <label for="{{ $idPrefix }}_name">اسم السوق <b aria-hidden="true">*</b></label>
+            <input id="{{ $idPrefix }}_name" name="name" value="{{ $nameValue }}" required minlength="2" maxlength="150"
+                   placeholder="مثال: سوق السمك المركزي بجدة"
+                   @if ($nameError) aria-invalid="true" aria-describedby="{{ $idPrefix }}_name_error" @endif>
+            @if ($nameError)<small id="{{ $idPrefix }}_name_error" class="info-field-error">{{ $nameError }}</small>@endif
         </div>
-    </fieldset>
 
-    @unless ($isEdit)
-        <fieldset class="info-admin-fieldset">
-            <legend>محتويات السوق</legend>
+        @unless ($isEdit)
+            @foreach ($unitCounts as [$field, $label])
+                @php $countError = $active ? $errors->first($field) : null; @endphp
 
-            <div class="info-field-grid info-field-grid-three">
-                @foreach ($unitCounts as [$field, $label, $hint])
-                    @php $countError = $active ? $errors->first($field) : null; @endphp
+                <div class="info-field">
+                    <label for="{{ $idPrefix }}_{{ $field }}">{{ $label }}</label>
+                    <input id="{{ $idPrefix }}_{{ $field }}" name="{{ $field }}" type="number" dir="ltr"
+                           value="{{ $active ? old($field) : null }}" min="0" max="200" step="1" inputmode="numeric"
+                           placeholder="0"
+                           @if ($countError) aria-invalid="true" aria-describedby="{{ $idPrefix }}_{{ $field }}_error" @endif>
+                    @if ($countError)
+                        <small id="{{ $idPrefix }}_{{ $field }}_error" class="info-field-error">{{ $countError }}</small>
+                    @endif
+                </div>
+            @endforeach
+        @endunless
+    </div>
 
-                    <div class="info-field">
-                        <label for="{{ $idPrefix }}_{{ $field }}">{{ $label }}</label>
-                        <input id="{{ $idPrefix }}_{{ $field }}" name="{{ $field }}" type="number" dir="ltr"
-                               value="{{ $active ? old($field) : null }}" min="0" max="200" step="1" inputmode="numeric"
-                               placeholder="0"
-                               @if ($countError) aria-invalid="true" aria-describedby="{{ $idPrefix }}_{{ $field }}_error" @endif>
-                        @if ($countError)
-                            <small id="{{ $idPrefix }}_{{ $field }}_error" class="info-field-error">{{ $countError }}</small>
-                        @else
-                            <small class="info-field-hint">تُفتح بهذا العدد سجلات {{ $hint }} وتُستكمل بياناتها من صفحة السوق.</small>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-        </fieldset>
-    @endunless
-
-    <fieldset class="info-admin-fieldset">
-        <legend>معلومات المستثمر</legend>
-
-        <div class="info-field-grid info-field-grid-three">
-            {{-- The investor is usually settled after the market opens, so nothing here is demanded. --}}
-            <x-information.commercial-entity
-                prefix="investor"
-                :id-prefix="$idPrefix.'_investor'"
-                :values="$values"
-                :active="$active"
-                entity-name-field="name"
-                :with-contact="true"
-                :required="false"
-            />
-        </div>
-    </fieldset>
+    {{--
+        A second grid rather than more cells in the first: the investor's name spans two
+        columns and would leave a hole behind the counts were the two rows one grid.
+    --}}
+    <div class="info-field-grid info-field-grid-three">
+        {{-- The investor is usually settled after the market opens, so nothing here is demanded. --}}
+        <x-information.commercial-entity
+            prefix="investor"
+            :id-prefix="$idPrefix.'_investor'"
+            :values="$values"
+            :active="$active"
+            entity-name-field="name"
+            :with-contact="true"
+            :required="false"
+        />
+    </div>
 
     <div class="info-admin-form-actions">
         <label class="info-lookup-check">

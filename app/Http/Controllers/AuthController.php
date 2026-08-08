@@ -81,7 +81,10 @@ class AuthController extends Controller
         /** @var User $user */
         $user = Auth::user()->loadMissing('role');
 
-        $dashboardRoute = $user->role->dashboard_route;
+        $dashboardRoute = $this->isInformationPortalRequest()
+            && in_array($user->role->code, config('information.desk_roles'), true)
+                ? 'information.admin.dashboard'
+                : $user->role->dashboard_route;
 
         if (Route::has($dashboardRoute)) {
             return redirect()->intended(route($dashboardRoute));
@@ -98,6 +101,20 @@ class AuthController extends Controller
         return redirect()->route('login')->withErrors([
             'username' => 'تعذر فتح لوحة التحكم لهذا الحساب. يرجى التواصل مع مسؤول النظام.',
         ]);
+    }
+
+    /**
+     * The login form answers on every host, so where it was submitted from is what tells
+     * the information centre's staff apart from the rest — the portal keeps its own host,
+     * or "/info" on the main application when no host is configured for it.
+     */
+    private function isInformationPortalRequest(): bool
+    {
+        $portalDomain = config('information.domain');
+
+        return is_string($portalDomain) && $portalDomain !== ''
+            ? request()->getHost() === $portalDomain
+            : request()->is('info', 'info/*');
     }
 
     private function isIhsaUser(): bool

@@ -208,3 +208,12 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
   00) and `fish_species` beneath them, keyed by `code`, seeded from the workbook data in
   `FishFamilySeeder` and `FishSpeciesSeeder`. `name_ar` is a display name and is not
   unique; the code carries identity.
+
+## Forms and Pages
+
+- A form is one card. No fieldsets, legends, or nested panels carving it into sub-cards —
+  the fields sit in plain grid rows inside the single card.
+- Write no explanatory prose for the user: no page subtitles describing what the form is
+  for, no hints under fields telling them what a field does or what happens next. The
+  label and the placeholder are the whole instruction. Validation errors and genuinely
+  non-obvious constraints stay.

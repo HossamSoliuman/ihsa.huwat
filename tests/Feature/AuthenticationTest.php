@@ -51,6 +51,37 @@ class AuthenticationTest extends TestCase
         }
     }
 
+    public function test_desk_roles_signing_in_on_the_portal_host_land_on_the_information_dashboard(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+
+        foreach (config('information.desk_roles') as $roleCode) {
+            $user = User::factory()->create([
+                'role_id' => Role::query()->where('code', $roleCode)->value('id'),
+                'username' => "desk_{$roleCode}",
+                'password_hash' => Hash::make('password123'),
+            ]);
+
+            $this->post($this->portalLoginUrl(), ['username' => $user->username, 'password' => 'password123'])
+                ->assertRedirect(route('information.admin.dashboard'));
+            $this->post(route('logout'));
+        }
+    }
+
+    public function test_a_role_without_desk_access_keeps_its_own_dashboard_on_the_portal_host(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        $role = Role::query()->where('code', 'hr_manager')->firstOrFail();
+        $user = User::factory()->create([
+            'role_id' => $role->id,
+            'username' => 'hr-on-portal-host',
+            'password_hash' => Hash::make('password123'),
+        ]);
+
+        $this->post($this->portalLoginUrl(), ['username' => $user->username, 'password' => 'password123'])
+            ->assertRedirect(route($role->dashboard_route));
+    }
+
     public function test_government_user_cannot_log_in_to_the_ihsa_portal(): void
     {
         $this->withoutMiddleware(ThrottleRequests::class);
@@ -98,5 +129,11 @@ class AuthenticationTest extends TestCase
             ->assertSee('تعذر إكمال الطلب')
             ->assertDontSee('sensitive exception details')
             ->assertDontSee(RuntimeException::class);
+    }
+
+    /** The login form answers on every host, so only the host it is posted to tells the portal apart. */
+    private function portalLoginUrl(): string
+    {
+        return 'http://'.config('information.domain').'/login';
     }
 }

@@ -27,7 +27,7 @@ $informationPortal = function (): void {
 
     Route::prefix('/admin')
         ->name('admin.')
-        ->middleware(['auth', 'role:super_admin,quality_supervisor'])
+        ->middleware(['auth', 'role:'.implode(',', config('information.desk_roles'))])
         ->group(function (): void {
             Route::get('/', [InformationAdminController::class, 'index'])->name('index');
             Route::get('/dashboard', InformationDashboardController::class)->name('dashboard');
