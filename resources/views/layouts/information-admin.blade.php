@@ -44,6 +44,13 @@
                     @endisset
                 </a>
 
+                <a href="{{ route('information.admin.ports.index') }}"
+                   class="info-admin-nav-link @if (request()->routeIs('information.admin.ports.*')) is-active @endif"
+                   @if (request()->routeIs('information.admin.ports.*')) aria-current="page" @endif>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v13m0 0c-4 0-7.5-3.4-8-8h3m5 8c4 0 7.5-3.4 8-8h-3M12 8a2.2 2.2 0 1 0 0-4.4A2.2 2.2 0 0 0 12 8Zm-4 3.5h8"></path></svg>
+                    <span>الموانئ</span>
+                </a>
+
                 <a href="{{ route('information.admin.markets.index') }}"
                    class="info-admin-nav-link @if (request()->routeIs('information.admin.markets.*')) is-active @endif"
                    @if (request()->routeIs('information.admin.markets.*')) aria-current="page" @endif>

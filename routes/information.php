@@ -9,6 +9,7 @@ use App\Http\Controllers\InformationMarketController;
 use App\Http\Controllers\InformationMarketUnitController;
 use App\Http\Controllers\InformationMarketWorkerController;
 use App\Http\Controllers\InformationPortalController;
+use App\Http\Controllers\InformationPortController;
 use App\Http\Controllers\InformationStatusController;
 use App\Models\LookupList;
 use Illuminate\Support\Facades\Route;
@@ -56,6 +57,15 @@ $informationPortal = function (): void {
                         Route::delete('/{record}', [InformationLookupController::class, 'destroyReference'])->whereNumber('record')->name('destroy');
                     });
             });
+
+            /** الموانئ — a read-only profile per live port. */
+            Route::prefix('/ports')
+                ->name('ports.')
+                ->whereNumber('port')
+                ->group(function (): void {
+                    Route::get('/', [InformationPortController::class, 'index'])->name('index');
+                    Route::get('/{port}', [InformationPortController::class, 'show'])->name('show');
+                });
 
             /**
              * أسواق السمك. The unit is scoped to its market and the worker to its unit, so a

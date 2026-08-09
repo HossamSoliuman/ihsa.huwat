@@ -90,6 +90,7 @@ class FishMarketManagementTest extends TestCase
             ->assertSeeInOrder([
                 'لوحة التحكم',
                 'الصيادين والبحارة',
+                'الموانئ',
                 'أسواق السمك',
                 'الدلالين',
                 'الإعدادات',

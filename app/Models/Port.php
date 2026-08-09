@@ -92,6 +92,11 @@ class Port extends Model
         return $this->hasMany(HarborViolation::class);
     }
 
+    public function informationSubmissions(): HasMany
+    {
+        return $this->hasMany(InformationSubmission::class);
+    }
+
     public function trips(): HasMany
     {
         return $this->hasMany(Trip::class);
