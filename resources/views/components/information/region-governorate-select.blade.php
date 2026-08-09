@@ -18,9 +18,19 @@
      * The governorate list runs to a hundred-odd entries, so the region select in front of
      * it narrows the choices. It carries no `name`, so it never submits — المنطقة is read
      * back through the governorate.
+     *
+     * A nameless select has no old input to read, and `old(null)` hands back the whole
+     * flashed payload, so the fallback is used directly. Old input is raw request data,
+     * so anything that is not a scalar is dropped rather than cast.
      */
-    $selectedGovernorate = old($governorateName, $selected);
-    $restoredRegion = old($regionName, $selectedRegion);
+    $restoredValue = static function (?string $field, mixed $fallback): ?string {
+        $value = $field === null ? $fallback : old($field, $fallback);
+
+        return is_scalar($value) ? (string) $value : null;
+    };
+
+    $selectedGovernorate = $restoredValue($governorateName, $selected);
+    $restoredRegion = $restoredValue($regionName, $selectedRegion);
 @endphp
 
 <div class="info-field">
@@ -28,7 +38,7 @@
     <select id="{{ $idPrefix }}-region" @if ($regionName) name="{{ $regionName }}" @endif data-lookup-region-filter="{{ $idPrefix }}-governorate">
         <option value="">كل المناطق</option>
         @foreach ($regions as $region)
-            <option value="{{ $region->id }}" @selected((string) $restoredRegion === (string) $region->id)>{{ $region->name }}</option>
+            <option value="{{ $region->id }}" @selected($restoredRegion === (string) $region->id)>{{ $region->name }}</option>
         @endforeach
     </select>
 </div>
@@ -41,7 +51,7 @@
         <option value="">اختر {{ $governorateLabel }}</option>
         @foreach ($governorates as $governorate)
             <option value="{{ $governorate->id }}" data-region="{{ $governorate->region_id }}"
-                    @selected((string) $selectedGovernorate === (string) $governorate->id)>{{ $governorate->name }}</option>
+                    @selected($selectedGovernorate === (string) $governorate->id)>{{ $governorate->name }}</option>
         @endforeach
     </select>
     @error('governorate_id')<small id="{{ $idPrefix }}_governorate_error" class="info-field-error">{{ $message }}</small>@enderror
