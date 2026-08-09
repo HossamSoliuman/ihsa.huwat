@@ -1,6 +1,7 @@
 @props([
     'broker' => null,
     'markets' => [],
+    'stalls' => [],
     'nationalities' => [],
     'jobTitles' => [],
 ])
@@ -25,6 +26,17 @@
     $isActive = $errors->any()
         ? (bool) old('is_active')
         : (bool) (data_get($values, 'is_active') ?? true);
+
+    /** The rows already on the record, or the one blank row a new broker starts with. */
+    $employeeRows = old('employees', $isEdit
+        ? $broker->employees->map(fn (\App\Models\FishMarketBrokerEmployee $employee): array => [
+            'job_title' => $employee->job_title,
+            'nationality' => $employee->nationality,
+            'headcount' => $employee->headcount,
+        ])->all()
+        : []);
+
+    $employeeRows = $employeeRows ?: [['job_title' => '', 'nationality' => '', 'headcount' => '']];
 @endphp
 
 <form class="info-admin-form" method="post" data-broker-form
@@ -43,7 +55,7 @@
             @php($error = $errorFor('fish_market_id'))
             <div class="info-field">
                 <label for="{{ $idPrefix }}_market">السوق <b aria-hidden="true">*</b></label>
-                <select id="{{ $idPrefix }}_market" name="fish_market_id" required
+                <select id="{{ $idPrefix }}_market" name="fish_market_id" required data-broker-market
                         @if ($error) aria-invalid="true" aria-describedby="{{ $idPrefix }}_market_error" @endif>
                     <option value="">اختر السوق</option>
                     @foreach ($markets as $market)
@@ -78,6 +90,31 @@
                        inputmode="tel" maxlength="15" dir="ltr" placeholder="05xxxxxxxx"
                        @if ($error) aria-invalid="true" aria-describedby="{{ $idPrefix }}_phone_error" @endif>
                 @if ($error)<small id="{{ $idPrefix }}_phone_error" class="info-field-error">{{ $error }}</small>@endif
+            </div>
+
+            @php($error = $errorFor('fish_market_unit_id'))
+            <div class="info-field">
+                <label for="{{ $idPrefix }}_unit">الدكة المنسوب إليها</label>
+                <select id="{{ $idPrefix }}_unit" name="fish_market_unit_id" data-broker-stall
+                        @if ($error) aria-invalid="true" aria-describedby="{{ $idPrefix }}_unit_error" @endif>
+                    <option value="">اختر الدكة</option>
+                    @foreach ($stalls as $stall)
+                        <option value="{{ $stall->id }}" data-market="{{ $stall->fish_market_id }}"
+                                @selected((string) $valueOf('fish_market_unit_id') === (string) $stall->id)>
+                            {{ $stall->label ?? 'دكة حراج' }}@if ($stall->entity_name) — {{ $stall->entity_name }}@endif
+                        </option>
+                    @endforeach
+                </select>
+                @if ($error)<small id="{{ $idPrefix }}_unit_error" class="info-field-error">{{ $error }}</small>@endif
+            </div>
+
+            @php($error = $errorFor('stall_number'))
+            <div class="info-field">
+                <label for="{{ $idPrefix }}_stall_number">رقم الدكة</label>
+                <input id="{{ $idPrefix }}_stall_number" name="stall_number" value="{{ $valueOf('stall_number') }}"
+                       maxlength="20" dir="ltr" placeholder="14"
+                       @if ($error) aria-invalid="true" aria-describedby="{{ $idPrefix }}_stall_number_error" @endif>
+                @if ($error)<small id="{{ $idPrefix }}_stall_number_error" class="info-field-error">{{ $error }}</small>@endif
             </div>
         </div>
     </fieldset>
@@ -140,6 +177,38 @@
             </div>
         </fieldset>
     @endif
+
+    {{--
+        الموظفون are counted, not named: one row per وظيفة and جنسية. The rows in the markup
+        submit with no script, so the desk can still file one row per save; the script only
+        adds and drops rows on the page.
+    --}}
+    <div class="info-admin-subhead">
+        <h3>الموظفون</h3>
+
+        <button type="button" class="info-add-button" data-broker-add-employee>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+            <span>إضافة موظف</span>
+        </button>
+    </div>
+
+    <div class="info-repeat-list" data-broker-employee-list>
+        @foreach ($employeeRows as $index => $employee)
+            <x-information.broker-employee
+                :index="$index" :employee="$employee" :id-prefix="$idPrefix"
+                :job-titles="$jobTitles" :nationalities="$nationalities"
+            />
+        @endforeach
+    </div>
+
+    @error('employees')<small class="info-field-error info-collection-error">{{ $message }}</small>@enderror
+
+    <template data-broker-employee-template>
+        <x-information.broker-employee
+            index="__INDEX__" :id-prefix="$idPrefix"
+            :job-titles="$jobTitles" :nationalities="$nationalities"
+        />
+    </template>
 
     <div class="info-admin-form-actions">
         <label class="info-lookup-check">

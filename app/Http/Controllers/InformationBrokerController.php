@@ -8,12 +8,15 @@ use App\Http\Requests\StoreFishMarketBrokerRequest;
 use App\Http\Requests\UpdateFishMarketBrokerRequest;
 use App\Models\FishMarket;
 use App\Models\FishMarketBroker;
+use App\Models\FishMarketUnit;
 use App\Models\MarketJobTitle;
 use App\Models\Nationality;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 /**
  * الدلالين. Flat records attached to a market, filed either as a فرد or as a منشأة —
@@ -56,31 +59,45 @@ class InformationBrokerController extends Controller
     {
         return view('information.admin.brokers.create', [
             'markets' => $this->markets(),
+            'stalls' => $this->stalls(),
             ...$this->options(),
         ]);
     }
 
     public function store(StoreFishMarketBrokerRequest $request): RedirectResponse
     {
-        $broker = FishMarketBroker::query()->create($request->validated());
+        $attributes = $request->validated();
+
+        $broker = DB::transaction(function () use ($attributes): FishMarketBroker {
+            $broker = FishMarketBroker::query()->create(Arr::except($attributes, 'employees'));
+            $this->saveEmployees($broker, $attributes['employees'] ?? []);
+
+            return $broker;
+        });
 
         return to_route('information.admin.brokers.show', $broker)->with('status', 'تمت إضافة الدلال.');
     }
 
     public function show(ManageFishMarketRequest $request, FishMarketBroker $broker): View
     {
-        $broker->load('market.governorate.region');
+        $broker->load('market.governorate.region', 'unit', 'employees');
 
         return view('information.admin.brokers.show', [
             'broker' => $broker,
             'markets' => $this->markets(),
+            'stalls' => $this->stalls(),
             ...$this->options(),
         ]);
     }
 
     public function update(UpdateFishMarketBrokerRequest $request, FishMarketBroker $broker): RedirectResponse
     {
-        $broker->update($request->validated());
+        $attributes = $request->validated();
+
+        DB::transaction(function () use ($broker, $attributes): void {
+            $broker->update(Arr::except($attributes, 'employees'));
+            $this->saveEmployees($broker, $attributes['employees'] ?? []);
+        });
 
         return to_route('information.admin.brokers.show', $broker)->with('status', 'تم تحديث بيانات الدلال.');
     }
@@ -101,6 +118,36 @@ class InformationBrokerController extends Controller
     private function markets(): Collection
     {
         return FishMarket::query()->with('governorate')->ordered()->get(['id', 'governorate_id', 'name', 'is_active']);
+    }
+
+    /**
+     * The دكة dropdown. Every market's stalls are offered at once and the page narrows them
+     * to the market in play, so changing the market does not cost a round trip.
+     *
+     * @return Collection<int, FishMarketUnit>
+     */
+    private function stalls(): Collection
+    {
+        return FishMarketUnit::query()
+            ->where('unit_type', FishMarketUnit::TYPE_AUCTION_STALL)
+            ->orderBy('fish_market_id')
+            ->orderBy('id')
+            ->get(['id', 'fish_market_id', 'label', 'entity_name']);
+    }
+
+    /**
+     * The موظفون block is filed whole: the rows submitted replace whatever was on the
+     * record, so dropping a row on the page removes it here.
+     *
+     * @param  list<array{job_title: string, nationality: string, headcount: int|string}>  $employees
+     */
+    private function saveEmployees(FishMarketBroker $broker, array $employees): void
+    {
+        $broker->employees()->delete();
+
+        if ($employees !== []) {
+            $broker->employees()->createMany($employees);
+        }
     }
 
     /** @return array<string, array<string, string>> */

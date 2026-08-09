@@ -4835,6 +4835,15 @@
         padding-bottom: 0;
     }
 
+    /* A موظفين row carries no card of its own; its remove control sits on the field line. */
+    .info-employee-row-action {
+        align-self: end;
+    }
+
+    .info-employee-row-action .info-repeat-remove {
+        justify-self: start;
+    }
+
     .info-admin-drawer,
     .info-admin-record {
         border: 1px solid var(--info-line);

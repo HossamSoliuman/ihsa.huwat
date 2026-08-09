@@ -185,12 +185,124 @@ function initializeInformationBrokerBranches() {
     });
 }
 
+/**
+ * A دلال works out of a دكة of his own market, so the دكة list is narrowed to the market in
+ * play. With no script every دكة stays selectable and the server is the authority — it
+ * rejects a دكة that does not belong to the market submitted.
+ */
+function initializeInformationBrokerStalls() {
+    document.querySelectorAll('[data-broker-form]').forEach((form) => {
+        const market = form.querySelector('[data-broker-market]');
+        const stall = form.querySelector('[data-broker-stall]');
+
+        if (!market || !stall) {
+            return;
+        }
+
+        function filterStalls() {
+            const selectedMarket = market.value;
+            const selectedOption = stall.selectedOptions[0];
+
+            Array.from(stall.options).forEach((option, index) => {
+                if (index === 0) {
+                    return;
+                }
+
+                const isVisible = option.dataset.market === selectedMarket;
+                option.hidden = !isVisible;
+                option.disabled = !isVisible;
+            });
+
+            if (selectedOption?.disabled) {
+                stall.value = '';
+            }
+        }
+
+        market.addEventListener('change', filterStalls);
+        filterStalls();
+    });
+}
+
+/**
+ * الموظفون of a دلال are counted per وظيفة and جنسية, so the block is a list of rows rather
+ * than a fixed set of fields. The rows are read by position, so dropping one renumbers the
+ * names the server sees. The rows already in the markup submit with no script.
+ */
+function initializeInformationBrokerEmployees() {
+    document.querySelectorAll('[data-broker-form]').forEach((form) => {
+        const list = form.querySelector('[data-broker-employee-list]');
+        const template = form.querySelector('[data-broker-employee-template]');
+
+        if (!list || !template) {
+            return;
+        }
+
+        function renumberRows() {
+            Array.from(list.querySelectorAll('[data-broker-employee-row]')).forEach((row, index) => {
+                row.querySelectorAll('[name]').forEach((field) => {
+                    field.name = field.name.replace(/employees\[\d+]/, `employees[${index}]`);
+                });
+
+                row.querySelectorAll('[id]').forEach((field) => {
+                    field.id = field.id.replace(/_employee_\d+_/, `_employee_${index}_`);
+                });
+
+                row.querySelectorAll('[for]').forEach((label) => {
+                    label.htmlFor = label.htmlFor.replace(/_employee_\d+_/, `_employee_${index}_`);
+                });
+
+                row.querySelectorAll('[aria-describedby]').forEach((field) => {
+                    field.setAttribute(
+                        'aria-describedby',
+                        field.getAttribute('aria-describedby').replace(/_employee_\d+_/, `_employee_${index}_`),
+                    );
+                });
+            });
+        }
+
+        form.querySelector('[data-broker-add-employee]')?.addEventListener('click', () => {
+            const rows = list.querySelectorAll('[data-broker-employee-row]');
+
+            if (rows.length >= 50) {
+                return;
+            }
+
+            list.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__INDEX__', String(rows.length)));
+            list.lastElementChild?.querySelector('select, input')?.focus();
+        });
+
+        list.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-broker-remove-employee]');
+
+            if (!button) {
+                return;
+            }
+
+            const rows = Array.from(list.querySelectorAll('[data-broker-employee-row]'));
+
+            /** The last row is emptied rather than dropped, so the block keeps a row to fill. */
+            if (rows.length === 1) {
+                rows[0].querySelectorAll('select, input').forEach((field) => {
+                    field.value = '';
+                });
+
+                return;
+            }
+
+            button.closest('[data-broker-employee-row]')?.remove();
+            renumberRows();
+        });
+    });
+}
+
 function initializeInformationAdmin() {
     initializeInformationAdminTabs();
     initializeInformationLookupFilters();
     initializeInformationPortFilters();
     initializeInformationAdminConfirmations();
     initializeInformationBrokerBranches();
+    initializeInformationBrokerStalls();
+    initializeInformationBrokerEmployees();
 }
 
 if (document.readyState === 'loading') {

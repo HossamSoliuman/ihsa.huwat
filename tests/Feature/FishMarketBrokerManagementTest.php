@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\FishMarket;
 use App\Models\FishMarketBroker;
+use App\Models\FishMarketBrokerEmployee;
+use App\Models\FishMarketUnit;
 use App\Models\MarketJobTitle;
 use App\Models\Nationality;
 use App\Models\Role;
@@ -162,6 +164,130 @@ class FishMarketBrokerManagementTest extends TestCase
             ->assertInvalid(['entity_name', 'commercial_registration_no', 'email', 'tax_number', 'national_address']);
 
         $this->assertSame(0, FishMarketBroker::query()->count());
+    }
+
+    public function test_a_broker_keeps_the_stall_it_works_out_of_and_its_counted_employees(): void
+    {
+        $market = FishMarket::factory()->create();
+        $stall = FishMarketUnit::factory()->auctionStall()->create([
+            'fish_market_id' => $market->id,
+            'label' => 'دكة 3',
+        ]);
+        [$firstJobTitle, $secondJobTitle] = array_slice(array_keys(MarketJobTitle::options()), 0, 2);
+        $nationality = array_key_first(Nationality::options());
+
+        $this->actingAs($this->supervisor())
+            ->post(route('information.admin.brokers.store'), [
+                ...$this->establishmentPayload($market->id),
+                'fish_market_unit_id' => $stall->id,
+                'stall_number' => '١٤',
+                'employees' => [
+                    ['job_title' => $firstJobTitle, 'nationality' => $nationality, 'headcount' => '٣'],
+                    ['job_title' => $secondJobTitle, 'nationality' => $nationality, 'headcount' => 2],
+                    /** The blank row the form always offers is not an employee record. */
+                    ['job_title' => '', 'nationality' => '', 'headcount' => ''],
+                ],
+            ])
+            ->assertValid();
+
+        $broker = FishMarketBroker::query()->sole();
+
+        $this->assertSame($stall->id, $broker->fish_market_unit_id);
+        $this->assertSame('14', $broker->stall_number);
+        $this->assertSame(2, $broker->employees()->count());
+        $this->assertSame(3, $broker->employees()->where('job_title', $firstJobTitle)->sole()->headcount);
+    }
+
+    public function test_the_stall_has_to_be_an_auction_stall_of_the_same_market(): void
+    {
+        $supervisor = $this->supervisor();
+        $market = FishMarket::factory()->create();
+        $elsewhere = FishMarketUnit::factory()->auctionStall()->create();
+        $shop = FishMarketUnit::factory()->shop()->create(['fish_market_id' => $market->id]);
+
+        $this->actingAs($supervisor)
+            ->post(route('information.admin.brokers.store'), [
+                ...$this->establishmentPayload($market->id),
+                'fish_market_unit_id' => $elsewhere->id,
+            ])
+            ->assertInvalid(['fish_market_unit_id']);
+
+        $this->actingAs($supervisor)
+            ->post(route('information.admin.brokers.store'), [
+                ...$this->establishmentPayload($market->id),
+                'fish_market_unit_id' => $shop->id,
+            ])
+            ->assertInvalid(['fish_market_unit_id']);
+
+        $this->assertSame(0, FishMarketBroker::query()->count());
+    }
+
+    public function test_an_employee_row_is_filed_whole_and_the_same_pair_is_not_counted_twice(): void
+    {
+        $supervisor = $this->supervisor();
+        $market = FishMarket::factory()->create();
+        $jobTitle = array_key_first(MarketJobTitle::options());
+        $nationality = array_key_first(Nationality::options());
+
+        $this->actingAs($supervisor)
+            ->post(route('information.admin.brokers.store'), [
+                ...$this->establishmentPayload($market->id),
+                'employees' => [['job_title' => $jobTitle, 'nationality' => '', 'headcount' => '']],
+            ])
+            /** Spelled out because a `*` in a message key spans one segment, not a whole path. */
+            ->assertInvalid([
+                'employees.0.nationality' => 'هذا الحقل مطلوب.',
+                'employees.0.headcount' => 'هذا الحقل مطلوب.',
+            ]);
+
+        $this->actingAs($supervisor)
+            ->post(route('information.admin.brokers.store'), [
+                ...$this->establishmentPayload($market->id),
+                'employees' => [
+                    ['job_title' => $jobTitle, 'nationality' => $nationality, 'headcount' => 3],
+                    ['job_title' => $jobTitle, 'nationality' => $nationality, 'headcount' => 2],
+                ],
+            ])
+            ->assertInvalid(['employees']);
+
+        $this->assertSame(0, FishMarketBroker::query()->count());
+    }
+
+    public function test_editing_a_broker_replaces_the_employee_rows_it_was_filed_with(): void
+    {
+        $broker = FishMarketBroker::factory()->create();
+        FishMarketBrokerEmployee::factory()->count(3)->create(['fish_market_broker_id' => $broker->id]);
+        $jobTitle = array_key_first(MarketJobTitle::options());
+        $nationality = array_key_first(Nationality::options());
+
+        $this->actingAs($this->supervisor())
+            ->patch(route('information.admin.brokers.update', $broker), [
+                ...$this->establishmentPayload($broker->fish_market_id),
+                'employees' => [['job_title' => $jobTitle, 'nationality' => $nationality, 'headcount' => 5]],
+            ])
+            ->assertRedirect(route('information.admin.brokers.show', $broker));
+
+        $employee = $broker->employees()->sole();
+
+        $this->assertSame($jobTitle, $employee->job_title);
+        $this->assertSame(5, $employee->headcount);
+    }
+
+    public function test_the_broker_page_offers_the_stalls_and_the_employee_block(): void
+    {
+        $broker = FishMarketBroker::factory()->create();
+        $stall = FishMarketUnit::factory()->auctionStall()->create([
+            'fish_market_id' => $broker->fish_market_id,
+            'label' => 'دكة 7',
+        ]);
+
+        $this->actingAs($this->supervisor())
+            ->get(route('information.admin.brokers.show', $broker))
+            ->assertOk()
+            ->assertSee('الدكة المنسوب إليها')
+            ->assertSee('رقم الدكة')
+            ->assertSee('الموظفون')
+            ->assertSee($stall->label);
     }
 
     public function test_a_broker_must_be_attached_to_a_known_market_and_a_known_branch(): void

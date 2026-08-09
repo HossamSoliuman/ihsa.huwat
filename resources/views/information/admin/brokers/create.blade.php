@@ -34,7 +34,7 @@
             <h2>بيانات الدلال</h2>
         </div>
 
-        <x-information.broker-form :markets="$markets" :nationalities="$nationalities" :job-titles="$jobTitles" />
+        <x-information.broker-form :markets="$markets" :stalls="$stalls" :nationalities="$nationalities" :job-titles="$jobTitles" />
     </section>
 @endif
 @endsection

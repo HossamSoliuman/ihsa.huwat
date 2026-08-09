@@ -36,6 +36,6 @@
         </form>
     </div>
 
-    <x-information.broker-form :broker="$broker" :markets="$markets" :nationalities="$nationalities" :job-titles="$jobTitles" />
+    <x-information.broker-form :broker="$broker" :markets="$markets" :stalls="$stalls" :nationalities="$nationalities" :job-titles="$jobTitles" />
 </section>
 @endsection

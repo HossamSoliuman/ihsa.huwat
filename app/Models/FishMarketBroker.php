@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * A دلال attached to a market, filed either as a فرد or as a منشأة. `entity_type` is the
@@ -42,6 +43,8 @@ class FishMarketBroker extends Model
 
     protected $fillable = [
         'fish_market_id',
+        'fish_market_unit_id',
+        'stall_number',
         'entity_type',
         'full_name',
         'nationality',
@@ -80,6 +83,18 @@ class FishMarketBroker extends Model
     public function market(): BelongsTo
     {
         return $this->belongsTo(FishMarket::class, 'fish_market_id');
+    }
+
+    /** The دكة حراج he works out of, which is a unit of his own market. */
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(FishMarketUnit::class, 'fish_market_unit_id');
+    }
+
+    /** @return HasMany<FishMarketBrokerEmployee, $this> */
+    public function employees(): HasMany
+    {
+        return $this->hasMany(FishMarketBrokerEmployee::class);
     }
 
     /** The name to print for this broker, whichever branch it was filed under. */
