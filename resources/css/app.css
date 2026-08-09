@@ -2634,14 +2634,6 @@
         color: var(--info-chart-status-approved);
     }
 
-    .info-admin-nav-dot[data-status="under_review"] {
-        background: var(--info-chart-status-review);
-    }
-
-    .info-admin-nav-dot[data-status="approved"] {
-        background: var(--info-chart-status-approved);
-    }
-
     .info-dashboard-header {
         display: flex;
         align-items: baseline;
@@ -3672,81 +3664,6 @@
     /* The lone settings entry has no group label, so a gap keeps it off the request list. */
     .info-admin-nav-link.is-standalone {
         margin-top: 0.85rem;
-    }
-
-    /*
-     * الصيادين والبحارة is a parent item holding the six statuses. A native disclosure
-     * carries the group so the nesting needs no script to open and close.
-     */
-    .info-admin-nav-group > summary.info-admin-nav-parent {
-        list-style: none;
-    }
-
-    .info-admin-nav-group > summary.info-admin-nav-parent::-webkit-details-marker {
-        display: none;
-    }
-
-    .info-admin-nav-caret {
-        display: block;
-        width: 0.42rem;
-        height: 0.42rem;
-        flex: 0 0 auto;
-        margin-inline-start: 0.35rem;
-        border-bottom: 1.5px solid currentcolor;
-        border-inline-start: 1.5px solid currentcolor;
-        rotate: -45deg;
-        transition: rotate 160ms ease;
-    }
-
-    .info-admin-nav-group[open] > summary .info-admin-nav-caret {
-        rotate: 135deg;
-    }
-
-    /* Without a count beside it the caret still has to sit at the far edge. */
-    .info-admin-nav-group > summary > span:last-of-type + .info-admin-nav-caret {
-        margin-inline-start: auto;
-    }
-
-    .info-admin-nav-children {
-        display: grid;
-        gap: 0.15rem;
-        border-inline-start: 1px solid var(--info-line);
-        margin-block: 0.15rem;
-        margin-inline-start: 0.85rem;
-        padding-inline-start: 0.3rem;
-    }
-
-    .info-admin-nav-link.is-child {
-        font-size: 0.82rem;
-        font-weight: 500;
-    }
-
-    .info-admin-nav-dot {
-        width: 0.4rem;
-        height: 0.4rem;
-        flex: 0 0 auto;
-        border-radius: 50%;
-        background: var(--info-subtle);
-    }
-
-    .info-admin-nav-dot[data-status="submitted"] {
-        background: var(--info-sea);
-    }
-
-    .info-admin-nav-dot[data-status="under_review"] {
-        background: var(--info-chart-status-review);
-    }
-
-    .info-admin-nav-dot[data-status="approved"] {
-        background: var(--info-chart-status-approved);
-    }
-
-    .info-admin-nav-dot[data-status="needs_edit"] {
-        background: var(--info-gold);
-    }
-
-    .info-admin-nav-dot[data-status="rejected"] {
-        background: var(--info-danger);
     }
 
     .info-admin-sidebar-footer {

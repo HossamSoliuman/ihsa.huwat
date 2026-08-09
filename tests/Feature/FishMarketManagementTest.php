@@ -82,7 +82,7 @@ class FishMarketManagementTest extends TestCase
             ->assertSee('data-lookup-region-filter', false);
     }
 
-    public function test_the_sidebar_nests_the_statuses_and_keeps_the_settings_entry_last(): void
+    public function test_the_sidebar_lists_flat_entries_and_keeps_the_settings_entry_last(): void
     {
         $this->actingAs($this->supervisor())
             ->get(route('information.admin.index'))
@@ -90,14 +90,12 @@ class FishMarketManagementTest extends TestCase
             ->assertSeeInOrder([
                 'لوحة التحكم',
                 'الصيادين والبحارة',
-                'كل الطلبات',
-                'المرفوضة',
                 'أسواق السمك',
                 'الدلالين',
                 'الإعدادات',
             ])
-            /** Expanded on the submissions screen, so the active status is always visible. */
-            ->assertSee('<details class="info-admin-nav-group" open>', false);
+            /** The statuses live on the submissions screen itself, so no entry nests children. */
+            ->assertDontSee('info-admin-nav-group', false);
     }
 
     public function test_a_market_is_created_with_its_investor_in_one_post(): void

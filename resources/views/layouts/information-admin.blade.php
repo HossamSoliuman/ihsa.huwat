@@ -34,47 +34,15 @@
                     <span>لوحة التحكم</span>
                 </a>
 
-                @php
-                    $activeStatus = request()->query('status');
-                    $isSubmissionSection = request()->routeIs('information.admin.index');
-                    $navItems = [
-                        ['status' => null, 'label' => 'كل الطلبات'],
-                        ['status' => 'submitted', 'label' => 'الطلبات الجديدة'],
-                        ['status' => 'under_review', 'label' => 'تحت المراجعة'],
-                        ['status' => 'needs_edit', 'label' => 'بانتظار التعديل'],
-                        ['status' => 'approved', 'label' => 'المعتمدة'],
-                        ['status' => 'rejected', 'label' => 'المرفوضة'],
-                    ];
-                @endphp
-
-                {{-- The statuses are the one section with children, so a disclosure carries them. --}}
-                <details class="info-admin-nav-group" {{ $isSubmissionSection ? 'open' : '' }}>
-                    <summary class="info-admin-nav-link info-admin-nav-parent @if ($isSubmissionSection) is-active @endif">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path></svg>
-                        <span>الصيادين والبحارة</span>
-                        @isset($statusCounts)
-                            <b>{{ $statusCounts['all'] ?? 0 }}</b>
-                        @endisset
-                        <i class="info-admin-nav-caret" aria-hidden="true"></i>
-                    </summary>
-
-                    <div class="info-admin-nav-children">
-                        @foreach ($navItems as $navItem)
-                            @php
-                                $isActive = $isSubmissionSection && $activeStatus === $navItem['status'];
-                            @endphp
-                            <a href="{{ route('information.admin.index', array_filter(['status' => $navItem['status']])) }}"
-                               class="info-admin-nav-link is-child @if ($isActive) is-active @endif"
-                               @if ($isActive) aria-current="page" @endif>
-                                <span class="info-admin-nav-dot" data-status="{{ $navItem['status'] ?? 'all' }}" aria-hidden="true"></span>
-                                <span>{{ $navItem['label'] }}</span>
-                                @isset($statusCounts)
-                                    <b>{{ $statusCounts[$navItem['status'] ?? 'all'] ?? 0 }}</b>
-                                @endisset
-                            </a>
-                        @endforeach
-                    </div>
-                </details>
+                <a href="{{ route('information.admin.index') }}"
+                   class="info-admin-nav-link @if (request()->routeIs('information.admin.index')) is-active @endif"
+                   @if (request()->routeIs('information.admin.index')) aria-current="page" @endif>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path></svg>
+                    <span>الصيادين والبحارة</span>
+                    @isset($statusCounts)
+                        <b>{{ $statusCounts['all'] ?? 0 }}</b>
+                    @endisset
+                </a>
 
                 <a href="{{ route('information.admin.markets.index') }}"
                    class="info-admin-nav-link @if (request()->routeIs('information.admin.markets.*')) is-active @endif"

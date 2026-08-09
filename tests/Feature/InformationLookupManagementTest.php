@@ -212,6 +212,24 @@ class InformationLookupManagementTest extends TestCase
         }
     }
 
+    public function test_a_rejected_port_reopens_the_desk_with_the_region_picker_intact(): void
+    {
+        $port = Port::factory()->create(['name' => 'ميناء قائم']);
+        $tab = route('information.admin.lookups.index', ['tab' => 'ports']);
+
+        /** The region select carries no `name`, so it has no old input of its own to read back. */
+        $this->actingAs($this->supervisor())
+            ->from($tab)
+            ->followingRedirects()
+            ->post(route('information.admin.lookups.references.store', 'ports'), [
+                'governorate_id' => $port->governorate_id,
+                'name' => '',
+            ])
+            ->assertOk()
+            ->assertSee($port->governorate->region->name)
+            ->assertSee($port->governorate->name);
+    }
+
     public function test_the_desk_lists_live_records_before_retired_ones(): void
     {
         Region::factory()->create(['name' => 'منطقة تعمل']);
