@@ -2,8 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Department;
 use App\Models\Employee;
+use App\Models\EmployeeContract;
+use App\Models\JobTitle;
 use App\Models\Leave;
+use App\Models\Nationality;
 use App\Models\Port;
 use App\Models\Role;
 use App\Models\Shift;
@@ -24,7 +28,27 @@ class HumanResourcesManagementTest extends TestCase
 
     public function test_hr_can_create_employee_with_hashed_password(): void
     {
-        $this->actingAs($this->hr())->post(route('dashboard.hr.employees.store'), ['full_name' => 'موظف جديد', 'username' => 'new_employee', 'password' => 'Strong1234', 'password_confirmation' => 'Strong1234', 'hire_date' => today()->toDateString(), 'contract_type' => 'permanent'])->assertSessionHasNoErrors();
+        $this->actingAs($this->hr())->post(route('dashboard.hr.employees.store'), [
+            'full_name' => 'موظف جديد',
+            'username' => 'new_employee',
+            'password' => 'Strong1234',
+            'password_confirmation' => 'Strong1234',
+            'role_id' => Role::where('code', 'employee_portal')->valueOrFail('id'),
+            'national_id' => '1088888888',
+            'nationality' => array_key_first(Nationality::options()),
+            'date_of_birth' => '1990-01-01',
+            'gender' => 'male',
+            'phone' => '0500000000',
+            'email' => 'new.employee@example.test',
+            'department_id' => Department::factory()->create()->id,
+            'job_title_id' => JobTitle::factory()->create()->id,
+            'hire_date' => today()->toDateString(),
+            'contract_type' => 'permanent',
+            'contract_start_date' => today()->toDateString(),
+            'working_hours_per_day' => 8,
+            'working_days_per_week' => 6,
+            'base_salary' => 7000,
+        ])->assertSessionHasNoErrors();
         $user = User::where('username', 'new_employee')->firstOrFail();
         $this->assertTrue(Hash::check('Strong1234', $user->password_hash));
         $this->assertNotNull($user->employee);
@@ -52,15 +76,16 @@ class HumanResourcesManagementTest extends TestCase
         $this->actingAs($this->hr())->post(route('dashboard.hr.assignments.store'), $payload)->assertSessionHasNoErrors();
         $payload['port_id'] = $second->id;
         $this->actingAs($this->hr())->post(route('dashboard.hr.assignments.store'), $payload)->assertSessionHasNoErrors();
-        $this->assertDatabaseCount('employee_assignments', 1);
+        $this->assertSame(1, $employee->assignments()->count());
         $this->assertDatabaseHas('employee_assignments', ['employee_id' => $employee->id, 'port_id' => $second->id]);
     }
 
     public function test_dashboard_renders_pending_leave_and_expiring_contract(): void
     {
-        $employee = Employee::factory()->create(['contract_type' => 'temporary', 'contract_end_date' => today()->addDays(10)]);
-        $leave = Leave::factory()->create(['employee_id' => $employee->id, 'status' => 'pending']);
-        $this->actingAs($this->hr())->get(route('dashboard.hr.index'))->assertOk()->assertSee($employee->user->full_name)->assertSee($leave->reason);
+        $employee = Employee::factory()->create();
+        EmployeeContract::factory()->temporary()->for($employee)->create(['end_date' => today()->addDays(10)]);
+        Leave::factory()->create(['employee_id' => $employee->id, 'status' => 'pending']);
+        $this->actingAs($this->hr())->get(route('dashboard.hr.index'))->assertOk()->assertSee($employee->user->full_name);
     }
 
     private function hr(): User

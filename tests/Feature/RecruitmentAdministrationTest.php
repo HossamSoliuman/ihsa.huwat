@@ -2,9 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Department;
+use App\Models\EmployeeContract;
 use App\Models\EmploymentApplication;
 use App\Models\EmploymentApplicationAttachment;
 use App\Models\EmploymentJob;
+use App\Models\JobTitle;
 use App\Models\Port;
 use App\Models\Role;
 use App\Models\Shift;
@@ -47,7 +50,7 @@ class RecruitmentAdministrationTest extends TestCase
         ];
 
         $response = $this->actingAs($manager)->post(route('dashboard.jobs.store'), $payload);
-        $job = EmploymentJob::query()->sole();
+        $job = EmploymentJob::query()->where('title_ar', $payload['title_ar'])->sole();
 
         $response->assertRedirect(route('dashboard.jobs.edit', $job));
         $this->assertSame('draft', $job->status);
@@ -164,12 +167,14 @@ class RecruitmentAdministrationTest extends TestCase
         $payload = [
             'username' => 'new.employee',
             'password' => 'Temporary!Pass123',
-            'employee_number' => 'EMP-2026-000001',
             'hire_date' => today()->format('Y-m-d'),
+            'department_id' => Department::factory()->create()->id,
+            'job_title_id' => JobTitle::factory()->create()->id,
             'contract_type' => 'permanent',
+            'contract_start_date' => today()->format('Y-m-d'),
+            'working_hours_per_day' => 8,
+            'working_days_per_week' => 6,
             'base_salary' => 8000,
-            'job_title' => 'أخصائي إحصاء',
-            'department' => 'البيانات',
             'port_id' => $port->id,
             'shift_id' => $shift->id,
         ];
@@ -184,7 +189,13 @@ class RecruitmentAdministrationTest extends TestCase
         $this->assertDatabaseHas('employees', [
             'user_id' => $employeeUser->id,
             'employment_application_id' => $application->id,
-            'employee_number' => $payload['employee_number'],
+        ]);
+        $employee = $employeeUser->employee;
+        $this->assertMatchesRegularExpression('/^HWT-\d{5}$/', $employee->employee_number);
+        $this->assertSame('active', EmployeeContract::query()->where('employee_id', $employee->id)->sole()->status);
+        $this->assertDatabaseHas('employee_salary_components', [
+            'employee_id' => $employee->id,
+            'amount' => 8000,
         ]);
         $this->assertDatabaseHas('employee_assignments', [
             'port_id' => $port->id,

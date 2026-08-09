@@ -11,7 +11,7 @@ use App\Models\EmployeeAssignment;
 use App\Models\FishSpecies;
 use App\Models\Governorate;
 use App\Models\Leave;
-use App\Models\Payroll;
+use App\Models\PayrollRunEmployee;
 use App\Models\Port;
 use App\Models\Region;
 use App\Models\Trip;
@@ -116,7 +116,7 @@ class BuildReportAction
         $rows = $assignments->map(function (EmployeeAssignment $assignment) use ($attendance): array {
             $item = $attendance->get("{$assignment->employee_id}:{$assignment->shift_id}:{$assignment->assignment_date->toDateString()}");
 
-            return [$assignment->employee->user->full_name, $assignment->port->name, $assignment->assignment_date->toDateString(), config("attendance.shifts.{$assignment->shift->name}"), $item ? config("attendance.statuses.{$item->status}") : 'لم يبدأ', $this->dateTime($item?->check_in), $this->dateTime($item?->check_out)];
+            return [$assignment->employee->user->full_name, $assignment->port->name, $assignment->assignment_date->toDateString(), $assignment->shift->name, $item ? config("attendance.statuses.{$item->status}") : 'لم يبدأ', $this->dateTime($item?->check_in), $this->dateTime($item?->check_out)];
         })->take(config('reports.limit'));
 
         return $this->table(['الموظف', 'الميناء', 'التاريخ', 'المناوبة', 'الحالة', 'الحضور', 'الانصراف'], $rows);
@@ -126,7 +126,7 @@ class BuildReportAction
     {
         $rows = EmployeeAssignment::query()->with(['port:id,name', 'employee.user:id,full_name', 'shift:id,name'])->whereIn('port_id', $portIds)
             ->whereBetween('assignment_date', [$filters['date_from'], $filters['date_to']])->when($filters['employee_id'] ?? null, fn (Builder $query, $id) => $query->where('employee_id', $id))
-            ->latest('assignment_date')->limit(config('reports.limit'))->get()->map(fn (EmployeeAssignment $item) => [$item->employee->user->full_name, $item->port->name, $item->assignment_date->toDateString(), config("attendance.shifts.{$item->shift->name}"), $item->is_temporary ? 'نعم' : 'لا']);
+            ->latest('assignment_date')->limit(config('reports.limit'))->get()->map(fn (EmployeeAssignment $item) => [$item->employee->user->full_name, $item->port->name, $item->assignment_date->toDateString(), $item->shift->name, $item->is_temporary ? 'نعم' : 'لا']);
 
         return $this->table(['الموظف', 'الميناء', 'التاريخ', 'المناوبة', 'بديل؟'], $rows);
     }
@@ -144,12 +144,27 @@ class BuildReportAction
     {
         $from = CarbonImmutable::parse($filters['date_from'])->startOfMonth();
         $to = CarbonImmutable::parse($filters['date_to'])->startOfMonth();
-        $rows = Payroll::query()->with('employee.user:id,full_name')->whereIn('employee_id', $employeeIds)
-            ->whereRaw('(period_year * 100 + period_month) BETWEEN ? AND ?', [(int) $from->format('Ym'), (int) $to->format('Ym')])
-            ->when($filters['employee_id'] ?? null, fn (Builder $query, $id) => $query->where('employee_id', $id))->orderByDesc('period_year')->orderByDesc('period_month')->limit(config('reports.limit'))->get()
-            ->map(fn (Payroll $item) => [$item->employee->user->full_name, "{$item->period_month}/{$item->period_year}", $this->number($item->base_salary), $this->number($item->net_salary), config("employment.payroll_statuses.{$item->paid_status}", $item->paid_status)]);
+        $rows = PayrollRunEmployee::query()
+            ->with('payrollRun:id,period_year,period_month,status')
+            ->whereIn('employee_id', $employeeIds)
+            ->whereHas('payrollRun', fn (Builder $query) => $query->whereRaw(
+                '(period_year * 100 + period_month) BETWEEN ? AND ?',
+                [(int) $from->format('Ym'), (int) $to->format('Ym')],
+            ))
+            ->when($filters['employee_id'] ?? null, fn (Builder $query, $id) => $query->where('employee_id', $id))
+            ->latest('payroll_run_id')
+            ->limit(config('reports.limit'))
+            ->get()
+            ->map(fn (PayrollRunEmployee $item) => [
+                $item->employee_name,
+                "{$item->payrollRun->period_month}/{$item->payrollRun->period_year}",
+                $this->number($item->total_earnings),
+                $this->number($item->total_deductions),
+                $this->number($item->net_salary),
+                config("payroll.run_statuses.{$item->payrollRun->status}", $item->payrollRun->status),
+            ]);
 
-        return $this->table(['الموظف', 'الشهر/السنة', 'الأساسي', 'الصافي', 'حالة الصرف'], $rows);
+        return $this->table(['الموظف', 'الشهر/السنة', 'الاستحقاقات', 'الخصومات', 'الصافي', 'حالة المسير'], $rows);
     }
 
     private function coverageReport(Collection $portIds): array

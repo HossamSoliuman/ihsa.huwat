@@ -1,6 +1,6 @@
 @extends('layouts.dashboard')
 
-@section('title', 'الرواتب والمستحقات')
+@section('title', 'مسيرات الرواتب')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('assets/css/payroll.css') }}">
@@ -9,39 +9,52 @@
 @section('content')
 <div class="payroll-ledger">
     <header class="payroll-command">
-        <div><span>FINANCIAL CONTROL / {{ $year }}</span><h1>الرواتب والمستحقات</h1><p>مسير شهري محكوم بسجلات الحضور، مع تثبيت السجلات المصروفة ومنع تعديلها لاحقًا.</p></div>
-        <div class="payroll-period-tools">
-            <form method="get" class="payroll-period-form"><label>الشهر<select name="month">@foreach(config('payroll.months') as $number => $name)<option value="{{ $number }}" @selected($number === $month)>{{ $name }}</option>@endforeach</select></label><label>السنة<input type="number" name="year" min="2000" max="2100" value="{{ $year }}"></label><button class="btn btn-outline" type="submit">عرض الفترة</button></form>
-            @if($payrollRows->isEmpty())<form method="post" action="{{ route('dashboard.payroll.generate') }}">@csrf<input type="hidden" name="month" value="{{ $month }}"><input type="hidden" name="year" value="{{ $year }}"><button class="btn btn-primary" type="submit">توليد المسير</button></form>@endif
-        </div>
+        <div><span>PAYROLL CONTROL</span><h1>مسيرات الرواتب</h1></div>
+        @can('create', App\Models\PayrollRun::class)
+            <form method="post" action="{{ route('dashboard.payroll.runs.store') }}" class="payroll-create-run">
+                @csrf
+                <label>الشهر<select name="period_month" required>@foreach(config('payroll.months') as $number => $label)<option value="{{ $number }}" @selected((int) old('period_month', now()->month) === $number)>{{ $label }}</option>@endforeach</select></label>
+                <label>السنة<input type="number" name="period_year" value="{{ old('period_year', now()->year) }}" min="2020" max="2100" required></label>
+                <label class="is-note">ملاحظة<input name="note" value="{{ old('note') }}" maxlength="2000"></label>
+                <button class="btn btn-primary" type="submit">إنشاء مسير</button>
+            </form>
+        @endcan
     </header>
 
-    <section class="payroll-vitals">
-        <article class="primary"><span>صافي المسير</span><strong>{{ number_format((float) $stats->net_total, 2) }}</strong><small>ر.س</small></article>
-        <article><span>الأساسي</span><strong>{{ number_format((float) $stats->base_total, 2) }}</strong></article>
-        <article><span>البدلات</span><strong>{{ number_format((float) $stats->allowance_total, 2) }}</strong></article>
-        <article><span>الإضافي</span><strong>{{ number_format((float) $stats->overtime_total, 2) }}</strong><small>{{ number_format((float) $stats->overtime_hours, 1) }} ساعة</small></article>
-        <article><span>المكافآت</span><strong>{{ number_format((float) $stats->bonus_total, 2) }}</strong></article>
-        <article class="deduction"><span>الخصومات</span><strong>{{ number_format((float) $stats->deduction_total, 2) }}</strong></article>
-        <article><span>حالة الصرف</span><strong>{{ $stats->paid_count }} / {{ $stats->total_count }}</strong><small>مصروف</small></article>
+    <section class="payroll-vitals payroll-vitals-compact">
+        <article class="primary"><span>إجمالي الصافي</span><strong>{{ number_format((float) $summary->net_total, 2) }}</strong><small>ر.س</small></article>
+        <article><span>عدد المسيرات</span><strong>{{ number_format((int) $summary->runs_count) }}</strong></article>
+        <article><span>سجلات الموظفين</span><strong>{{ number_format((int) $summary->employees_count) }}</strong></article>
+        <article><span>المصروف والمغلق</span><strong>{{ number_format((int) $summary->sealed_count) }}</strong></article>
     </section>
 
     <section class="payroll-register">
-        <header><div><span>MONTHLY REGISTER</span><h2>مسير {{ config("payroll.months.{$month}") }} {{ $year }}</h2></div><b>{{ $payrollRows->count() }} موظف</b></header>
-        <div class="payroll-table-wrap"><table class="payroll-table"><thead><tr><th>الموظف</th><th>الأساسي</th><th>الإضافي</th><th>البدلات</th><th>المكافآت</th><th>الخصومات</th><th>الصافي</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody>
-        @forelse($payrollRows as $payroll)
-            <tr class="{{ $payroll->paid_status === 'paid' ? 'is-paid' : '' }}">
-                <td><strong>{{ $payroll->employee->user->full_name }}</strong><small>#{{ str_pad((string) $payroll->id, 5, '0', STR_PAD_LEFT) }}</small></td><td>{{ number_format((float) $payroll->base_salary, 2) }}</td><td>{{ number_format((float) $payroll->overtime_amount, 2) }}<small>{{ $payroll->overtime_hours }} س</small></td>
-                @if($payroll->paid_status === 'pending')
-                    <td colspan="3"><form id="payroll-update-{{ $payroll->id }}" method="post" action="{{ route('dashboard.payroll.update', $payroll) }}" class="payroll-adjustments">@csrf @method('PUT')<label><span>بدلات</span><input type="number" step="0.01" min="0" name="allowances" value="{{ $payroll->allowances }}" required></label><label><span>مكافآت</span><input type="number" step="0.01" min="0" name="bonuses" value="{{ $payroll->bonuses }}" required></label><label><span>خصومات</span><input type="number" step="0.01" min="0" name="deductions" value="{{ $payroll->deductions }}" required></label></form></td>
-                @else<td>{{ number_format((float) $payroll->allowances, 2) }}</td><td>{{ number_format((float) $payroll->bonuses, 2) }}</td><td>{{ number_format((float) $payroll->deductions, 2) }}</td>@endif
-                <td><strong class="net-amount">{{ number_format((float) $payroll->net_salary, 2) }}</strong></td><td><span class="payroll-state state-{{ $payroll->paid_status }}">{{ $payroll->paid_status === 'paid' ? 'مصروف' : 'معلّق' }}</span>@if($payroll->paid_at)<small>{{ $payroll->paid_at->format('Y/m/d H:i') }}</small>@endif</td>
-                <td>@if($payroll->paid_status === 'pending')<div class="payroll-actions"><button class="btn btn-outline btn-sm" type="submit" form="payroll-update-{{ $payroll->id }}">حفظ</button><form method="post" action="{{ route('dashboard.payroll.pay', $payroll) }}" data-confirm="تأكيد صرف الراتب وتثبيت السجل؟">@csrf @method('PATCH')<button class="btn btn-primary btn-sm" type="submit">صرف</button></form></div>@else<span class="locked-record">مغلق</span>@endif</td>
+        <header>
+            <div><span>RUN REGISTER</span><h2>سجل المسيرات</h2></div>
+            <form method="get" class="payroll-filter-form">
+                <select name="year"><option value="">كل السنوات</option>@foreach($years as $year)<option value="{{ $year }}" @selected((string) ($filters['year'] ?? '') === (string) $year)>{{ $year }}</option>@endforeach</select>
+                <select name="status"><option value="">كل الحالات</option>@foreach(config('payroll.run_statuses') as $value => $label)<option value="{{ $value }}" @selected(($filters['status'] ?? '') === $value)>{{ $label }}</option>@endforeach</select>
+                <button class="btn btn-outline btn-sm" type="submit">تصفية</button>
+            </form>
+        </header>
+        <div class="payroll-table-wrap"><table class="payroll-table payroll-runs-table"><thead><tr><th>رقم المسير</th><th>الفترة</th><th>الموظفون</th><th>الاستحقاقات</th><th>الخصومات</th><th>الصافي</th><th>الملاحظات</th><th>الحالة</th><th></th></tr></thead><tbody>
+        @forelse($runs as $run)
+            <tr>
+                <td><strong dir="ltr">{{ $run->run_number }}</strong><small>{{ $run->creator->full_name }}</small></td>
+                <td>{{ config("payroll.months.{$run->period_month}") }} {{ $run->period_year }}</td>
+                <td>{{ number_format($run->employees_count) }}</td>
+                <td>{{ number_format((float) $run->total_earnings, 2) }}</td>
+                <td class="money-negative">{{ number_format((float) $run->total_deductions, 2) }}</td>
+                <td><strong class="net-amount">{{ number_format((float) $run->net_total, 2) }}</strong></td>
+                <td><span class="payroll-issue-count is-error">{{ $run->errors_count }}</span><span class="payroll-issue-count is-warning">{{ $run->warnings_count }}</span></td>
+                <td><span class="payroll-state state-{{ $run->status }}">{{ config("payroll.run_statuses.{$run->status}") }}</span></td>
+                <td><a class="btn btn-outline btn-sm" href="{{ route('dashboard.payroll.runs.show', $run) }}">فتح</a></td>
             </tr>
-        @empty<tr><td colspan="9" class="payroll-empty">لم يُولّد مسير لهذه الفترة بعد.</td></tr>@endforelse
+        @empty
+            <tr><td colspan="9" class="payroll-empty">لا توجد مسيرات رواتب.</td></tr>
+        @endforelse
         </tbody></table></div>
+        <div class="payroll-pagination">{{ $runs->links() }}</div>
     </section>
-
-    <section class="payroll-comparison"><header><span>6 PERIOD TREND</span><h2>المقارنة بين الأشهر</h2></header><div class="comparison-strip">@forelse($monthlyComparison as $period)<article><small>{{ config("payroll.months.{$period->period_month}") }} {{ $period->period_year }}</small><strong>{{ number_format((float) $period->total_net, 2) }}</strong><span>ر.س</span></article>@empty<p>لا توجد بيانات مقارنة بعد.</p>@endforelse</div></section>
 </div>
 @endsection

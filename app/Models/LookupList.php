@@ -23,6 +23,9 @@ abstract class LookupList extends Model
      * @var array<string, class-string<self>>
      */
     public const LISTS = [
+        'departments' => Department::class,
+        'job_titles' => JobTitle::class,
+        'banks' => Bank::class,
         'nationalities' => Nationality::class,
         'boat_types' => BoatType::class,
         'boat_classifications' => BoatClassification::class,

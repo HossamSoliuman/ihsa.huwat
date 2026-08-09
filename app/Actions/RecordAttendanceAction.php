@@ -14,7 +14,8 @@ class RecordAttendanceAction
     {
         return DB::transaction(function () use ($assignment): Attendance {
             $assignment = EmployeeAssignment::query()->with('shift')->lockForUpdate()->findOrFail($assignment->id);
-            $lateAfter = Carbon::parse($assignment->assignment_date->toDateString().' '.$assignment->shift->start_time)->addMinutes(15);
+            $lateAfter = Carbon::parse($assignment->assignment_date->toDateString().' '.$assignment->shift->start_time)
+                ->addMinutes($assignment->shift->grace_minutes);
 
             return Attendance::query()->updateOrCreate(
                 ['employee_id' => $assignment->employee_id, 'attendance_date' => $assignment->assignment_date, 'shift_id' => $assignment->shift_id],

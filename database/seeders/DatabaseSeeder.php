@@ -12,6 +12,11 @@ class DatabaseSeeder extends Seeder
             LegacyDataSeeder::class,
             RoleSeeder::class,
             UserSeeder::class,
+            DepartmentSeeder::class,
+            JobTitleSeeder::class,
+            BankSeeder::class,
+            LeaveTypeSeeder::class,
+            SalaryComponentSeeder::class,
             ShiftSeeder::class,
             /** Families first: the species seeder files each code under the family it belongs to. */
             FishFamilySeeder::class,

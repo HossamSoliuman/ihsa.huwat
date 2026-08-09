@@ -18,13 +18,13 @@ class BuildAttendanceDashboardAction
         $ports = Port::query()->visibleTo($user)->where('is_active', true)->orderBy('name')->get(['id', 'name']);
         $selectedPortId = isset($filters['port_id']) ? (int) $filters['port_id'] : null;
         $scopedPortIds = $selectedPortId ? [$selectedPortId] : $ports->modelKeys();
-        $shifts = Shift::query()->orderBy('start_time')->get();
+        $shifts = Shift::query()->active()->orderBy('start_time')->get();
 
         $assignments = EmployeeAssignment::query()->with([
             'employee.user:id,full_name',
             'employee.attendance' => fn ($query) => $query->whereDate('attendance_date', $date),
             'port:id,name',
-            'shift:id,name,start_time,end_time',
+            'shift:id,code,name,start_time,end_time',
         ])->whereDate('assignment_date', $date)->whereIn('port_id', $scopedPortIds)
             ->get()->sortBy([['shift.start_time', 'asc'], ['employee.user.full_name', 'asc']])->values();
 
@@ -40,9 +40,9 @@ class BuildAttendanceDashboardAction
             'late' => $rows->where('attendance.status', 'late')->count(),
             'on_leave' => Leave::query()->where('status', 'approved')->whereIn('employee_id', $assignments->pluck('employee_id')->unique())
                 ->whereDate('start_date', '<=', $date)->whereDate('end_date', '>=', $date)->distinct('employee_id')->count('employee_id'),
-            'morning' => $assignments->where('shift.name', 'morning')->count(),
-            'evening' => $assignments->where('shift.name', 'evening')->count(),
-            'night' => $assignments->where('shift.name', 'night')->count(),
+            'morning' => $assignments->where('shift.code', 'morning')->count(),
+            'evening' => $assignments->where('shift.code', 'evening')->count(),
+            'night' => $assignments->where('shift.code', 'night')->count(),
             'overtime_hours' => round($rows->sum(fn (array $row) => $this->overtimeHours($row['assignment'], $row['attendance'])), 1),
         ];
 

@@ -8,7 +8,8 @@ use App\Models\Employee;
 use App\Models\EmployeeAssignment;
 use App\Models\Governorate;
 use App\Models\Leave;
-use App\Models\Payroll;
+use App\Models\PayrollRun;
+use App\Models\PayrollRunEmployee;
 use App\Models\Port;
 use App\Models\Region;
 use App\Models\Role;
@@ -48,8 +49,9 @@ class ReportManagementTest extends TestCase
         EmployeeAssignment::factory()->create(['employee_id' => $visibleEmployee->id, 'port_id' => $port->id]);
         $hiddenEmployee = Employee::factory()->create();
         EmployeeAssignment::factory()->create(['employee_id' => $hiddenEmployee->id, 'port_id' => $otherPort->id]);
-        Payroll::factory()->create(['employee_id' => $visibleEmployee->id, 'period_month' => today()->month, 'period_year' => today()->year]);
-        Payroll::factory()->create(['employee_id' => $hiddenEmployee->id, 'period_month' => today()->month, 'period_year' => today()->year]);
+        $run = PayrollRun::factory()->create(['status' => PayrollRun::STATUS_APPROVED, 'run_number' => 'PR-REPORT-SCOPE']);
+        PayrollRunEmployee::factory()->for($run, 'payrollRun')->for($visibleEmployee)->create(['employee_name' => $visibleEmployee->user->full_name]);
+        PayrollRunEmployee::factory()->for($run, 'payrollRun')->for($hiddenEmployee)->create(['employee_name' => $hiddenEmployee->user->full_name]);
         $user = $this->user('region_manager', ['region_id' => $region->id]);
 
         $this->actingAs($user)->get(route('dashboard.reports.index'))->assertSee($visibleTrip->trip_code)->assertDontSee('HIDDEN-TRIP');
@@ -89,7 +91,8 @@ class ReportManagementTest extends TestCase
         $assignment = EmployeeAssignment::factory()->create(['employee_id' => $employee->id, 'port_id' => $port->id, 'assignment_date' => today()]);
         Attendance::factory()->create(['employee_id' => $employee->id, 'shift_id' => $assignment->shift_id, 'attendance_date' => today()]);
         Leave::factory()->create(['employee_id' => $employee->id, 'start_date' => today(), 'end_date' => today()->addDay()]);
-        Payroll::factory()->create(['employee_id' => $employee->id, 'period_month' => today()->month, 'period_year' => today()->year]);
+        $run = PayrollRun::factory()->create(['status' => PayrollRun::STATUS_APPROVED, 'run_number' => 'PR-REPORT-FIXTURE']);
+        PayrollRunEmployee::factory()->for($run, 'payrollRun')->for($employee)->create(['employee_name' => $employee->user->full_name]);
         $trip = Trip::factory()->create([
             'port_id' => $port->id, 'assigned_employee_id' => $employee->id, 'status' => 'approved',
             'actual_arrival' => now(), 'approved_at' => now(), 'verified_weight' => 250,

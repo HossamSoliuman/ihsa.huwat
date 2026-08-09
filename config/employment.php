@@ -1,8 +1,9 @@
 <?php
 
 return [
-    'employee_statuses' => ['active' => 'نشط', 'on_leave' => 'في إجازة', 'suspended' => 'موقوف', 'terminated' => 'منتهي'],
-    'contract_types' => ['permanent' => 'دائم', 'temporary' => 'مؤقت'],
+    'employee_statuses' => ['draft' => 'مسودة', 'active' => 'نشط', 'on_leave' => 'في إجازة', 'suspended' => 'موقوف', 'terminated' => 'منتهي', 'inactive' => 'غير نشط'],
+    'contract_types' => ['permanent' => 'دائم', 'temporary' => 'مؤقت', 'fixed_term' => 'محدد المدة', 'part_time' => 'دوام جزئي', 'seasonal' => 'موسمي'],
+    'contract_statuses' => ['draft' => 'مسودة', 'active' => 'نشط', 'expired' => 'منتهي', 'terminated' => 'موقوف'],
     'leave_statuses' => ['pending' => 'قيد المراجعة', 'approved' => 'موافق عليها', 'rejected' => 'مرفوضة'],
     'attendance_statuses' => ['present' => 'حاضر', 'late' => 'متأخر', 'absent' => 'غائب', 'on_leave' => 'إجازة'],
     'nationalities' => ['saudi' => 'سعودي', 'non_saudi' => 'غير سعودي'],
@@ -22,4 +23,12 @@ return [
     ],
     'sources' => ['website' => 'الموقع الإلكتروني', 'social_media' => 'وسائل التواصل', 'referral' => 'ترشيح', 'job_fair' => 'معرض توظيف', 'other' => 'أخرى'],
     'attachment_types' => ['cv' => 'السيرة الذاتية', 'identity' => 'وثيقة الهوية', 'certificate' => 'المؤهل أو الشهادة', 'other' => 'مرفق إضافي'],
+    'employee_document_types' => ['national_id' => 'الهوية', 'contract' => 'العقد', 'iban' => 'الآيبان', 'certificate' => 'شهادة', 'other' => 'أخرى'],
+    'employee_number_prefix' => 'HWT',
+    'contract_number_prefix' => 'HWT-C',
+
+    /** Defaults stay empty until the client supplies its organisation and banking lists. */
+    'departments' => [],
+    'job_titles' => [],
+    'banks' => [],
 ];
