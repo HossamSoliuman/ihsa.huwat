@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureInformationIdentity;
+use App\Http\Middleware\EnsureInformationScope;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\Government\EnsureGovernmentAdministrator;
 use Illuminate\Foundation\Application;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureUserHasRole::class,
             'government.admin' => EnsureGovernmentAdministrator::class,
             'information.identity' => EnsureInformationIdentity::class,
+            'information.scope' => EnsureInformationScope::class,
         ]);
         $middleware->redirectGuestsTo(fn (Request $request): string => $request->is('gov', 'gov/*')
             ? route('government.login')

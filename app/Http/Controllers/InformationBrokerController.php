@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Information\Support\InformationScope;
 use App\Http\Requests\FilterFishMarketBrokersRequest;
 use App\Http\Requests\ManageFishMarketRequest;
 use App\Http\Requests\StoreFishMarketBrokerRequest;
@@ -27,8 +28,9 @@ class InformationBrokerController extends Controller
     public function index(FilterFishMarketBrokersRequest $request): View
     {
         $filters = $request->validated();
+        $scope = $request->user()->informationScope();
 
-        $brokers = FishMarketBroker::query()
+        $brokers = $scope->applyBrokers(FishMarketBroker::query())
             ->with('market.governorate')
             ->when($filters['fish_market_id'] ?? null, fn (Builder $query, int $marketId): Builder => $query
                 ->where('fish_market_id', $marketId))
@@ -51,15 +53,17 @@ class InformationBrokerController extends Controller
         return view('information.admin.brokers.index', [
             'brokers' => $brokers,
             'filters' => $filters,
-            'markets' => $this->markets(),
+            'markets' => $this->markets($scope),
         ]);
     }
 
     public function create(ManageFishMarketRequest $request): View
     {
+        $scope = $request->user()->informationScope();
+
         return view('information.admin.brokers.create', [
-            'markets' => $this->markets(),
-            'stalls' => $this->stalls(),
+            'markets' => $this->markets($scope),
+            'stalls' => $this->stalls($scope),
             ...$this->options(),
         ]);
     }
@@ -82,10 +86,12 @@ class InformationBrokerController extends Controller
     {
         $broker->load('market.governorate.region', 'unit', 'employees');
 
+        $scope = $request->user()->informationScope();
+
         return view('information.admin.brokers.show', [
             'broker' => $broker,
-            'markets' => $this->markets(),
-            'stalls' => $this->stalls(),
+            'markets' => $this->markets($scope),
+            'stalls' => $this->stalls($scope),
             ...$this->options(),
         ]);
     }
@@ -115,9 +121,12 @@ class InformationBrokerController extends Controller
      *
      * @return Collection<int, FishMarket>
      */
-    private function markets(): Collection
+    private function markets(InformationScope $scope): Collection
     {
-        return FishMarket::query()->with('governorate')->ordered()->get(['id', 'governorate_id', 'name', 'is_active']);
+        return $scope->applyMarkets(FishMarket::query())
+            ->with('governorate')
+            ->ordered()
+            ->get(['id', 'governorate_id', 'name', 'is_active']);
     }
 
     /**
@@ -126,9 +135,11 @@ class InformationBrokerController extends Controller
      *
      * @return Collection<int, FishMarketUnit>
      */
-    private function stalls(): Collection
+    private function stalls(InformationScope $scope): Collection
     {
         return FishMarketUnit::query()
+            ->when(! $scope->isUnrestricted(), fn (Builder $query): Builder => $query
+                ->whereIn('fish_market_id', $scope->marketIds()))
             ->where('unit_type', FishMarketUnit::TYPE_AUCTION_STALL)
             ->orderBy('fish_market_id')
             ->orderBy('id')

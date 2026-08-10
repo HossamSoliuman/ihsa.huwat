@@ -12,6 +12,9 @@ class InformationDashboardController extends Controller
         FilterInformationDashboardRequest $request,
         BuildInformationDashboard $buildInformationDashboard,
     ): View {
-        return view('information.admin.dashboard', $buildInformationDashboard->execute($request->validated()));
+        return view('information.admin.dashboard', $buildInformationDashboard->execute(
+            $request->validated(),
+            $request->user()->informationScope(),
+        ));
     }
 }

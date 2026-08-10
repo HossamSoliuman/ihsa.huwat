@@ -27,7 +27,10 @@ class StoreFishMarketRequest extends ManageFishMarketRequest
     public function rules(): array
     {
         return [
-            'governorate_id' => ['required', 'integer', Rule::exists(Governorate::class, 'id')],
+            'governorate_id' => [
+                'required', 'integer', Rule::exists(Governorate::class, 'id'),
+                ...$this->scopedTo($this->informationScope()->governorateIds()),
+            ],
             'name' => [
                 'required', 'string', 'min:2', 'max:150',
                 $this->nameIsUniqueInGovernorate(),

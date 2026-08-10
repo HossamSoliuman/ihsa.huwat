@@ -39,7 +39,7 @@ final class RegistryCensusPanel
         $unitCounts = FishMarketUnit::query()
             ->toBase()
             ->join((new FishMarket)->getTable().' AS markets', 'markets.id', '=', 'fish_market_units.fish_market_id')
-            ->when($scope->hasGeographyFilter(), fn ($query) => $query->whereIn('markets.governorate_id', $scope->governorateIds()))
+            ->tap(fn ($query) => $scope->applyJoinedMarkets($query))
             ->selectRaw('unit_type, COUNT(*) AS aggregate')
             ->groupBy('unit_type')
             ->pluck('aggregate', 'unit_type');
@@ -47,17 +47,17 @@ final class RegistryCensusPanel
             ->toBase()
             ->join((new FishMarketUnit)->getTable().' AS units', 'units.id', '=', 'fish_market_workers.fish_market_unit_id')
             ->join((new FishMarket)->getTable().' AS markets', 'markets.id', '=', 'units.fish_market_id')
-            ->when($scope->hasGeographyFilter(), fn ($query) => $query->whereIn('markets.governorate_id', $scope->governorateIds()))
+            ->tap(fn ($query) => $scope->applyJoinedMarkets($query))
             ->count();
         $brokerCounts = FishMarketBroker::query()
             ->toBase()
             ->join((new FishMarket)->getTable().' AS markets', 'markets.id', '=', 'fish_market_brokers.fish_market_id')
-            ->when($scope->hasGeographyFilter(), fn ($query) => $query->whereIn('markets.governorate_id', $scope->governorateIds()))
+            ->tap(fn ($query) => $scope->applyJoinedMarkets($query))
             ->selectRaw('entity_type, COUNT(*) AS aggregate')
             ->groupBy('entity_type')
             ->pluck('aggregate', 'entity_type');
 
-        $activeGovernorates = Governorate::query()->selectable()
+        $activeGovernorates = $scope->applyAccountGovernorates(Governorate::query()->selectable())
             ->when($scope->regionId, fn (Builder $query, int $regionId): Builder => $query->where('region_id', $regionId))
             ->when($scope->governorateId, fn (Builder $query, int $governorateId): Builder => $query->whereKey($governorateId))
             ->pluck('id');

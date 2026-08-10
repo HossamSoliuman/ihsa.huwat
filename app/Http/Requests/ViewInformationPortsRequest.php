@@ -6,7 +6,7 @@ use App\Models\Governorate;
 use App\Models\Region;
 use Illuminate\Validation\Rule;
 
-class ViewInformationPortsRequest extends ManageInformationLookupRequest
+class ViewInformationPortsRequest extends AccessInformationDeskRequest
 {
     /** @return array<string, mixed> */
     public function rules(): array

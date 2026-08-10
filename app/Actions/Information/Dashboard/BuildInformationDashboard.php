@@ -11,6 +11,7 @@ use App\Actions\Information\Dashboard\Panels\MarketPanel;
 use App\Actions\Information\Dashboard\Panels\RegistryCensusPanel;
 use App\Actions\Information\Dashboard\Panels\ReviewHealthPanel;
 use App\Actions\Information\Dashboard\Support\DashboardCache;
+use App\Actions\Information\Support\InformationScope;
 use App\Models\Governorate;
 use App\Models\Port;
 use App\Models\Region;
@@ -33,9 +34,10 @@ final class BuildInformationDashboard
      * @param  array{range?: string|null, region_id?: int|null, governorate_id?: int|null, port_id?: int|null}  $filters
      * @return array<string, mixed>
      */
-    public function execute(array $filters): array
+    public function execute(array $filters, ?InformationScope $account = null): array
     {
-        $scope = DashboardScope::fromFilters($filters);
+        $account ??= InformationScope::unrestricted();
+        $scope = DashboardScope::fromFilters($filters, $account);
 
         return [
             'filters' => $scope->filters(),
@@ -46,9 +48,10 @@ final class BuildInformationDashboard
                 'year' => 'هذا العام',
                 'all' => 'الكل',
             ],
-            'regions' => Region::query()->ordered()->get(['id', 'name']),
-            'governorates' => Governorate::query()->ordered()->get(['id', 'region_id', 'name']),
-            'ports' => Port::query()->ordered()->get(['id', 'governorate_id', 'name']),
+            /** The pickers offer only what the account holds, so no filter reaches past it. */
+            'regions' => $account->applyRegions(Region::query())->ordered()->get(['id', 'name']),
+            'governorates' => $account->applyGovernorates(Governorate::query())->ordered()->get(['id', 'region_id', 'name']),
+            'ports' => $account->applyPorts(Port::query())->ordered()->get(['id', 'governorate_id', 'name']),
             ...$this->cache->remember(DashboardCache::REGISTRY, $scope, fn (): array => $this->registryCensus->build($scope)),
             ...$this->cache->remember(DashboardCache::REVIEW, $scope, fn (): array => $this->reviewHealth->build($scope)),
             ...$this->cache->remember(DashboardCache::GEOGRAPHY, $scope, fn (): array => $this->geography->build($scope)),

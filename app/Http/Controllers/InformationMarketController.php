@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateFishMarketAction;
 use App\Actions\DeleteMasterDataRecordAction;
+use App\Actions\Information\Support\InformationScope;
 use App\Http\Requests\FilterFishMarketsRequest;
 use App\Http\Requests\ManageFishMarketRequest;
 use App\Http\Requests\StoreFishMarketRequest;
@@ -35,8 +36,9 @@ class InformationMarketController extends Controller
     public function index(FilterFishMarketsRequest $request): View
     {
         $filters = $request->validated();
+        $scope = $request->user()->informationScope();
 
-        $markets = FishMarket::query()
+        $markets = $scope->applyMarkets(FishMarket::query())
             ->with('governorate.region')
             ->withCount(['shops', 'auctionStalls', 'workers', 'brokers'])
             ->when($filters['region_id'] ?? null, fn (Builder $query, int $regionId): Builder => $query->whereIn(
@@ -61,17 +63,22 @@ class InformationMarketController extends Controller
         return view('information.admin.markets.index', [
             'markets' => $markets,
             'filters' => $filters,
-            ...$this->geography(),
+            ...$this->geography($scope),
         ]);
     }
 
     public function create(ManageFishMarketRequest $request): View
     {
-        return view('information.admin.markets.create', $this->geography());
+        $scope = $request->user()->informationScope();
+        abort_unless($scope->allowsNewMarkets(), 403);
+
+        return view('information.admin.markets.create', $this->geography($scope));
     }
 
     public function store(StoreFishMarketRequest $request, CreateFishMarketAction $createFishMarket): RedirectResponse
     {
+        abort_unless($request->user()->informationScope()->allowsNewMarkets(), 403);
+
         $market = $createFishMarket->execute($request->validated());
 
         return to_route('information.admin.markets.show', $market)
@@ -94,7 +101,7 @@ class InformationMarketController extends Controller
             'jobTitles' => MarketJobTitle::options(),
             'nationalityLabels' => Nationality::labels(),
             'jobTitleLabels' => MarketJobTitle::labels(),
-            ...$this->geography(),
+            ...$this->geography($request->user()->informationScope()),
         ]);
     }
 
@@ -110,6 +117,8 @@ class InformationMarketController extends Controller
         FishMarket $market,
         DeleteMasterDataRecordAction $deleteMasterDataRecord,
     ): RedirectResponse {
+        abort_unless($request->user()->informationScope()->allowsNewMarkets(), 403);
+
         /** The foreign keys cascade, so the guard is what keeps a populated market whole. */
         $deleteMasterDataRecord->execute($market, self::DEPENDENCIES, 'السوق');
 
@@ -117,15 +126,16 @@ class InformationMarketController extends Controller
     }
 
     /**
-     * The region picker in front of the governorate list, as the ports desk does it.
+     * The region picker in front of the governorate list, as the ports desk does it, holding
+     * only the geography the account reaches.
      *
      * @return array<string, mixed>
      */
-    private function geography(): array
+    private function geography(InformationScope $scope): array
     {
         return [
-            'regions' => Region::query()->orderBy('name')->get(['id', 'name']),
-            'governorates' => Governorate::query()->orderBy('name')->get(['id', 'region_id', 'name']),
+            'regions' => $scope->applyRegions(Region::query())->orderBy('name')->get(['id', 'name']),
+            'governorates' => $scope->applyGovernorates(Governorate::query())->orderBy('name')->get(['id', 'region_id', 'name']),
         ];
     }
 }

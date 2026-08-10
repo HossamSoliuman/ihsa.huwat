@@ -20,9 +20,10 @@ class InformationPortController extends Controller
     public function index(ViewInformationPortsRequest $request): View
     {
         $filters = $request->validated();
+        $scope = $request->user()->informationScope();
 
         /** Only ports the portal still offers: a port stopped with its geography is not live. */
-        $ports = Port::query()
+        $ports = $scope->applyPorts(Port::query())
             ->selectable()
             ->with('governorate.region')
             ->withSum('capacities as berth_capacity', 'capacity')
@@ -46,11 +47,12 @@ class InformationPortController extends Controller
             ->orderBy('name')
             ->get();
 
+        /** The filters offer only the geography the account holds, so nothing outside it is nameable. */
         return view('information.admin.ports.index', [
             'ports' => $ports,
             'filters' => $filters,
-            'regions' => Region::query()->orderBy('name')->get(['id', 'name']),
-            'governorates' => Governorate::query()->orderBy('name')->get(['id', 'region_id', 'name']),
+            'regions' => $scope->applyRegions(Region::query())->orderBy('name')->get(['id', 'name']),
+            'governorates' => $scope->applyGovernorates(Governorate::query())->orderBy('name')->get(['id', 'region_id', 'name']),
         ]);
     }
 

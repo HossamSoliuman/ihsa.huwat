@@ -4860,6 +4860,137 @@
         padding-bottom: 0;
     }
 
+    /*
+     * The records a مشرف is pinned to. A governorate list runs to a hundred-odd entries, so
+     * the list scrolls in place rather than pushing the form's actions off the screen, and
+     * carries its own filter above it.
+     */
+    .info-scope-list-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .info-scope-list-head input[type="search"],
+    .info-scope-list-head select {
+        min-width: 0;
+        min-height: 2.3rem;
+        border: 1px solid var(--info-line);
+        background: var(--info-field);
+        padding: 0.45rem 0.7rem;
+        color: var(--info-ink);
+        font-family: inherit;
+        font-size: 0.88rem;
+        outline: none;
+        transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .info-scope-list-head input[type="search"] {
+        flex: 1 1 12rem;
+    }
+
+    .info-scope-list-head select {
+        flex: 0 1 10rem;
+    }
+
+    .info-scope-list-head select option {
+        background: var(--info-canvas);
+        color: var(--info-ink);
+    }
+
+    .info-scope-list-head input[type="search"]::placeholder {
+        color: var(--info-muted);
+    }
+
+    .info-scope-list-head input[type="search"]:hover,
+    .info-scope-list-head select:hover {
+        border-color: var(--info-line-strong);
+    }
+
+    .info-scope-list-head input[type="search"]:focus,
+    .info-scope-list-head select:focus {
+        border-color: var(--info-blue);
+        box-shadow: 0 0 0 2px var(--info-blue-pale);
+    }
+
+    /* The tally and the bulk controls travel together at the far end of the filter line. */
+    .info-scope-count {
+        margin-inline-start: auto;
+        color: var(--info-muted);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        white-space: nowrap;
+    }
+
+    .info-scope-list-head .info-button[aria-pressed="true"] {
+        border-color: var(--info-blue);
+        background: var(--info-blue-pale);
+        color: var(--info-blue);
+    }
+
+    .info-scope-options {
+        display: grid;
+        gap: 0.35rem;
+        grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+        max-height: 21rem;
+        overflow-y: auto;
+        border: 1px solid var(--info-line);
+        background: var(--info-surface-soft);
+        padding: 0.6rem;
+        scrollbar-color: var(--info-line-strong) transparent;
+        scrollbar-width: thin;
+    }
+
+    .info-scope-options > .info-admin-empty {
+        grid-column: 1 / -1;
+    }
+
+    /* Each record is its own target: legible at rest, and unmistakably ticked once chosen. */
+    .info-scope-options .info-lookup-check {
+        align-items: start;
+        padding: 0.45rem 0.55rem;
+        border: 1px solid transparent;
+        color: var(--info-ink);
+        font-size: 0.86rem;
+        font-weight: 500;
+        line-height: 1.35;
+        white-space: normal;
+        cursor: pointer;
+        transition: border-color 160ms ease, background-color 160ms ease;
+    }
+
+    .info-scope-options .info-lookup-check input[type="checkbox"] {
+        width: 0.95rem;
+        height: 0.95rem;
+        flex: none;
+        margin-block-start: 0.1rem;
+        accent-color: var(--info-blue);
+        cursor: pointer;
+    }
+
+    .info-scope-options .info-lookup-check:hover {
+        border-color: var(--info-line);
+        background: var(--info-surface-strong);
+    }
+
+    .info-scope-options .info-lookup-check:has(input:checked) {
+        border-color: var(--info-blue);
+        background: var(--info-blue-pale);
+    }
+
+    .info-scope-options .info-lookup-check:has(input:focus-visible) {
+        outline: 2px solid var(--info-blue);
+        outline-offset: 1px;
+    }
+
+    .info-scope-options .info-lookup-check small {
+        display: block;
+        color: var(--info-muted);
+        font-size: 0.72rem;
+    }
+
     /* A موظفين row carries no card of its own; its remove control sits on the field line. */
     .info-employee-row-action {
         align-self: end;

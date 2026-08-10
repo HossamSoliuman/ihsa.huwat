@@ -2,6 +2,13 @@
 
 $applicationHost = parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST);
 
+/*
+ * The desk owns the whole information centre; a moderator is an account the desk creates
+ * and pins to a handful of ports, markets, governorates or regions, and sees nothing else.
+ */
+$deskRoles = ['super_admin', 'quality_supervisor'];
+$moderatorRole = 'information_moderator';
+
 return [
     /*
      * Dedicated host for the information portal. It defaults to the "info" subdomain
@@ -15,11 +22,23 @@ return [
         : null),
 
     /*
-     * Roles that reach the reference desk. Signing in on the portal host lands these
-     * roles on the desk's own dashboard rather than on the role's dashboard in the
-     * main application.
+     * Roles that reach the reference desk unrestricted — the reference lists and the
+     * moderator accounts are theirs alone.
      */
-    'desk_roles' => ['super_admin', 'quality_supervisor'],
+    'desk_roles' => $deskRoles,
+
+    /*
+     * The role every moderator account is filed under. What one of these accounts reaches
+     * is decided entirely by the rows in `user_scopes`, never by the role itself.
+     */
+    'moderator_role' => $moderatorRole,
+
+    /*
+     * Everyone who may open the information centre at all. Signing in on the portal host
+     * lands these roles on the desk's own dashboard rather than on the role's dashboard in
+     * the main application.
+     */
+    'admin_roles' => [...$deskRoles, $moderatorRole],
 
     /*
      * The option lists below are shipped defaults only: each one has a table, a model

@@ -20,6 +20,8 @@ class RoleSeeder extends Seeder
             ['code' => 'finance_officer', 'name_ar' => 'مسؤول الرواتب والمالية', 'dashboard_route' => 'dashboard.payroll.index'],
             ['code' => 'quality_supervisor', 'name_ar' => 'مراقب الجودة', 'dashboard_route' => 'dashboard.discrepancies.index'],
             ['code' => 'employee_portal', 'name_ar' => 'بوابة الموظف', 'dashboard_route' => 'dashboard.profile.show'],
+            /** Opens on the information centre wherever it signs in, narrowed to its own assignments. */
+            ['code' => 'information_moderator', 'name_ar' => 'مشرف مركز المعلومات', 'dashboard_route' => 'information.admin.dashboard'],
         ] as $role) {
             Role::query()->updateOrCreate(['code' => $role['code']], $role);
         }

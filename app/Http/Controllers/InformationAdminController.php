@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Information\Support\InformationScope;
 use App\Actions\ReviewInformationSubmissionAction;
 use App\Http\Requests\FilterInformationSubmissionsRequest;
 use App\Http\Requests\ReviewInformationSubmissionRequest;
@@ -19,8 +20,9 @@ class InformationAdminController extends Controller
     public function index(FilterInformationSubmissionsRequest $request): View
     {
         $filters = $request->validated();
+        $scope = $request->user()->informationScope();
 
-        $submissions = InformationSubmission::query()
+        $submissions = $scope->applySubmissions(InformationSubmission::query())
             ->with(['port:id,name', 'boat:id,name,registration_no', 'reviewer:id,full_name'])
             ->when($filters['status'] ?? null, fn (Builder $query, string $status): Builder => $query->where('status', $status))
             ->when($filters['port_id'] ?? null, fn (Builder $query, int $portId): Builder => $query->where('port_id', $portId))
@@ -58,8 +60,8 @@ class InformationAdminController extends Controller
         return view('information.admin.index', [
             'submissions' => $submissions,
             'filters' => $filters,
-            'statusCounts' => $this->statusCounts(),
-            'ports' => Port::query()->orderBy('name')->get(['id', 'name']),
+            'statusCounts' => $this->statusCounts($scope),
+            'ports' => $scope->applyPorts(Port::query())->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -122,9 +124,9 @@ class InformationAdminController extends Controller
      *
      * @return array<string, int>
      */
-    private function statusCounts(): array
+    private function statusCounts(InformationScope $scope): array
     {
-        $counts = InformationSubmission::query()
+        $counts = $scope->applySubmissions(InformationSubmission::query())
             ->selectRaw('status, COUNT(*) AS aggregate')
             ->groupBy('status')
             ->pluck('aggregate', 'status');

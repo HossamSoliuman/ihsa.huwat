@@ -2,8 +2,12 @@
 
 namespace App\Actions\Information\Dashboard;
 
+use App\Actions\Information\Support\InformationScope;
+use App\Models\FishMarket;
 use App\Models\Governorate;
+use App\Models\InformationSubmission;
 use App\Models\Port;
+use App\Models\Region;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -25,15 +29,18 @@ final class DashboardScope
         public readonly Carbon $currentEnd,
         public readonly ?Carbon $previousStart,
         public readonly ?Carbon $previousEnd,
+        /** What the account signed in may see at all. The filters narrow within it, never past it. */
+        private readonly InformationScope $account,
     ) {}
 
     /**
      * @param  array{range?: string|null, region_id?: int|null, governorate_id?: int|null, port_id?: int|null}  $filters
      */
-    public static function fromFilters(array $filters): self
+    public static function fromFilters(array $filters, ?InformationScope $account = null): self
     {
         $range = $filters['range'] ?? '30';
         $currentEnd = now();
+        $account ??= InformationScope::unrestricted();
 
         if ($range === 'all') {
             return new self(
@@ -45,6 +52,7 @@ final class DashboardScope
                 currentEnd: $currentEnd,
                 previousStart: null,
                 previousEnd: null,
+                account: $account,
             );
         }
 
@@ -63,6 +71,7 @@ final class DashboardScope
             currentEnd: $currentEnd,
             previousStart: $previousEnd->copy()->subSeconds($periodSeconds - 1),
             previousEnd: $previousEnd,
+            account: $account,
         );
     }
 
@@ -77,14 +86,24 @@ final class DashboardScope
         ];
     }
 
+    /**
+     * Two accounts holding different ports ask the same filters of a different dashboard, so
+     * what the account may see belongs in the cache key alongside the filters themselves.
+     */
     public function fingerprint(): string
     {
-        return sha1((string) json_encode($this->filters()));
+        return sha1((string) json_encode([
+            ...$this->filters(),
+            'account' => [$this->account->level, $this->account->ids],
+        ]));
     }
 
     public function hasGeographyFilter(): bool
     {
-        return $this->regionId !== null || $this->governorateId !== null || $this->portId !== null;
+        return ! $this->account->isUnrestricted()
+            || $this->regionId !== null
+            || $this->governorateId !== null
+            || $this->portId !== null;
     }
 
     /** @return Collection<int, int> */
@@ -94,7 +113,7 @@ final class DashboardScope
             return $this->resolvedGovernorateIds;
         }
 
-        $query = Governorate::query()->select('governorates.id');
+        $query = $this->account->applyGovernorates(Governorate::query()->select('governorates.id'));
 
         if ($this->portId !== null) {
             $query->whereIn('governorates.id', Port::query()->whereKey($this->portId)->select('governorate_id'));
@@ -122,7 +141,7 @@ final class DashboardScope
             return $this->resolvedPortIds;
         }
 
-        $query = Port::query()->select('ports.id');
+        $query = $this->account->applyPorts(Port::query()->select('ports.id'));
 
         if ($this->portId !== null) {
             $query->whereKey($this->portId);
@@ -139,7 +158,7 @@ final class DashboardScope
             : $ids;
     }
 
-    /** @param  Builder<\App\Models\InformationSubmission>  $query */
+    /** @param  Builder<InformationSubmission>  $query */
     public function applySubmissions(Builder $query, ?Carbon $start, ?Carbon $end): Builder
     {
         return $query
@@ -148,12 +167,52 @@ final class DashboardScope
             ->when($end, fn (Builder $query, Carbon $date): Builder => $query->where('submitted_at', '<=', $date));
     }
 
-    /** @param  Builder<\App\Models\FishMarket>  $query */
+    /**
+     * The account narrows to the markets it holds — which for a port moderator is none —
+     * and the filters narrow the geography within that.
+     *
+     * @param  Builder<FishMarket>  $query
+     */
     public function applyMarkets(Builder $query): Builder
     {
-        return $query->when(
+        return $this->account->applyMarkets($query)->when(
             $this->hasGeographyFilter(),
             fn (Builder $query): Builder => $query->whereIn('governorate_id', $this->governorateIds()),
         );
+    }
+
+    /**
+     * The geography a panel may name at all. Unlike the readers above these carry no filter
+     * — the callers apply their own — and only hold the query to what the account reaches.
+     *
+     * @param  Builder<Governorate>  $query
+     */
+    public function applyAccountGovernorates(Builder $query): Builder
+    {
+        return $this->account->applyGovernorates($query);
+    }
+
+    /** @param  Builder<Region>  $query */
+    public function applyAccountRegions(Builder $query): Builder
+    {
+        return $this->account->applyRegions($query);
+    }
+
+    /**
+     * The same narrowing for the panels that reach markets through a join and count their
+     * units, workers or brokers rather than the markets themselves. The filters narrow by
+     * governorate as they always have; an account holding named markets narrows to those on
+     * top of it, so a moderator never counts the market next door.
+     *
+     * @template TQuery of Builder|\Illuminate\Database\Query\Builder
+     *
+     * @param  TQuery  $query
+     * @return TQuery
+     */
+    public function applyJoinedMarkets($query, string $alias = 'markets')
+    {
+        return $query
+            ->when($this->hasGeographyFilter(), fn ($query) => $query->whereIn($alias.'.governorate_id', $this->governorateIds()))
+            ->when(! $this->account->isUnrestricted(), fn ($query) => $query->whereIn($alias.'.id', $this->account->marketIds()));
     }
 }

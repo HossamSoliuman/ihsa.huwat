@@ -46,7 +46,7 @@ final class GeographyPanel
             ->join((new FishMarket)->getTable(), 'fish_markets.id', '=', 'fish_market_brokers.fish_market_id')
             ->join((new Governorate)->getTable(), 'governorates.id', '=', 'fish_markets.governorate_id')
             ->join((new Region)->getTable(), 'regions.id', '=', 'governorates.region_id')
-            ->when($scope->hasGeographyFilter(), fn ($query) => $query->whereIn('fish_markets.governorate_id', $scope->governorateIds()))
+            ->tap(fn ($query) => $scope->applyJoinedMarkets($query, 'fish_markets'))
             ->selectRaw("{$dimensionId} AS location_id, {$dimensionName} AS location_name, COUNT(*) AS aggregate")
             ->groupBy($dimensionId, $dimensionName)
             ->orderByDesc('aggregate')
@@ -89,7 +89,7 @@ final class GeographyPanel
     /** @return list<array<string, mixed>> */
     private function regionShare(DashboardScope $scope): array
     {
-        $regions = Region::query()
+        $regions = $scope->applyAccountRegions(Region::query())
             ->when($scope->regionId, fn ($query, int $regionId) => $query->whereKey($regionId))
             ->ordered()
             ->get(['id', 'name']);

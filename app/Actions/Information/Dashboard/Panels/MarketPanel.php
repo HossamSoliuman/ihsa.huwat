@@ -31,14 +31,14 @@ final class MarketPanel
             ->toBase()
             ->join((new FishMarket)->getTable().' AS markets', 'markets.id', '=', 'fish_market_units.fish_market_id')
             ->leftJoin('fish_market_workers AS workers', 'workers.fish_market_unit_id', '=', 'fish_market_units.id')
-            ->when($scope->hasGeographyFilter(), fn ($query) => $query->whereIn('markets.governorate_id', $scope->governorateIds()))
+            ->tap(fn ($query) => $scope->applyJoinedMarkets($query))
             ->selectRaw('unit_type, COUNT(workers.id) AS aggregate')
             ->groupBy('unit_type')
             ->pluck('aggregate', 'unit_type');
         $brokerMix = FishMarketBroker::query()
             ->toBase()
             ->join((new FishMarket)->getTable().' AS markets', 'markets.id', '=', 'fish_market_brokers.fish_market_id')
-            ->when($scope->hasGeographyFilter(), fn ($query) => $query->whereIn('markets.governorate_id', $scope->governorateIds()))
+            ->tap(fn ($query) => $scope->applyJoinedMarkets($query))
             ->selectRaw('entity_type, COUNT(*) AS aggregate')
             ->groupBy('entity_type')
             ->pluck('aggregate', 'entity_type');

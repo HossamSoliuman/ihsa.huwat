@@ -295,6 +295,111 @@ function initializeInformationBrokerEmployees() {
     });
 }
 
+/**
+ * A مشرف is pinned to records at one level, and the page carries every level's list at
+ * once. Each list is filed under its own key, so the ones not chosen submit harmlessly and
+ * the server reads only the level picked — this narrows the page to that list, filters a
+ * long one down, and offers the two bulk controls.
+ */
+function initializeInformationModeratorScope() {
+    document.querySelectorAll('[data-scope-picker]').forEach((picker) => {
+        const level = (picker.closest('form') ?? document).querySelector('[data-scope-level]');
+        const lists = Array.from(picker.querySelectorAll('[data-scope-list]'));
+
+        if (!level || lists.length === 0) {
+            return;
+        }
+
+        function showSelectedLevel() {
+            lists.forEach((list) => {
+                list.hidden = list.dataset.scopeList !== level.value;
+            });
+        }
+
+        function boxes(list) {
+            return Array.from(list.querySelectorAll('input[type="checkbox"]'));
+        }
+
+        function visibleBoxes(list) {
+            return boxes(list).filter((box) => !box.closest('label').hidden);
+        }
+
+        /** The name typed, the محافظة picked and the المحدد فقط toggle narrow the list together. */
+        function applyFilter(list) {
+            const term = (list.querySelector('[data-scope-search]')?.value ?? '').trim().toLowerCase();
+            const parent = list.querySelector('[data-scope-parent-filter]')?.value ?? '';
+            const selectedOnly = list.querySelector('[data-scope-selected-only]')?.getAttribute('aria-pressed') === 'true';
+            let shown = 0;
+
+            list.querySelectorAll('.info-lookup-check').forEach((option) => {
+                const matches =
+                    (term === '' || option.textContent.toLowerCase().includes(term)) &&
+                    (parent === '' || option.dataset.scopeParent === parent) &&
+                    (!selectedOnly || option.querySelector('input[type="checkbox"]').checked);
+
+                option.hidden = !matches;
+                shown += matches ? 1 : 0;
+            });
+
+            const empty = list.querySelector('[data-scope-empty]');
+
+            if (empty) {
+                empty.hidden = shown > 0 || boxes(list).length === 0;
+            }
+        }
+
+        function updateCount(list) {
+            const count = list.querySelector('[data-scope-count]');
+
+            if (count) {
+                count.textContent = `${boxes(list).filter((box) => box.checked).length} محدد`;
+            }
+        }
+
+        lists.forEach((list) => {
+            list.querySelector('[data-scope-search]')?.addEventListener('input', () => applyFilter(list));
+            list.querySelector('[data-scope-parent-filter]')?.addEventListener('change', () => applyFilter(list));
+
+            const selectedOnly = list.querySelector('[data-scope-selected-only]');
+
+            selectedOnly?.addEventListener('click', () => {
+                selectedOnly.setAttribute('aria-pressed', selectedOnly.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+                applyFilter(list);
+            });
+
+            /** The bulk controls act on what the filter is showing, never on what it hid. */
+            list.querySelector('[data-scope-select-all]')?.addEventListener('click', () => {
+                visibleBoxes(list).forEach((box) => {
+                    box.checked = true;
+                });
+
+                updateCount(list);
+                applyFilter(list);
+            });
+
+            list.querySelector('[data-scope-clear]')?.addEventListener('click', () => {
+                visibleBoxes(list).forEach((box) => {
+                    box.checked = false;
+                });
+
+                updateCount(list);
+                applyFilter(list);
+            });
+
+            list.addEventListener('change', (event) => {
+                if (event.target.matches('input[type="checkbox"]')) {
+                    updateCount(list);
+                }
+            });
+
+            updateCount(list);
+        });
+
+        level.addEventListener('change', showSelectedLevel);
+        showSelectedLevel();
+    });
+}
+
 function initializeInformationAdmin() {
     initializeInformationAdminTabs();
     initializeInformationLookupFilters();
@@ -303,6 +408,7 @@ function initializeInformationAdmin() {
     initializeInformationBrokerBranches();
     initializeInformationBrokerStalls();
     initializeInformationBrokerEmployees();
+    initializeInformationModeratorScope();
 }
 
 if (document.readyState === 'loading') {

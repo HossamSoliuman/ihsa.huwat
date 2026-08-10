@@ -27,7 +27,10 @@ class AppServiceProvider extends ServiceProvider
         Model::preventLazyLoading(! app()->isProduction());
 
         Gate::define('manage-master-data', fn ($user): bool => $user->role->code === 'super_admin');
-        Gate::define('manage-information-lookups', fn ($user): bool => in_array($user->role->code, ['super_admin', 'quality_supervisor'], true));
+        /** الإعدادات and the moderator accounts stay with the desk; the rest of the centre opens to moderators too, narrowed to what they were assigned. */
+        Gate::define('manage-information-lookups', fn ($user): bool => in_array($user->role->code, config('information.desk_roles'), true));
+        Gate::define('manage-information-moderators', fn ($user): bool => in_array($user->role->code, config('information.desk_roles'), true));
+        Gate::define('access-information-desk', fn ($user): bool => in_array($user->role->code, config('information.admin_roles'), true));
 
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
         RateLimiter::for('government-login', fn (Request $request) => Limit::perMinute(5)->by(

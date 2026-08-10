@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Information\Support\InformationScope;
 use App\Http\Controllers\InformationAdminController;
 use App\Http\Controllers\InformationBrokerController;
 use App\Http\Controllers\InformationDashboardController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\InformationLookupController;
 use App\Http\Controllers\InformationMarketController;
 use App\Http\Controllers\InformationMarketUnitController;
 use App\Http\Controllers\InformationMarketWorkerController;
+use App\Http\Controllers\InformationModeratorController;
 use App\Http\Controllers\InformationPortalController;
 use App\Http\Controllers\InformationPortController;
 use App\Http\Controllers\InformationStatusController;
@@ -26,41 +28,63 @@ $informationPortal = function (): void {
         Route::get('/submitted/{reference}', [InformationPortalController::class, 'submitted'])->name('submitted');
     });
 
+    /**
+     * The desk and its moderators share every route below. `information.scope` is what tells
+     * them apart: it names the section each route belongs to, refuses the sections a
+     * moderator's level does not answer for, and 404s any record outside the ones assigned.
+     */
     Route::prefix('/admin')
         ->name('admin.')
-        ->middleware(['auth', 'role:'.implode(',', config('information.desk_roles'))])
+        ->middleware(['auth', 'role:'.implode(',', config('information.admin_roles')), 'information.scope'])
         ->group(function (): void {
-            Route::get('/', [InformationAdminController::class, 'index'])->name('index');
             Route::get('/dashboard', InformationDashboardController::class)->name('dashboard');
 
+            /** المشرفون — accounts the desk opens, and the records each one is pinned to. */
+            Route::prefix('/moderators')
+                ->name('moderators.')
+                ->middleware('information.scope:'.InformationScope::MODERATORS)
+                ->whereNumber('moderator')
+                ->group(function (): void {
+                    Route::get('/', [InformationModeratorController::class, 'index'])->name('index');
+                    Route::get('/create', [InformationModeratorController::class, 'create'])->name('create');
+                    Route::post('/', [InformationModeratorController::class, 'store'])->name('store');
+                    Route::get('/{moderator}', [InformationModeratorController::class, 'show'])->name('show');
+                    Route::patch('/{moderator}', [InformationModeratorController::class, 'update'])->name('update');
+                    Route::delete('/{moderator}', [InformationModeratorController::class, 'destroy'])->name('destroy');
+                });
+
             /** Registered ahead of the "/{submission}" route so the desk keeps the shorter paths. */
-            Route::prefix('/lookups')->name('lookups.')->group(function (): void {
-                Route::get('/', [InformationLookupController::class, 'index'])->name('index');
+            Route::prefix('/lookups')
+                ->name('lookups.')
+                ->middleware('information.scope:'.InformationScope::SETTINGS)
+                ->group(function (): void {
+                    Route::get('/', [InformationLookupController::class, 'index'])->name('index');
 
-                /** Every option list owns a table, so the list being edited names itself in the path. */
-                Route::prefix('/lists/{list}')
-                    ->name('options.')
-                    ->whereIn('list', array_keys(LookupList::LISTS))
-                    ->group(function (): void {
-                        Route::post('/', [InformationLookupController::class, 'storeOption'])->name('store');
-                        Route::patch('/{option}', [InformationLookupController::class, 'updateOption'])->whereNumber('option')->name('update');
-                        Route::patch('/{option}/status', [InformationLookupController::class, 'toggleOption'])->whereNumber('option')->name('toggle');
-                        Route::delete('/{option}', [InformationLookupController::class, 'destroyOption'])->whereNumber('option')->name('destroy');
-                    });
+                    /** Every option list owns a table, so the list being edited names itself in the path. */
+                    Route::prefix('/lists/{list}')
+                        ->name('options.')
+                        ->whereIn('list', array_keys(LookupList::LISTS))
+                        ->group(function (): void {
+                            Route::post('/', [InformationLookupController::class, 'storeOption'])->name('store');
+                            Route::patch('/{option}', [InformationLookupController::class, 'updateOption'])->whereNumber('option')->name('update');
+                            Route::patch('/{option}/status', [InformationLookupController::class, 'toggleOption'])->whereNumber('option')->name('toggle');
+                            Route::delete('/{option}', [InformationLookupController::class, 'destroyOption'])->whereNumber('option')->name('destroy');
+                        });
 
-                Route::prefix('/references/{type}')
-                    ->name('references.')
-                    ->whereIn('type', array_keys(InformationLookupController::REFERENCES))
-                    ->group(function (): void {
-                        Route::post('/', [InformationLookupController::class, 'storeReference'])->name('store');
-                        Route::patch('/{record}/status', [InformationLookupController::class, 'toggleReference'])->whereNumber('record')->name('toggle');
-                        Route::delete('/{record}', [InformationLookupController::class, 'destroyReference'])->whereNumber('record')->name('destroy');
-                    });
-            });
+                    Route::prefix('/references/{type}')
+                        ->name('references.')
+                        ->whereIn('type', array_keys(InformationLookupController::REFERENCES))
+                        ->group(function (): void {
+                            Route::post('/', [InformationLookupController::class, 'storeReference'])->name('store');
+                            Route::patch('/{record}/status', [InformationLookupController::class, 'toggleReference'])->whereNumber('record')->name('toggle');
+                            Route::delete('/{record}', [InformationLookupController::class, 'destroyReference'])->whereNumber('record')->name('destroy');
+                        });
+                });
 
             /** الموانئ — a read-only profile per live port. */
             Route::prefix('/ports')
                 ->name('ports.')
+                ->middleware('information.scope:'.InformationScope::PORTS)
                 ->whereNumber('port')
                 ->group(function (): void {
                     Route::get('/', [InformationPortController::class, 'index'])->name('index');
@@ -73,6 +97,7 @@ $informationPortal = function (): void {
              */
             Route::prefix('/markets')
                 ->name('markets.')
+                ->middleware('information.scope:'.InformationScope::MARKETS)
                 ->scopeBindings()
                 ->whereNumber(['market', 'unit', 'worker'])
                 ->group(function (): void {
@@ -95,6 +120,7 @@ $informationPortal = function (): void {
             /** الدلالين — flat records, each attached to one market. */
             Route::prefix('/brokers')
                 ->name('brokers.')
+                ->middleware('information.scope:'.InformationScope::BROKERS)
                 ->whereNumber('broker')
                 ->group(function (): void {
                     Route::get('/', [InformationBrokerController::class, 'index'])->name('index');
@@ -105,9 +131,20 @@ $informationPortal = function (): void {
                     Route::delete('/{broker}', [InformationBrokerController::class, 'destroy'])->name('destroy');
                 });
 
-            Route::get('/{submission}', [InformationAdminController::class, 'show'])->name('show');
-            Route::patch('/{submission}/review', [InformationAdminController::class, 'review'])->name('review');
-            Route::get('/{submission}/documents/{category}', [InformationAdminController::class, 'document'])->name('documents.show');
+            /**
+             * الصيادين والبحارة. A moderator reads the submissions filed under the ports it
+             * holds; ruling on one stays with the desk, so the review route asks for a
+             * section no moderator level answers for.
+             */
+            Route::middleware('information.scope:'.InformationScope::SUBMISSIONS)->group(function (): void {
+                Route::get('/', [InformationAdminController::class, 'index'])->name('index');
+                Route::get('/{submission}', [InformationAdminController::class, 'show'])->name('show');
+                Route::get('/{submission}/documents/{category}', [InformationAdminController::class, 'document'])->name('documents.show');
+            });
+
+            Route::patch('/{submission}/review', [InformationAdminController::class, 'review'])
+                ->middleware('information.scope:'.InformationScope::REVIEW)
+                ->name('review');
         });
 };
 

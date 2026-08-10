@@ -40,7 +40,10 @@ class StoreFishMarketBrokerRequest extends ManageFishMarketRequest
     public function rules(): array
     {
         return [
-            'fish_market_id' => ['required', 'integer', Rule::exists(FishMarket::class, 'id')],
+            'fish_market_id' => [
+                'required', 'integer', Rule::exists(FishMarket::class, 'id'),
+                ...$this->scopedTo($this->informationScope()->marketIds()),
+            ],
             /** A دكة of the same market, and a دكة حراج rather than a محل. */
             'fish_market_unit_id' => ['nullable', 'integer', Rule::exists(FishMarketUnit::class, 'id')
                 ->where('fish_market_id', $this->input('fish_market_id'))
