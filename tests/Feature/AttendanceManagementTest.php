@@ -44,7 +44,7 @@ class AttendanceManagementTest extends TestCase
         $this->travelTo(today()->setTime(6, 10));
         $user = $this->hrManager();
         $assignment = EmployeeAssignment::factory()->create([
-            'shift_id' => Shift::query()->where('name', 'morning')->value('id'),
+            'shift_id' => Shift::query()->where('code', 'morning')->value('id'),
         ]);
 
         $this->actingAs($user)->post(route('dashboard.attendance.check-in', $assignment))->assertSessionHasNoErrors();

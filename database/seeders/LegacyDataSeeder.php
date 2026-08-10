@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class LegacyDataSeeder extends Seeder
 {
@@ -84,13 +85,21 @@ class LegacyDataSeeder extends Seeder
         $shiftIds = [];
 
         foreach ($shifts as $shift) {
+            $code = (string) $shift['name'];
+
             DB::table('shifts')->updateOrInsert(
-                ['name' => $shift['name']],
-                Arr::except($shift, ['id', 'name']),
+                ['code' => $code],
+                [
+                    ...Arr::except($shift, ['id', 'name']),
+                    'name' => (string) config('attendance.shifts.'.$code, $code),
+                    'crosses_midnight' => (string) $shift['end_time'] <= (string) $shift['start_time'],
+                    'grace_minutes' => 15,
+                    'is_active' => true,
+                ],
             );
 
             $shiftIds[(int) $shift['id']] = (int) DB::table('shifts')
-                ->where('name', $shift['name'])
+                ->where('code', $code)
                 ->value('id');
         }
 
@@ -263,23 +272,85 @@ class LegacyDataSeeder extends Seeder
         array $applicationIds,
     ): array {
         $employeeIds = [];
+        $nextEmployeeNumber = 1;
+        $nextContractNumber = 1;
 
         foreach ($employees as $employee) {
             $legacyEmployeeId = (int) $employee['id'];
-            $employee['user_id'] = $userIds[(int) $employee['user_id']];
-            $employee['employment_application_id'] = $this->mappedNullableId(
+            $userId = $userIds[(int) $employee['user_id']];
+            $applicationId = $this->mappedNullableId(
                 $applicationIds,
                 $employee['employment_application_id'],
             );
+            $application = $applicationId === null
+                ? null
+                : DB::table('employment_applications')->where('id', $applicationId)->first();
+            $employeeNumber = filled($employee['employee_number'])
+                ? (string) $employee['employee_number']
+                : $this->nextSeededNumber('employees', 'employee_number', (string) config('employment.employee_number_prefix', 'HWT'), $nextEmployeeNumber);
 
             DB::table('employees')->updateOrInsert(
-                ['user_id' => $employee['user_id']],
-                Arr::except($employee, ['id', 'user_id']),
+                ['user_id' => $userId],
+                [
+                    'employment_application_id' => $applicationId,
+                    'employee_number' => $employeeNumber,
+                    'national_id' => $employee['national_id'],
+                    'nationality' => $this->nationalityCode($application?->nationality),
+                    'date_of_birth' => $application?->birth_date,
+                    'gender' => $application?->gender,
+                    'phone' => $application?->mobile,
+                    'email' => $application?->email ?? DB::table('users')->where('id', $userId)->value('email'),
+                    'department_id' => $this->employmentLookupId('departments', $employee['department']),
+                    'job_title_id' => $this->employmentLookupId('job_titles', $employee['job_title']),
+                    'port_id' => $application?->preferred_port_id,
+                    'hire_date' => $employee['hire_date'],
+                    'status' => $employee['status'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
             );
 
             $employeeIds[$legacyEmployeeId] = (int) DB::table('employees')
-                ->where('user_id', $employee['user_id'])
+                ->where('user_id', $userId)
                 ->value('id');
+
+            $basicSalaryComponentId = (int) DB::table('salary_components')
+                ->where('code', 'basic')
+                ->value('id');
+            DB::table('employee_salary_components')->updateOrInsert(
+                [
+                    'employee_id' => $employeeIds[$legacyEmployeeId],
+                    'salary_component_id' => $basicSalaryComponentId,
+                    'effective_from' => $employee['hire_date'],
+                ],
+                [
+                    'amount' => $employee['base_salary'],
+                    'percentage' => null,
+                    'effective_to' => null,
+                    'created_by' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            );
+
+            $contractNumber = DB::table('employee_contracts')
+                ->where('employee_id', $employeeIds[$legacyEmployeeId])
+                ->value('contract_number')
+                ?? $this->nextSeededNumber('employee_contracts', 'contract_number', (string) config('employment.contract_number_prefix', 'HWT-C'), $nextContractNumber);
+
+            DB::table('employee_contracts')->updateOrInsert(
+                ['employee_id' => $employeeIds[$legacyEmployeeId], 'contract_number' => $contractNumber],
+                [
+                    'contract_type' => $employee['contract_type'],
+                    'start_date' => $employee['hire_date'],
+                    'end_date' => $employee['contract_end_date'],
+                    'working_hours_per_day' => 8,
+                    'working_days_per_week' => 6,
+                    'status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            );
         }
 
         return $employeeIds;
@@ -303,7 +374,68 @@ class LegacyDataSeeder extends Seeder
                 Arr::only($assignment, ['employee_id', 'assignment_date']),
                 Arr::except($assignment, ['id', 'employee_id', 'assignment_date']),
             );
+
+            DB::table('employees')
+                ->where('id', $assignment['employee_id'])
+                ->whereNull('port_id')
+                ->update(['port_id' => $assignment['port_id'], 'updated_at' => now()]);
         }
+    }
+
+    private function employmentLookupId(string $table, mixed $name): ?int
+    {
+        $name = trim((string) $name);
+
+        if ($name === '') {
+            return null;
+        }
+
+        $existingId = DB::table($table)->where('name', $name)->value('id');
+
+        if ($existingId !== null) {
+            return (int) $existingId;
+        }
+
+        $code = Str::of($name)->slug('_')->limit(60, '')->toString();
+
+        if ($code === '') {
+            $code = 'legacy_'.Str::substr(hash('sha256', $name), 0, 12);
+        }
+
+        return (int) DB::table($table)->insertGetId([
+            'code' => $code,
+            'name' => $name,
+            'sort_order' => (int) DB::table($table)->max('sort_order') + 10,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function nationalityCode(mixed $nationality): ?string
+    {
+        if ($nationality === null) {
+            return null;
+        }
+
+        $nationalities = (array) config('information.nationalities', []);
+
+        if (array_key_exists((string) $nationality, $nationalities)) {
+            return (string) $nationality;
+        }
+
+        $code = array_search((string) $nationality, $nationalities, true);
+
+        return $code === false ? null : (string) $code;
+    }
+
+    private function nextSeededNumber(string $table, string $column, string $prefix, int &$next): string
+    {
+        do {
+            $number = $prefix.'-'.str_pad((string) $next++, 5, '0', STR_PAD_LEFT);
+        } while (DB::table($table)->where($column, $number)->exists());
+
+        return $number;
     }
 
     /**

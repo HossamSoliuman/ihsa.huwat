@@ -6,7 +6,8 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\EmployeeAssignment;
 use App\Models\Leave;
-use App\Models\Payroll;
+use App\Models\PayrollRun;
+use App\Models\PayrollRunEmployee;
 use App\Models\Port;
 use App\Models\Role;
 use App\Models\User;
@@ -32,8 +33,9 @@ class EmploymentProfileTest extends TestCase
         $port = Port::factory()->create(['name' => 'ميناء ملفي']);
         EmployeeAssignment::factory()->create(['employee_id' => $employee->id, 'port_id' => $port->id]);
         Attendance::factory()->create(['employee_id' => $employee->id, 'status' => 'late']);
-        Payroll::factory()->create(['employee_id' => $employee->id, 'net_salary' => 8123]);
-        Payroll::factory()->create(['employee_id' => $otherEmployee->id, 'net_salary' => 99999]);
+        $run = PayrollRun::factory()->create(['status' => PayrollRun::STATUS_APPROVED, 'run_number' => 'PR-PROFILE']);
+        PayrollRunEmployee::factory()->for($run, 'payrollRun')->for($employee)->create(['employee_name' => $user->full_name, 'net_salary' => 8123]);
+        PayrollRunEmployee::factory()->for($run, 'payrollRun')->for($otherEmployee)->create(['employee_name' => $otherEmployee->user->full_name, 'net_salary' => 99999]);
 
         $this->actingAs($user)->get(route('dashboard.profile.show'))
             ->assertOk()->assertSee($user->full_name)->assertSee($port->name)

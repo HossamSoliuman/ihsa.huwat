@@ -1,15 +1,58 @@
 @extends('layouts.dashboard')
-@section('title','الموارد البشرية')
+
+@section('title', 'الموارد البشرية')
+
 @section('content')
 <div class="employment-admin-shell">
-<section class="employment-admin-hero"><div><span class="employment-eyebrow">WORKFORCE CONTROL</span><h2>إدارة الموارد البشرية</h2><p>الموظفون والعقود والإجازات والتكليفات اليومية في مساحة عمل موحدة.</p></div></section>
-<section class="employment-kpis"><article><span>إجمالي الموظفين</span><strong>{{ $kpi['total'] }}</strong></article><article><span>النشطون</span><strong>{{ $kpi['active'] }}</strong></article><article><span>عقود دائمة</span><strong>{{ $kpi['permanent'] }}</strong></article><article><span>عقود مؤقتة</span><strong>{{ $kpi['temporary'] }}</strong></article><article><span>عقود قاربت الانتهاء</span><strong>{{ $kpi['expiring'] }}</strong></article><article><span>في إجازة</span><strong>{{ $kpi['on_leave'] }}</strong></article><article><span>إجازات معلقة</span><strong>{{ $kpi['pending_leaves'] }}</strong></article><article><span>جدد هذا الشهر</span><strong>{{ $kpi['new_this_month'] }}</strong></article></section>
-<div class="grid-2">
-<section class="panel master-data-editor"><h3>إضافة موظف</h3><form method="post" action="{{ route('dashboard.hr.employees.store') }}" class="master-data-form">@csrf<label>الاسم<input name="full_name" required></label><label>اسم المستخدم<input name="username" dir="ltr" required></label><label>كلمة المرور<input type="password" name="password" required></label><label>تأكيدها<input type="password" name="password_confirmation" required></label><label>تاريخ التعيين<input type="date" name="hire_date" value="{{ today()->toDateString() }}" required></label><label>نوع العقد<select name="contract_type"><option value="permanent">دائم</option><option value="temporary">مؤقت</option></select></label><label>نهاية العقد<input type="date" name="contract_end_date"></label><button class="btn btn-primary" type="submit">إنشاء الحساب</button></form></section>
-<section class="panel master-data-editor"><h3>تكليف موظف</h3><form method="post" action="{{ route('dashboard.hr.assignments.store') }}" class="master-data-form">@csrf<label>الموظف<select name="employee_id">@foreach($assignableEmployees as $employee)<option value="{{ $employee->id }}">{{ $employee->user->full_name }}</option>@endforeach</select></label><label>الميناء<select name="port_id">@foreach($ports as $port)<option value="{{ $port->id }}">{{ $port->name }}</option>@endforeach</select></label><label>المناوبة<select name="shift_id">@foreach($shifts as $shift)<option value="{{ $shift->id }}">{{ config("attendance.shifts.{$shift->name}") }}</option>@endforeach</select></label><label>التاريخ<input type="date" name="assignment_date" value="{{ today()->toDateString() }}"></label><button class="btn btn-primary" type="submit">تنفيذ التكليف</button></form></section>
-</div>
-<section class="panel employment-list-panel"><header class="employment-section-heading"><div><span>EMPLOYEE DIRECTORY</span><h3>قائمة الموظفين</h3></div><small>{{ $employees->count() }} موظف</small></header><div class="employment-table-wrap"><table><thead><tr><th>الاسم</th><th>المستخدم</th><th>التعيين</th><th>العقد</th><th>النهاية</th><th>الحالة</th><th>ميناء اليوم</th></tr></thead><tbody>@forelse($employees as $employee)<tr><td>{{ $employee->user->full_name }}</td><td dir="ltr">{{ $employee->user->username }}</td><td>{{ $employee->hire_date?->format('Y/m/d') ?? '—' }}</td><td>{{ $employee->contract_type === 'permanent' ? 'دائم' : 'مؤقت' }}</td><td>{{ $employee->contract_end_date?->format('Y/m/d') ?? '—' }}</td><td>{{ config("attendance.statuses.{$employee->status}", $employee->status) }}</td><td>{{ $employee->assignments->first()?->port?->name ?? '—' }}</td></tr>@empty<tr><td colspan="7">لا يوجد موظفون.</td></tr>@endforelse</tbody></table></div></section>
-<div class="grid-2"><section class="panel"><h3>العقود القريبة من الانتهاء</h3><table><thead><tr><th>الموظف</th><th>النهاية</th><th>المتبقي</th></tr></thead><tbody>@forelse($expiringContracts as $employee)<tr><td>{{ $employee->user->full_name }}</td><td>{{ $employee->contract_end_date->format('Y/m/d') }}</td><td>{{ today()->diffInDays($employee->contract_end_date) }} يوم</td></tr>@empty<tr><td colspan="3">لا توجد عقود قريبة.</td></tr>@endforelse</tbody></table></section><section class="panel"><h3>التوزيع الجغرافي اليوم</h3><table><thead><tr><th>المنطقة</th><th>المحافظة</th><th>الميناء</th><th>الموظفون</th></tr></thead><tbody>@forelse($byGeo as $row)<tr><td>{{ $row['port']->governorate->region->name }}</td><td>{{ $row['port']->governorate->name }}</td><td>{{ $row['port']->name }}</td><td>{{ $row['employees_count'] }}</td></tr>@empty<tr><td colspan="4">لا توجد تكليفات اليوم.</td></tr>@endforelse</tbody></table></section></div>
-<section class="panel employment-list-panel"><header class="employment-section-heading"><div><span>LEAVE QUEUE</span><h3>طلبات الإجازة المعلقة</h3></div></header><div class="employment-table-wrap"><table><thead><tr><th>الموظف</th><th>من</th><th>إلى</th><th>السبب</th><th>الإجراء</th></tr></thead><tbody>@forelse($pendingLeaves as $leave)<tr><td>{{ $leave->employee->user->full_name }}</td><td>{{ $leave->start_date->format('Y/m/d') }}</td><td>{{ $leave->end_date->format('Y/m/d') }}</td><td>{{ $leave->reason ?? '—' }}</td><td><div class="row-actions"><form method="post" action="{{ route('dashboard.hr.leaves.review',$leave) }}">@csrf @method('PATCH')<input type="hidden" name="decision" value="approved"><button class="btn btn-primary btn-sm">اعتماد</button></form><form method="post" action="{{ route('dashboard.hr.leaves.review',$leave) }}">@csrf @method('PATCH')<input type="hidden" name="decision" value="rejected"><button class="btn btn-outline btn-sm">رفض</button></form></div></td></tr>@empty<tr><td colspan="5">لا توجد طلبات معلقة.</td></tr>@endforelse</tbody></table></div></section>
+    <header class="employee-page-head">
+        <div><span class="employment-eyebrow">HR / OVERVIEW</span><h1>الموارد البشرية</h1></div>
+        <div class="employee-head-actions"><a class="btn btn-outline" href="{{ route('dashboard.hr.settings.index') }}">الإعدادات</a><a class="btn btn-primary" href="{{ route('dashboard.hr.employees.index') }}">الموظفون</a></div>
+    </header>
+
+    <section class="employment-kpis" aria-label="مؤشرات الموارد البشرية">
+        <article><span>إجمالي الموظفين</span><strong>{{ $kpi['total'] }}</strong></article>
+        <article><span>النشطون</span><strong>{{ $kpi['active'] }}</strong></article>
+        <article><span>عقود دائمة</span><strong>{{ $kpi['permanent'] }}</strong></article>
+        <article><span>عقود مؤقتة</span><strong>{{ $kpi['temporary'] }}</strong></article>
+        <article><span>عقود قاربت الانتهاء</span><strong>{{ $kpi['expiring'] }}</strong></article>
+        <article><span>في إجازة</span><strong>{{ $kpi['on_leave'] }}</strong></article>
+        <article><span>إجازات معلقة</span><strong>{{ $kpi['pending_leaves'] }}</strong></article>
+        <article><span>جدد هذا الشهر</span><strong>{{ $kpi['new_this_month'] }}</strong></article>
+    </section>
+
+    <div class="grid-2">
+        <section class="panel">
+            <header class="employment-section-heading"><div><span>CONTRACT WATCH</span><h3>العقود القريبة من الانتهاء</h3></div></header>
+            <div class="employment-table-wrap"><table><thead><tr><th>الموظف</th><th>رقم العقد</th><th>النهاية</th><th>المتبقي</th></tr></thead><tbody>
+            @forelse($expiringContracts as $employee)
+                <tr><td><a href="{{ route('dashboard.hr.employees.show', $employee) }}">{{ $employee->user->full_name }}</a></td><td dir="ltr">{{ $employee->activeContract->contract_number }}</td><td>{{ $employee->activeContract->end_date->format('Y-m-d') }}</td><td>{{ today()->diffInDays($employee->activeContract->end_date) }} يوم</td></tr>
+            @empty
+                <tr><td colspan="4">لا توجد عقود قريبة.</td></tr>
+            @endforelse
+            </tbody></table></div>
+        </section>
+
+        <section class="panel">
+            <header class="employment-section-heading"><div><span>LEAVE QUEUE</span><h3>الإجازات المعلقة</h3></div></header>
+            <div class="employment-table-wrap"><table><thead><tr><th>الموظف</th><th>البداية</th><th>النهاية</th></tr></thead><tbody>
+            @forelse($pendingLeaves as $leave)
+                <tr><td>{{ $leave->employee->user->full_name }}</td><td>{{ $leave->start_date->format('Y-m-d') }}</td><td>{{ $leave->end_date->format('Y-m-d') }}</td></tr>
+            @empty
+                <tr><td colspan="3">لا توجد إجازات معلقة.</td></tr>
+            @endforelse
+            </tbody></table></div>
+        </section>
+    </div>
+
+    <section class="panel employment-list-panel">
+        <header class="employment-section-heading"><div><span>DAILY PLACEMENT</span><h3>التوزيع الجغرافي اليوم</h3></div></header>
+        <div class="employment-table-wrap"><table><thead><tr><th>المنطقة</th><th>المحافظة</th><th>الميناء</th><th>الموظفون</th></tr></thead><tbody>
+        @forelse($byGeo as $row)
+            <tr><td>{{ $row['port']->governorate->region->name }}</td><td>{{ $row['port']->governorate->name }}</td><td>{{ $row['port']->name }}</td><td>{{ $row['employees_count'] }}</td></tr>
+        @empty
+            <tr><td colspan="4">لا توجد تكليفات اليوم.</td></tr>
+        @endforelse
+        </tbody></table></div>
+    </section>
 </div>
 @endsection

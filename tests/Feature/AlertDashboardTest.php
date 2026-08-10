@@ -94,7 +94,7 @@ class AlertDashboardTest extends TestCase
     {
         $port = Port::factory()->create();
         $user = $this->superAdmin();
-        $shift = Shift::query()->where('name', 'morning')->firstOrFail();
+        $shift = Shift::query()->where('code', 'morning')->firstOrFail();
         $employee = Employee::factory()->create();
         EmployeeAssignment::factory()->create([
             'employee_id' => $employee->id,

@@ -1490,3 +1490,362 @@
 }
 /* Preserve administrator-authored line breaks without rendering raw HTML. */
 .preserve-lines { white-space: pre-line; }
+
+/* Employment settings — compact personnel registry */
+.employment-settings {
+    --settings-card: color-mix(in srgb, var(--bg) 66%, transparent);
+    --settings-rule: color-mix(in srgb, var(--line) 76%, transparent);
+    width: min(100%, 1480px);
+    margin-inline: auto;
+}
+
+.employment-settings-head {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: end;
+    gap: 14px 22px;
+    min-height: 112px;
+    padding: 26px 30px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    background:
+        linear-gradient(90deg, transparent 0 72%, rgba(var(--accent-rgb), .08) 72% 72.15%, transparent 72.15%),
+        repeating-linear-gradient(135deg, transparent 0 18px, rgba(var(--accent-rgb), .025) 18px 19px),
+        var(--panel);
+}
+
+.employment-settings-head::after {
+    content: '';
+    position: absolute;
+    inset-inline-end: 28px;
+    bottom: 27px;
+    width: 94px;
+    height: 1px;
+    background: var(--accent);
+    box-shadow: 22px -8px 0 -0.5px var(--accent), 42px -16px 0 -0.5px var(--accent);
+    opacity: .55;
+}
+
+.employment-settings-head h1 {
+    margin: 0;
+    font: 700 var(--text-page-title)/1.35 'Noto Kufi Arabic', 'Tajawal', sans-serif;
+    letter-spacing: -.025em;
+}
+
+.employment-settings-index {
+    align-self: center;
+    padding: 7px 10px 5px;
+    color: var(--accent);
+    border: 1px solid rgba(var(--accent-rgb), .48);
+    font: 600 .7rem/1 'Chakra Petch', monospace;
+    letter-spacing: .12em;
+}
+
+.employment-settings-tabs {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(132px, 1fr));
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    scrollbar-width: thin;
+}
+
+.employment-settings-tabs a {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 55px;
+    padding: 12px 16px;
+    color: var(--muted);
+    border-inline-start: 1px solid var(--line);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color .18s ease, background .18s ease;
+}
+
+.employment-settings-tabs a:last-child { border-inline-start: 0; }
+.employment-settings-tabs a:hover { color: var(--ink); background: var(--panel-hover); }
+.employment-settings-tabs a.is-active { color: var(--ink); background: var(--accent-soft); }
+.employment-settings-tabs a.is-active::after { content: ''; position: absolute; inset-inline: 14px; bottom: 0; height: 2px; background: var(--accent); }
+.employment-settings-tabs a span { color: var(--faint); font: 600 .7rem/1 'Chakra Petch', monospace; }
+.employment-settings-tabs a.is-active span { color: var(--accent); }
+
+.employment-settings-card {
+    margin-top: 22px;
+    border: 1px solid var(--line);
+    background: var(--settings-card);
+    box-shadow: inset 3px 0 0 rgba(var(--accent-rgb), .32);
+}
+
+.employment-settings-card > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: 68px;
+    padding: 17px 22px;
+    border-bottom: 1px solid var(--line);
+}
+
+.employment-settings-card > header h2 { margin: 0; font-size: var(--text-section-title); }
+.employment-settings-card > header > span { min-width: 58px; padding: 6px 9px; color: var(--accent); border: 1px solid rgba(var(--accent-rgb), .36); text-align: center; font: 600 .75rem/1 'Chakra Petch', monospace; }
+
+.employment-settings-create {
+    display: grid;
+    grid-template-columns: minmax(240px, 520px) auto;
+    align-items: end;
+    justify-content: start;
+    gap: 12px;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(90deg, rgba(var(--accent-rgb), .045), transparent 50%);
+}
+
+.employment-settings-create label { display: grid; gap: 7px; color: var(--muted); font-size: var(--text-small); font-weight: 600; }
+.employment-settings-create .btn { min-height: 42px; }
+.employment-settings-table-wrap { overflow-x: auto; }
+.employment-settings-table { width: 100%; min-width: 760px; border-collapse: collapse; }
+.employment-settings-table.is-behavioural { min-width: 1040px; }
+.employment-settings-table th { padding: 12px 14px; color: var(--muted); border-bottom: 1px solid var(--line); background: rgba(0, 0, 0, .06); font-size: var(--text-caption); text-align: right; white-space: nowrap; }
+.employment-settings-table td { padding: 12px 14px; border-bottom: 1px solid var(--settings-rule); vertical-align: middle; }
+.employment-settings-table tbody tr:last-child td { border-bottom: 0; }
+.employment-settings-table tbody tr { transition: background .16s ease, opacity .16s ease; }
+.employment-settings-table tbody tr:hover { background: var(--panel-hover); }
+.employment-settings-table tbody tr.is-retired { opacity: .62; }
+.employment-settings-table input:not([type='checkbox']),
+.employment-settings-table select,
+.employment-settings-create input {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 10px;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 0;
+    outline: 0;
+    background: rgba(0, 0, 0, .08);
+    font: inherit;
+}
+
+.employment-settings-table input:focus,
+.employment-settings-table select:focus,
+.employment-settings-create input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .12); }
+.employment-settings-table input.is-order { width: 86px; text-align: center; }
+.employment-settings-table td > code { display: block; width: max-content; margin-top: 5px; color: var(--faint); font: 500 .7rem/1.2 'Chakra Petch', monospace; }
+
+.employment-settings-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 70px;
+    color: var(--muted);
+    font-size: var(--text-caption);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.employment-settings-state::before { content: ''; width: 7px; height: 7px; border: 1px solid currentColor; transform: rotate(45deg); }
+.employment-settings-state[data-tone='active'] { color: var(--success); }
+.employment-settings-state[data-tone='retired'] { color: var(--warning); }
+.employment-settings-actions { display: flex; align-items: center; gap: 5px; }
+.employment-settings-actions button { min-height: 31px; padding: 5px 9px; color: var(--muted); border: 1px solid var(--line); border-radius: 0; background: transparent; font: 600 var(--text-caption)/1 'Tajawal', sans-serif; cursor: pointer; white-space: nowrap; }
+.employment-settings-actions button:hover { color: var(--ink); border-color: var(--line-strong); background: var(--panel-hover); }
+.employment-settings-actions button.is-danger { color: var(--danger); }
+.employment-settings-check { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.employment-settings-check input { accent-color: var(--accent); }
+.employment-settings-unit { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: var(--text-caption); white-space: nowrap; }
+.employment-settings-empty { height: 110px; color: var(--muted); text-align: center; }
+
+@media (max-width: 1050px) {
+    .employment-settings-tabs { grid-template-columns: repeat(6, minmax(160px, 1fr)); }
+}
+
+@media (max-width: 680px) {
+    .employment-settings-head { min-height: 94px; padding: 20px; }
+    .employment-settings-head::after { display: none; }
+    .employment-settings-create { grid-template-columns: 1fr; }
+    .employment-settings-create .btn { width: 100%; }
+    .employment-settings-card > header { padding-inline: 16px; }
+}
+
+/* Employee registry — restrained personnel ledger */
+.employee-directory,
+.employee-editor-page,
+.employee-profile-page { width: min(100%, 1480px); margin-inline: auto; }
+
+.employee-page-head,
+.employee-profile-head {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+    min-height: 112px;
+    padding: 24px 28px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: repeating-linear-gradient(135deg, transparent 0 21px, rgba(var(--accent-rgb), .026) 21px 22px), var(--panel);
+}
+
+.employee-page-head::after,
+.employee-profile-head::after { content: ''; position: absolute; inset-inline-end: 0; bottom: 0; width: 34%; height: 2px; background: linear-gradient(90deg, transparent, var(--accent)); opacity: .7; }
+.employee-page-head h1,
+.employee-profile-head h1 { margin: 4px 0 0; font: 700 var(--text-page-title)/1.3 'Noto Kufi Arabic', 'Tajawal', sans-serif; }
+.employee-head-actions { display: flex; gap: 8px; }
+.employee-directory-card { margin-top: 22px; padding: 0; overflow: hidden; }
+.employee-directory-filters { display: grid; grid-template-columns: minmax(230px, 1.4fr) repeat(3, minmax(140px, 1fr)); gap: 13px; padding: 20px 22px; border-bottom: 1px solid var(--line); background: linear-gradient(90deg, rgba(var(--accent-rgb), .045), transparent 55%); }
+.employee-directory-filters label,
+.employee-create-form label,
+.employee-contract-form label { display: grid; gap: 7px; color: var(--muted); font-size: var(--text-small); font-weight: 600; }
+.employee-directory-filters input,
+.employee-directory-filters select,
+.employee-create-form input,
+.employee-create-form select,
+.employee-contract-form input,
+.employee-contract-form select,
+.employee-contract-form textarea { width: 100%; min-height: 42px; color: var(--ink); border: 1px solid var(--line); border-radius: 0; outline: 0; background: rgba(0, 0, 0, .07); }
+.employee-directory-filters :is(input, select):focus,
+.employee-create-form :is(input, select):focus,
+.employee-contract-form :is(input, select, textarea):focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .11); }
+.employee-filter-actions { display: flex; align-items: end; gap: 8px; }
+.employee-table-head { display: flex; align-items: center; justify-content: space-between; min-height: 65px; padding: 15px 22px; border-bottom: 1px solid var(--line); }
+.employee-table-head h2 { margin: 0; font-size: var(--text-section-title); }
+.employee-table-head span,
+.employee-contract-card > header > span { min-width: 46px; padding: 6px 9px; color: var(--accent); border: 1px solid rgba(var(--accent-rgb), .36); text-align: center; font: 600 .75rem/1 'Chakra Petch', monospace; }
+.employee-directory-table { width: 100%; min-width: 1080px; border-collapse: collapse; }
+.employee-directory-table th,
+.employee-contract-card th { padding: 12px 15px; color: var(--muted); border-bottom: 1px solid var(--line); background: rgba(0, 0, 0, .05); font-size: var(--text-caption); text-align: right; white-space: nowrap; }
+.employee-directory-table td,
+.employee-contract-card td { padding: 14px 15px; border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
+.employee-directory-table tbody tr:hover { background: var(--panel-hover); }
+.employee-name-link { display: grid; gap: 4px; color: var(--ink); text-decoration: none; }
+.employee-name-link small { color: var(--accent); font: 500 .72rem/1 'Chakra Petch', monospace; }
+.employee-row-arrow { display: grid; width: 31px; height: 31px; place-items: center; color: var(--accent); border: 1px solid var(--line); text-decoration: none; }
+.employee-state { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: var(--text-caption); font-weight: 700; white-space: nowrap; }
+.employee-state::before { content: ''; width: 7px; height: 7px; border: 1px solid currentColor; transform: rotate(45deg); }
+.employee-state[data-state='active'] { color: var(--success); }
+.employee-state[data-state='draft'], .employee-state[data-state='inactive'], .employee-state[data-state='expired'] { color: var(--warning); }
+.employee-state[data-state='terminated'], .employee-state[data-state='suspended'] { color: var(--danger); }
+.employee-empty { height: 120px; color: var(--muted); text-align: center; }
+
+.employee-form-card { margin-top: 22px; padding: 24px; border-inline-start: 3px solid rgba(var(--accent-rgb), .5); }
+.employee-create-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 16px; }
+.employee-form-actions { display: flex; align-items: end; gap: 8px; grid-column: 1 / -1; padding-top: 7px; }
+
+.employee-profile-head { justify-content: start; }
+.employee-profile-head > .btn { margin-inline-start: auto; }
+.employee-profile-mark { display: grid; flex: 0 0 62px; height: 62px; place-items: center; color: var(--accent); border: 1px solid rgba(var(--accent-rgb), .55); background: var(--accent-soft); font: 700 1.5rem/1 'Noto Kufi Arabic', sans-serif; }
+.employee-profile-title { display: grid; gap: 2px; }
+.employee-profile-title > span { color: var(--accent); font: 600 .7rem/1 'Chakra Petch', monospace; letter-spacing: .11em; }
+.employee-profile-title p { margin: 0; color: var(--muted); }
+.employee-profile-tabs { display: flex; overflow-x: auto; border: 1px solid var(--line); border-top: 0; background: var(--panel); }
+.employee-profile-tabs :is(a, span) { position: relative; min-width: max-content; padding: 16px 18px; color: var(--faint); border-inline-start: 1px solid var(--line); text-decoration: none; font-size: var(--text-small); font-weight: 700; }
+.employee-profile-tabs a { color: var(--muted); }
+.employee-profile-tabs a:hover, .employee-profile-tabs a.is-active { color: var(--ink); background: var(--accent-soft); }
+.employee-profile-tabs a.is-active::after { content: ''; position: absolute; inset-inline: 12px; bottom: 0; height: 2px; background: var(--accent); }
+.employee-profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 22px; }
+.employee-profile-card { padding: 0; overflow: hidden; }
+.employee-profile-card > header,
+.employee-contract-card > header,
+.employee-contract-form-card > header { min-height: 62px; padding: 17px 20px; border-bottom: 1px solid var(--line); }
+.employee-profile-card h2,
+.employee-contract-card h2,
+.employee-contract-form-card h2 { margin: 0; font-size: var(--text-section-title); }
+.employee-profile-card dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+.employee-profile-card dl div { min-height: 82px; padding: 16px 19px; border-bottom: 1px solid var(--line); border-inline-start: 1px solid var(--line); }
+.employee-profile-card dt { color: var(--muted); font-size: var(--text-caption); }
+.employee-profile-card dd { margin: 7px 0 0; color: var(--ink); font-weight: 700; }
+.employee-contract-card,
+.employee-contract-form-card { margin-top: 18px; padding: 0; }
+.employee-contract-card > header { display: flex; align-items: center; justify-content: space-between; }
+.employee-contract-card table { width: 100%; min-width: 920px; border-collapse: collapse; }
+.employee-contract-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 20px; }
+.employee-contract-form textarea { min-height: 84px; padding: 10px; resize: vertical; }
+.employee-contract-form .is-wide { grid-column: span 2; }
+.employee-salary-card { display: grid; grid-template-columns: 1fr auto auto; align-items: baseline; gap: 10px; margin-top: 18px; padding: 24px; border-inline-start: 3px solid var(--accent); }
+.employee-salary-card span { color: var(--muted); font-weight: 700; }
+.employee-salary-card strong { font: 700 2rem/1 'Chakra Petch', monospace; }
+.employee-salary-card small { color: var(--accent); }
+
+@media (max-width: 1100px) {
+    .employee-directory-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .employee-directory-filters .is-search { grid-column: span 2; }
+    .employee-create-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+    .employee-page-head, .employee-profile-head { align-items: flex-start; flex-wrap: wrap; padding: 20px; }
+    .employee-head-actions { width: 100%; }
+    .employee-directory-filters, .employee-create-form, .employee-contract-form, .employee-profile-grid { grid-template-columns: 1fr; }
+    .employee-directory-filters .is-search, .employee-contract-form .is-wide { grid-column: auto; }
+    .employee-profile-head > .btn { margin-inline-start: 0; }
+    .employee-profile-card dl { grid-template-columns: 1fr; }
+}
+
+.employee-finance-section { margin-top: 18px; overflow: hidden; border: 1px solid var(--line); background: var(--panel); }
+.employee-finance-heading { min-height: 108px; padding: 22px 25px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--line); background: linear-gradient(120deg, rgba(217, 168, 78, .12), transparent 42%); }
+.employee-finance-heading span { color: #d9a84e; font: 600 .65rem/1 'Chakra Petch', monospace; letter-spacing: .14em; }
+.employee-finance-heading h2 { margin: 8px 0 0; font-size: var(--text-section-title); }
+.employee-finance-heading > strong { color: #d9a84e; font: 700 2rem/1 'Chakra Petch', monospace; }
+.employee-finance-heading > strong small { color: var(--muted); font: 700 .7rem/1 'Tajawal', sans-serif; }
+.employee-salary-components { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); }
+.employee-salary-components article { min-height: 112px; padding: 19px; background: var(--panel); border-top: 2px solid transparent; }
+.employee-salary-components article:first-child { border-top-color: #d9a84e; }
+.employee-salary-components span, .employee-salary-components small { display: block; color: var(--muted); font-size: var(--text-caption); }
+.employee-salary-components strong { display: block; margin: 14px 0 8px; color: var(--ink); font: 700 1.15rem/1 'Chakra Petch', monospace; }
+.employee-finance-form-card, .employee-finance-table-card, .employee-audit-card { margin-top: 18px; padding: 0; overflow: hidden; }
+.employee-finance-form-card > header, .employee-finance-table-card > header, .employee-audit-card > header { min-height: 62px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.employee-finance-form-card h2, .employee-finance-table-card h2, .employee-audit-card h2 { margin: 0; font-size: var(--text-section-title); }
+.employee-finance-table-card > header > span, .employee-audit-card > header > span { min-width: 42px; padding: 6px; color: var(--accent); border: 1px solid rgba(var(--accent-rgb), .3); text-align: center; font: 600 .7rem/1 'Chakra Petch', monospace; }
+.employee-finance-table-card table { width: 100%; min-width: 780px; border-collapse: collapse; }
+.employee-finance-table-card th { padding: 11px 14px; color: var(--muted); background: rgba(0, 0, 0, .05); border-bottom: 1px solid var(--line); font-size: var(--text-caption); text-align: right; }
+.employee-finance-table-card td { padding: 13px 14px; color: var(--muted); border-bottom: 1px solid var(--line); font-size: var(--text-small); }
+.employee-finance-table-card td strong { color: #d9a84e; font-family: 'Chakra Petch', monospace; }
+.employee-salary-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); }
+.employee-salary-form-grid form { padding: 19px; display: grid; align-content: start; gap: 11px; background: var(--panel); }
+.employee-salary-form-grid h3 { margin: 0 0 5px; color: var(--ink); font-size: var(--text-body); }
+.employee-salary-form-grid label, .employee-single-form label { display: grid; gap: 6px; color: var(--muted); font-size: var(--text-caption); font-weight: 700; }
+.employee-salary-form-grid input, .employee-salary-form-grid textarea, .employee-single-form input, .employee-single-form select, .employee-single-form textarea { width: 100%; min-height: 40px; padding: 8px 10px; color: var(--ink); background: rgba(0, 0, 0, .07); border: 1px solid var(--line); outline: 0; }
+.employee-salary-form-grid textarea, .employee-single-form textarea { min-height: 74px; resize: vertical; }
+.employee-finance-split { display: grid; grid-template-columns: minmax(310px, .8fr) minmax(0, 1.6fr); gap: 18px; }
+.employee-single-form { padding: 20px; display: grid; gap: 13px; }
+.employee-inline-fields { display: grid; grid-template-columns: 1fr 100px; gap: 7px; }
+.employee-loan-list details { border-bottom: 1px solid var(--line); }
+.employee-loan-list summary { padding: 16px 19px; display: grid; grid-template-columns: 1fr auto auto; gap: 14px; align-items: center; cursor: pointer; list-style: none; }
+.employee-loan-list summary b { color: var(--accent); font: 600 .72rem/1 'Chakra Petch', monospace; }
+.employee-loan-list summary span { color: var(--ink); font: 700 .82rem/1 'Chakra Petch', monospace; }
+.employee-loan-list summary em { padding: 5px 8px; color: #d9a84e; border: 1px solid rgba(217, 168, 78, .35); font-size: var(--text-caption); font-style: normal; }
+.employee-loan-list details > div { padding: 0 19px 18px; }
+.employee-loan-list p { color: var(--muted); }
+.employee-loan-list ol { margin: 12px 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; list-style: none; }
+.employee-loan-list li { padding: 10px; display: grid; gap: 5px; border: 1px solid var(--line); }
+.employee-loan-list li span, .employee-loan-list li small { color: var(--muted); font-size: var(--text-caption); }
+.employee-loan-list li strong { font: 600 .8rem/1 'Chakra Petch', monospace; }
+.employee-audit-card ol { margin: 0; padding: 0; list-style: none; }
+.employee-audit-card li { padding: 13px 19px; display: grid; grid-template-columns: 145px 180px minmax(150px, 1fr); gap: 12px; color: var(--muted); border-bottom: 1px solid var(--line); font-size: var(--text-caption); }
+.employee-audit-card time { direction: ltr; text-align: right; font-family: 'Chakra Petch', monospace; }
+.employee-audit-card strong { color: var(--ink); }
+.employee-audit-card p { grid-column: 2/-1; margin: 0; color: var(--faint); }
+.employee-bank-layout { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(320px, 1.2fr); }
+.employee-bank-layout > dl { margin: 0; padding: 20px; display: grid; align-content: start; gap: 1px; background: var(--line); }
+.employee-bank-layout > dl div { padding: 15px; background: var(--panel); }
+.employee-bank-layout dt { color: var(--muted); font-size: var(--text-caption); }
+.employee-bank-layout dd { margin: 7px 0 0; color: var(--ink); font-weight: 700; }
+
+@media (max-width: 1100px) {
+    .employee-salary-components { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .employee-salary-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .employee-finance-split { grid-template-columns: 1fr; }
+    .employee-bank-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+    .employee-finance-heading { align-items: flex-start; flex-direction: column; }
+    .employee-salary-components, .employee-salary-form-grid { grid-template-columns: 1fr; }
+    .employee-loan-list summary, .employee-audit-card li { grid-template-columns: 1fr; }
+    .employee-loan-list ol { grid-template-columns: 1fr 1fr; }
+    .employee-audit-card p { grid-column: auto; }
+}

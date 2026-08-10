@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\PayrollRun;
 use App\Models\User;
 
 class BuildEmploymentProfileAction
@@ -11,12 +12,21 @@ class BuildEmploymentProfileAction
     public function execute(User $user): array
     {
         $employee = Employee::query()->with([
+            'department:id,name',
+            'jobTitle:id,name',
+            'manager.user:id,full_name',
+            'port:id,name,location_name',
+            'activeContract',
             'employmentApplication.job.port:id,name,location_name',
             'employmentApplication.preferredPort:id,name,location_name',
             'assignments' => fn ($query) => $query->with('port:id,name,location_name', 'shift:id,name,start_time,end_time')
                 ->whereDate('assignment_date', today())->latest('id'),
             'attendance' => fn ($query) => $query->with('shift:id,name,start_time,end_time')->latest('attendance_date')->latest('id')->limit(10),
-            'payroll' => fn ($query) => $query->orderByDesc('period_year')->orderByDesc('period_month')->latest('id')->limit(1),
+            'payrollRunEmployees' => fn ($query) => $query
+                ->with(['payrollRun', 'items'])
+                ->whereHas('payrollRun', fn ($query) => $query->whereIn('status', [PayrollRun::STATUS_APPROVED, PayrollRun::STATUS_PAID, PayrollRun::STATUS_CLOSED]))
+                ->latest('id')
+                ->limit(24),
             'leaves' => fn ($query) => $query->latest()->limit(10),
         ])->where('user_id', $user->id)->first();
         $attendanceSummary = null;
@@ -34,7 +44,8 @@ class BuildEmploymentProfileAction
             'application' => $employee?->employmentApplication,
             'assignment' => $employee?->assignments->first(),
             'recentAttendance' => $employee?->attendance ?? collect(),
-            'latestPayroll' => $employee?->payroll->first(),
+            'latestPayroll' => $employee?->payrollRunEmployees->first(),
+            'payrollHistory' => $employee?->payrollRunEmployees ?? collect(),
             'leaveHistory' => $employee?->leaves ?? collect(),
             'attendanceSummary' => $attendanceSummary,
         ];

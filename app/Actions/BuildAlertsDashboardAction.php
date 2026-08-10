@@ -4,8 +4,8 @@ namespace App\Actions;
 
 use App\Models\Attendance;
 use App\Models\CatchDetail;
-use App\Models\Employee;
 use App\Models\EmployeeAssignment;
+use App\Models\EmployeeContract;
 use App\Models\Port;
 use App\Models\Trip;
 use App\Models\TripDiscrepancy;
@@ -207,13 +207,14 @@ class BuildAlertsDashboardAction
     /** @param Collection<int, array{type: string, message: string, severity: string, time: mixed}> $alerts */
     private function addContractAlerts(Collection $alerts): void
     {
-        Employee::query()->with('user:id,full_name')->whereNotNull('contract_end_date')
-            ->whereBetween('contract_end_date', [today(), today()->addDays(config('alerts.contract_expiry_days'))])->get()
-            ->each(fn (Employee $employee) => $alerts->push($this->alert(
+        EmployeeContract::query()->with('employee.user:id,full_name')->where('status', 'active')
+            ->whereNotNull('end_date')
+            ->whereBetween('end_date', [today(), today()->addDays(config('alerts.contract_expiry_days'))])->get()
+            ->each(fn (EmployeeContract $contract) => $alerts->push($this->alert(
                 'عقد قرب من الانتهاء',
-                "عقد الموظف {$employee->user->full_name} ينتهي بتاريخ {$employee->contract_end_date->format('Y-m-d')}",
+                "عقد الموظف {$contract->employee->user->full_name} ينتهي بتاريخ {$contract->end_date->format('Y-m-d')}",
                 'warning',
-                $employee->contract_end_date,
+                $contract->end_date,
             )));
     }
 

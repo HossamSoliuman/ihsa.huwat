@@ -8,8 +8,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\FilterEmploymentApplicationsRequest;
 use App\Http\Requests\ProvisionEmployeeAccountRequest;
 use App\Http\Requests\ReviewEmploymentApplicationRequest;
+use App\Models\Department;
+use App\Models\Employee;
 use App\Models\EmploymentApplication;
 use App\Models\EmploymentJob;
+use App\Models\JobTitle;
 use App\Models\Port;
 use App\Models\Shift;
 use Illuminate\Contracts\View\View;
@@ -60,9 +63,11 @@ class EmploymentApplicationController extends Controller
         return view('dashboard.recruitment.applications.show', [
             'application' => $application,
             'ports' => Port::query()->with('governorate')->where('is_active', true)->orderBy('name')->get(),
-            'shifts' => Shift::query()->orderBy('start_time')->get(),
+            'shifts' => Shift::query()->active()->orderBy('start_time')->get(),
+            'departments' => Department::query()->where('is_active', true)->ordered()->get(),
+            'jobTitles' => JobTitle::query()->where('is_active', true)->ordered()->get(),
+            'managers' => Employee::query()->with('user:id,full_name')->whereIn('status', ['active', 'on_leave'])->orderBy('employee_number')->get(),
             'suggestedUsername' => strlen($suggestedUsername) >= 4 ? substr($suggestedUsername, 0, 100) : 'employee.'.$application->id,
-            'suggestedEmployeeNumber' => 'EMP-'.now()->year.'-'.str_pad((string) $application->id, 6, '0', STR_PAD_LEFT),
         ]);
     }
 
@@ -77,7 +82,7 @@ class EmploymentApplicationController extends Controller
     public function provision(ProvisionEmployeeAccountRequest $request, EmploymentApplication $application, ProvisionEmployeeAccountAction $action): RedirectResponse
     {
         $data = $request->validated();
-        $employee = $action->execute($application, $data, $request->user());
+        $employee = $action->execute($application, $data, $request->user(), $request->ip());
 
         return to_route('dashboard.applications.show', $application)
             ->with('status', 'تم إنشاء حساب الموظف وربطه بطلب التوظيف.')

@@ -75,7 +75,7 @@ class BuildCoverageDashboardAction
         }
 
         $regions = Region::query()->when($user->role->code === 'region_manager', fn (Builder $query) => $query->whereKey($user->region_id))->orderBy('name')->get(['id', 'name']);
-        $shifts = Shift::query()->orderBy('start_time')->get();
+        $shifts = Shift::query()->active()->orderBy('start_time')->get();
         $employees = Employee::query()->with('user:id,full_name')->where('status', 'active')
             ->whereDoesntHave('assignments', fn ($query) => $query->whereDate('assignment_date', today()))->get()->sortBy('user.full_name')->values();
 

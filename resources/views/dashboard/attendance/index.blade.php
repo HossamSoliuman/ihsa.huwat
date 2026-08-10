@@ -39,7 +39,7 @@
                 @php($assignment = $row['assignment']) @php($attendance = $row['attendance'])
                 <tr>
                     <td><strong>{{ $assignment->employee->user->full_name }}</strong>@if($assignment->is_temporary)<small class="substitute-mark">موظف بديل</small>@endif</td>
-                    <td><strong>{{ $assignment->port->name }}</strong><small>{{ config("attendance.shifts.{$assignment->shift->name}") }} · {{ $assignment->shift->start_time }}—{{ $assignment->shift->end_time }}</small></td>
+                    <td><strong>{{ $assignment->port->name }}</strong><small>{{ $assignment->shift->name }} · {{ $assignment->shift->start_time }}—{{ $assignment->shift->end_time }}</small></td>
                     <td><span class="attendance-state state-{{ $attendance?->status ?? 'pending' }}">{{ $attendance ? config("attendance.statuses.{$attendance->status}") : 'لم يبدأ' }}</span></td>
                     <td dir="ltr">{{ $attendance?->check_in?->format('H:i') ?? '—' }}</td>
                     <td dir="ltr">{{ $attendance?->check_out?->format('H:i') ?? '—' }}</td>
@@ -51,7 +51,7 @@
                             <form method="post" action="{{ route('dashboard.attendance.check-out', $assignment) }}">@csrf<button type="submit">انصراف</button></form>
                         @endif
                         @if(!$attendance)
-                            <form method="post" action="{{ route('dashboard.attendance.shift.update', $assignment) }}" class="shift-swap">@csrf @method('PATCH')<select name="shift_id">@foreach($shifts as $shift)<option value="{{ $shift->id }}" @selected($assignment->shift_id === $shift->id)>{{ config("attendance.shifts.{$shift->name}") }}</option>@endforeach</select><button type="submit">تبديل</button></form>
+                            <form method="post" action="{{ route('dashboard.attendance.shift.update', $assignment) }}" class="shift-swap">@csrf @method('PATCH')<select name="shift_id">@foreach($shifts as $shift)<option value="{{ $shift->id }}" @selected($assignment->shift_id === $shift->id)>{{ $shift->name }}</option>@endforeach</select><button type="submit">تبديل</button></form>
                         @endif
                     </div></td>
                 </tr>
@@ -65,7 +65,7 @@
             <header><div><span>COVERAGE GAPS</span><h2>فجوات التغطية</h2></div><b>{{ $coverageGaps->count() }}</b></header>
             <div class="coverage-list">
             @forelse($coverageGaps as $gap)
-                <article><div><strong>{{ $gap['port']->name }}</strong><small>{{ config("attendance.shifts.{$gap['shift']->name}") }}</small></div>
+                <article><div><strong>{{ $gap['port']->name }}</strong><small>{{ $gap['shift']->name }}</small></div>
                     <form method="post" action="{{ route('dashboard.attendance.substitutes.store') }}">@csrf<input type="hidden" name="date" value="{{ $filters['date'] }}"><input type="hidden" name="port_id" value="{{ $gap['port']->id }}"><input type="hidden" name="shift_id" value="{{ $gap['shift']->id }}"><select name="employee_id" required><option value="">اختر بديلاً</option>@foreach($employees as $employee)<option value="{{ $employee->id }}">{{ $employee->user->full_name }}</option>@endforeach</select><button class="btn btn-primary btn-sm" type="submit">تعيين</button></form>
                 </article>
             @empty<div class="attendance-clear">✓ لا توجد فجوات تغطية في النطاق المحدد.</div>@endforelse
@@ -75,7 +75,7 @@
         <section class="attendance-roster compact-panel">
             <header><div><span>EXCEPTIONS</span><h2>البدلاء والتأخير</h2></div></header>
             <div class="exception-columns">
-                <div><h3>الموظفون البدلاء</h3>@forelse($substituteRows as $row)<p><strong>{{ $row['assignment']->employee->user->full_name }}</strong><span>{{ $row['assignment']->port->name }} · {{ config("attendance.shifts.{$row['assignment']->shift->name}") }}</span></p>@empty<small>لا يوجد بدلاء بهذا التاريخ.</small>@endforelse</div>
+                <div><h3>الموظفون البدلاء</h3>@forelse($substituteRows as $row)<p><strong>{{ $row['assignment']->employee->user->full_name }}</strong><span>{{ $row['assignment']->port->name }} · {{ $row['assignment']->shift->name }}</span></p>@empty<small>لا يوجد بدلاء بهذا التاريخ.</small>@endforelse</div>
                 <div><h3>حالات التأخير</h3>@forelse($lateRows as $row)<p><strong>{{ $row['assignment']->employee->user->full_name }}</strong><span dir="ltr">{{ $row['attendance']->check_in->format('H:i') }}</span></p>@empty<small>لا توجد حالات تأخير.</small>@endforelse</div>
             </div>
         </section>

@@ -48,7 +48,7 @@ class BuildPortOperationsAction
             'counting' => $arrivedTrips->where('status', 'counting')->count(), 'pending_review' => $reviewTrips->count(),
             'average_wait' => $waitTimes->isEmpty() ? 0 : (int) round($waitTimes->average()),
         ];
-        $shifts = Shift::query()->orderBy('start_time')->get();
+        $shifts = Shift::query()->active()->orderBy('start_time')->get();
         $employees = Employee::query()->with('user:id,full_name')->where('status', 'active')
             ->whereDoesntHave('assignments', fn ($query) => $query->whereDate('assignment_date', today()))
             ->get()->sortBy('user.full_name')->values();

@@ -8,8 +8,15 @@ use App\Http\Controllers\Dashboard\BoatController;
 use App\Http\Controllers\Dashboard\CaptainController;
 use App\Http\Controllers\Dashboard\CoverageController;
 use App\Http\Controllers\Dashboard\DiscrepancyController;
+use App\Http\Controllers\Dashboard\EmployeeBankDetailsController;
+use App\Http\Controllers\Dashboard\EmployeeContractController;
+use App\Http\Controllers\Dashboard\EmployeeController;
+use App\Http\Controllers\Dashboard\EmployeeDocumentController;
+use App\Http\Controllers\Dashboard\EmployeeExportController;
+use App\Http\Controllers\Dashboard\EmployeeLoanController;
 use App\Http\Controllers\Dashboard\EmployeeOperationsController;
 use App\Http\Controllers\Dashboard\EmployeePerformanceController;
+use App\Http\Controllers\Dashboard\EmployeeSalaryController;
 use App\Http\Controllers\Dashboard\EmploymentApplicationController as DashboardEmploymentApplicationController;
 use App\Http\Controllers\Dashboard\EmploymentAttachmentController;
 use App\Http\Controllers\Dashboard\EmploymentJobController;
@@ -26,8 +33,12 @@ use App\Http\Controllers\Dashboard\HarborLicenseController;
 use App\Http\Controllers\Dashboard\HarborViolationController;
 use App\Http\Controllers\Dashboard\HarborWorkerController;
 use App\Http\Controllers\Dashboard\HumanResourcesController;
+use App\Http\Controllers\Dashboard\HumanResourcesSettingsController;
 use App\Http\Controllers\Dashboard\MasterDataController;
-use App\Http\Controllers\Dashboard\PayrollController;
+use App\Http\Controllers\Dashboard\PayrollAdjustmentController;
+use App\Http\Controllers\Dashboard\PayrollRunController;
+use App\Http\Controllers\Dashboard\PayrollRunEmployeeController;
+use App\Http\Controllers\Dashboard\PayslipController;
 use App\Http\Controllers\Dashboard\PortController;
 use App\Http\Controllers\Dashboard\PortOperationsController;
 use App\Http\Controllers\Dashboard\RegionController;
@@ -95,17 +106,69 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('/dashboard/hr')->name('dashboard.hr.')->middleware('role:super_admin,hr_manager')->group(function () {
         Route::get('/', [HumanResourcesController::class, 'index'])->name('index');
-        Route::post('/employees', [HumanResourcesController::class, 'store'])->name('employees.store');
+        Route::prefix('/settings')
+            ->name('settings.')
+            ->whereIn('list', ['departments', 'job_titles', 'banks'])
+            ->whereNumber(['option', 'leaveType', 'salaryComponent', 'shift'])
+            ->group(function () {
+                Route::get('/', [HumanResourcesSettingsController::class, 'index'])->name('index');
+                Route::post('/lists/{list}', [HumanResourcesSettingsController::class, 'storeOption'])->name('options.store');
+                Route::patch('/lists/{list}/{option}', [HumanResourcesSettingsController::class, 'updateOption'])->name('options.update');
+                Route::patch('/lists/{list}/{option}/status', [HumanResourcesSettingsController::class, 'toggleOption'])->name('options.toggle');
+                Route::delete('/lists/{list}/{option}', [HumanResourcesSettingsController::class, 'destroyOption'])->name('options.destroy');
+                Route::patch('/leave-types/{leaveType}', [HumanResourcesSettingsController::class, 'updateLeaveType'])->name('leave-types.update');
+                Route::patch('/leave-types/{leaveType}/status', [HumanResourcesSettingsController::class, 'toggleLeaveType'])->name('leave-types.toggle');
+                Route::patch('/salary-components/{salaryComponent}', [HumanResourcesSettingsController::class, 'updateSalaryComponent'])->name('salary-components.update');
+                Route::patch('/salary-components/{salaryComponent}/status', [HumanResourcesSettingsController::class, 'toggleSalaryComponent'])->name('salary-components.toggle');
+                Route::patch('/shifts/{shift}', [HumanResourcesSettingsController::class, 'updateShift'])->name('shifts.update');
+                Route::patch('/shifts/{shift}/status', [HumanResourcesSettingsController::class, 'toggleShift'])->name('shifts.toggle');
+            });
         Route::post('/assignments', [HumanResourcesController::class, 'assign'])->name('assignments.store');
         Route::patch('/leaves/{leave}', [HumanResourcesController::class, 'review'])->name('leaves.review');
     });
 
+    Route::prefix('/dashboard/hr/employees')
+        ->name('dashboard.hr.employees.')
+        ->middleware('role:super_admin,hr_manager,finance_officer')
+        ->group(function () {
+            Route::get('/', [EmployeeController::class, 'index'])->name('index');
+            Route::get('/export', EmployeeExportController::class)->middleware('throttle:20,1')->name('export');
+            Route::get('/create', [EmployeeController::class, 'create'])->middleware('role:super_admin,hr_manager')->name('create');
+            Route::post('/', [EmployeeController::class, 'store'])->middleware('role:super_admin,hr_manager')->name('store');
+            Route::get('/{employee}', [EmployeeController::class, 'show'])->name('show');
+            Route::patch('/{employee}', [EmployeeController::class, 'update'])->middleware('role:super_admin,hr_manager')->name('update');
+            Route::post('/{employee}/contracts', [EmployeeContractController::class, 'store'])->middleware('role:super_admin,hr_manager')->name('contracts.store');
+            Route::post('/{employee}/contracts/renew', [EmployeeContractController::class, 'renew'])->middleware('role:super_admin,hr_manager')->name('contracts.renew');
+            Route::post('/{employee}/salary/{salaryComponent}', [EmployeeSalaryController::class, 'store'])->middleware('role:super_admin,hr_manager')->name('salary.store');
+            Route::patch('/{employee}/bank-details', [EmployeeBankDetailsController::class, 'update'])->middleware('role:super_admin,hr_manager')->name('bank-details.update');
+            Route::post('/{employee}/documents', [EmployeeDocumentController::class, 'store'])->middleware('role:super_admin,hr_manager')->name('documents.store');
+            Route::get('/{employee}/documents/{employeeDocument}', [EmployeeDocumentController::class, 'download'])->name('documents.download');
+            Route::post('/{employee}/adjustments', [PayrollAdjustmentController::class, 'store'])->name('adjustments.store');
+            Route::post('/{employee}/loans', [EmployeeLoanController::class, 'store'])->name('loans.store');
+        });
+
+    Route::get('/dashboard/hr/adjustments', [PayrollAdjustmentController::class, 'index'])
+        ->middleware('role:super_admin,hr_manager,finance_officer')->name('dashboard.hr.adjustments.index');
+    Route::get('/dashboard/hr/loans', [EmployeeLoanController::class, 'index'])
+        ->middleware('role:super_admin,hr_manager,finance_officer')->name('dashboard.hr.loans.index');
+
     Route::prefix('/dashboard/payroll')->name('dashboard.payroll.')->middleware('role:super_admin,finance_officer,hr_manager')->group(function () {
-        Route::get('/', [PayrollController::class, 'index'])->name('index');
-        Route::post('/runs', [PayrollController::class, 'generate'])->name('generate');
-        Route::put('/{payroll}', [PayrollController::class, 'update'])->name('update');
-        Route::patch('/{payroll}/payment', [PayrollController::class, 'pay'])->name('pay');
+        Route::get('/', [PayrollRunController::class, 'index'])->name('index');
+        Route::post('/runs', [PayrollRunController::class, 'store'])->name('runs.store');
+        Route::get('/runs/{payrollRun}', [PayrollRunController::class, 'show'])->name('runs.show');
+        Route::get('/runs/{payrollRun}/employees/{payrollRunEmployee}', [PayrollRunEmployeeController::class, 'show'])->name('runs.employees.show');
+        Route::post('/runs/{payrollRun}/calculate', [PayrollRunController::class, 'calculate'])->name('runs.calculate');
+        Route::post('/runs/{payrollRun}/approve', [PayrollRunController::class, 'approve'])->name('runs.approve');
+        Route::post('/runs/{payrollRun}/paid', [PayrollRunController::class, 'markPaid'])->name('runs.paid');
+        Route::post('/runs/{payrollRun}/close', [PayrollRunController::class, 'close'])->name('runs.close');
+        Route::delete('/runs/{payrollRun}', [PayrollRunController::class, 'destroy'])->name('runs.destroy');
+        Route::post('/adjustments/{payrollAdjustment}/approve', [PayrollAdjustmentController::class, 'approve'])->name('adjustments.approve');
+        Route::post('/loans/{employeeLoan}/approve', [EmployeeLoanController::class, 'approve'])->name('loans.approve');
     });
+
+    Route::get('/dashboard/payslips/{payrollRunEmployee}', PayslipController::class)
+        ->middleware('role:super_admin,finance_officer,hr_manager,employee_portal')
+        ->name('dashboard.payslips.show');
 
     Route::prefix('/dashboard/employee-operations')->name('dashboard.employee-operations.')->middleware('role:stat_employee')->group(function () {
         Route::get('/', [EmployeeOperationsController::class, 'index'])->name('index');

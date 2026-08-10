@@ -31,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('manage-information-lookups', fn ($user): bool => in_array($user->role->code, config('information.desk_roles'), true));
         Gate::define('manage-information-moderators', fn ($user): bool => in_array($user->role->code, config('information.desk_roles'), true));
         Gate::define('access-information-desk', fn ($user): bool => in_array($user->role->code, config('information.admin_roles'), true));
+        Gate::define('manage-human-resources-settings', fn ($user): bool => in_array($user->role->code, ['super_admin', 'hr_manager'], true));
 
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
         RateLimiter::for('government-login', fn (Request $request) => Limit::perMinute(5)->by(
