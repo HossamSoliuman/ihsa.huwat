@@ -39,6 +39,11 @@ class InfoPortalTest extends TestCase
         $this->get(self::PORTAL.'/admin/geo')->assertOk();
     }
 
+    public function test_an_unknown_tab_is_not_found_rather_than_an_error(): void
+    {
+        $this->get(self::PORTAL.'/admin/no-such-tab')->assertNotFound();
+    }
+
     public function test_the_ministry_dashboard_answers_on_the_main_host(): void
     {
         $this->get(self::MINISTRY.'/')->assertOk();

@@ -46,7 +46,8 @@ use Illuminate\Support\Facades\Route;
 $infoPortal = function (): void {
     Route::get('/', [AdminController::class, 'index'])->name('admin.index');
 
-    Route::prefix('admin')->name('admin.')->group(function (): void {
+    // تبويب مجهول يُردّ بـ 404 من الموجّه بدل أن يصل إلى السجل فيرمي استثناءً.
+    Route::prefix('admin')->name('admin.')->whereIn('tab', array_keys(config('info.tabs')))->group(function (): void {
         Route::get('{tab}', [AdminController::class, 'show'])->name('tab');
 
         Route::post('{tab}/{resource}', [AdminResourceController::class, 'store'])->name('resource.store');
