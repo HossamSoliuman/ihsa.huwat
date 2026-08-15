@@ -1,9 +1,0 @@
-@props(['harbor', 'worker', 'typeLabels', 'statusLabels'])
-<form method="post" action="{{ $worker ? route('dashboard.harbors.workers.update', [$harbor, $worker]) : route('dashboard.harbors.workers.store', $harbor) }}" class="harbor-form-grid">
-    @csrf @if($worker) @method('PUT') @endif
-    <label>اسم العامل<input name="employee_name" value="{{ old('employee_name', $worker?->employee_name) }}" maxlength="150" required></label><label>رقم الهوية<input name="identity_number" maxlength="100" placeholder="{{ $worker ? 'اتركه فارغًا للإبقاء على القيمة المحمية' : '' }}"></label>
-    <label>الجنسية<select name="nationality"><option value="saudi" @selected(old('nationality', $worker?->nationality ?? 'saudi') === 'saudi')>سعودي</option><option value="non_saudi" @selected(old('nationality', $worker?->nationality) === 'non_saudi')>غير سعودي</option></select></label>
-    <label>الفئة<select name="worker_type">@foreach($typeLabels as $value => $label)<option value="{{ $value }}" @selected(old('worker_type', $worker?->worker_type ?? 'fisherman') === $value)>{{ $label }}</option>@endforeach</select></label>
-    <label>الجوال<input name="mobile_number" value="{{ old('mobile_number', $worker?->mobile_number) }}" maxlength="30" dir="ltr"></label><label>الحالة<select name="employment_status">@foreach($statusLabels as $value => $label)<option value="{{ $value }}" @selected(old('employment_status', $worker?->employment_status ?? 'active') === $value)>{{ $label }}</option>@endforeach</select></label><label>تاريخ البداية<input type="date" name="start_date" value="{{ old('start_date', $worker?->start_date?->format('Y-m-d')) }}"></label><label>تاريخ النهاية<input type="date" name="end_date" value="{{ old('end_date', $worker?->end_date?->format('Y-m-d')) }}"></label>
-    <button class="btn btn-primary" type="submit">{{ $worker ? 'حفظ التعديل' : 'إضافة العامل' }}</button>
-</form>
