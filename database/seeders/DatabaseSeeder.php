@@ -11,7 +11,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             GeographicSeeder::class,
             FleetSeeder::class,
-            SeasonsAndMarketsSeeder::class,
+            SeasonsSeeder::class,
+            OperationsSeeder::class,
+            MarketsSeeder::class,
             GovernanceSeeder::class,
             SystemSeeder::class,
         ]);

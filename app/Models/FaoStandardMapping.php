@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class FaoStandardMapping extends MasterDataModel
+class FaoStandardMapping extends BaseModel
 {
     protected $casts = [
         'valid_from' => 'date',

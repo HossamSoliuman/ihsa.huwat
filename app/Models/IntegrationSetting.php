@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class IntegrationSetting extends MasterDataModel
+class IntegrationSetting extends BaseModel
 {
     protected $casts = [
         'enabled' => 'boolean',

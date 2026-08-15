@@ -68,13 +68,13 @@ class AdminResourceController extends Controller
     private function log(string $action, string $resource, int|string|null $id): void
     {
         AuditLog::create([
+            'user_email' => request()->user()?->email ?? 'system',
+            'role' => request()->user()?->role ?? 'admin',
             'action' => $action,
             'entity' => class_basename($this->registry->resource($resource)['model']),
-            'entity_id' => (string) $id,
-            'user' => request()->user()?->email ?? 'system',
-            'user_role' => request()->user()?->role ?? 'admin',
+            'record_label' => (string) $id,
             'details' => "{$action} سجل في {$this->registry->resource($resource)['title']}",
-            'timestamp' => now(),
+            'ip' => request()->ip(),
         ]);
     }
 

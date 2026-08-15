@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
-class Market extends MasterDataModel
+class Market extends BaseModel
 {
+    public function auctions()
+    {
+        return $this->hasMany(MarketAuction::class);
+    }
 }

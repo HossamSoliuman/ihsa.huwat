@@ -2,6 +2,6 @@
 
 namespace App\Models;
 
-class BusinessGlossaryTerm extends MasterDataModel
+class BusinessGlossaryTerm extends BaseModel
 {
 }

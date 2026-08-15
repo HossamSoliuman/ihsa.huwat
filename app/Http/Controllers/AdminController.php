@@ -68,7 +68,7 @@ class AdminController extends Controller
         return [
             'view' => 'admin.panels.integration',
             'provider' => $provider,
-            'config' => config("hawat.integrations.{$provider}"),
+            'config' => config("info.integrations.{$provider}"),
             'setting' => IntegrationSetting::firstOrNew(['provider' => $provider]),
         ];
     }

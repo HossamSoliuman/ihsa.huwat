@@ -2,11 +2,6 @@
 
 namespace App\Models;
 
-class GearType extends MasterDataModel
+class GearType extends BaseModel
 {
-    protected $casts = [
-        'min_mesh_size_mm' => 'float',
-        'selective' => 'boolean',
-        'active' => 'boolean',
-    ];
 }

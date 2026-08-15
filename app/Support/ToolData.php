@@ -44,9 +44,10 @@ class ToolData
                 ->orderByDesc('total_catch_tons')
                 ->get(['name', 'ports_count', 'total_catch_tons', 'active_boats', 'active_fishers']),
             'ports' => Port::query()
+                ->with('governorate.region')
                 ->orderByDesc('total_catch_tons')
                 ->limit(10)
-                ->get(['name', 'region', 'boats_count', 'monthly_trips', 'total_catch_tons']),
+                ->get(['id', 'governorate_id', 'name', 'boats_count', 'monthly_trips', 'total_catch_tons']),
         ];
     }
 
@@ -55,14 +56,14 @@ class ToolData
         return [
             'targets' => [
                 ['label' => 'المناطق', 'count' => Region::count(), 'columns' => 'name, code, coast_length_km, ports_count'],
-                ['label' => 'المحافظات', 'count' => Governorate::count(), 'columns' => 'name, region, coastal, ports_count'],
-                ['label' => 'الموانئ', 'count' => Port::count(), 'columns' => 'name, code, region, governorate, lat, lng, status'],
-                ['label' => 'مواقع الصيد', 'count' => FishingSite::count(), 'columns' => 'name, region, nearest_port, depth_m, pressure_level'],
+                ['label' => 'المحافظات', 'count' => Governorate::count(), 'columns' => 'name, code, region_id, coastal, ports_count'],
+                ['label' => 'الموانئ', 'count' => Port::count(), 'columns' => 'name, code, governorate_id, lat, lng, status'],
+                ['label' => 'مواقع الصيد', 'count' => FishingSite::count(), 'columns' => 'name, port_id, site_type, depth_m, pressure_level'],
                 ['label' => 'الأنواع السمكية', 'count' => Species::count(), 'columns' => 'code, name_ar, name_sci, name_en, category'],
-                ['label' => 'القوارب', 'count' => Boat::count(), 'columns' => 'name, boat_number, port, captain, license_number'],
-                ['label' => 'الصيادون', 'count' => Fisher::count(), 'columns' => 'name, national_id, port, boat, role'],
+                ['label' => 'القوارب', 'count' => Boat::count(), 'columns' => 'name, boat_number, port_id, captain, license_number'],
+                ['label' => 'الصيادون', 'count' => Fisher::count(), 'columns' => 'name, national_id, port_id, boat_id, role'],
                 ['label' => 'الأسواق', 'count' => Market::count(), 'columns' => 'name, region, governorate, market_type'],
-                ['label' => 'المزادات', 'count' => MarketAuction::count(), 'columns' => 'market, date, species, sold_kg, avg_price'],
+                ['label' => 'المزادات', 'count' => MarketAuction::count(), 'columns' => 'market_id, auction_date, species_id, quantity_sold_kg, avg_price_per_kg'],
             ],
         ];
     }

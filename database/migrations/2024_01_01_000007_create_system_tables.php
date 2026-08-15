@@ -10,38 +10,33 @@ return new class extends Migration
     {
         Schema::create('user_permissions', function (Blueprint $table) {
             $table->id();
-            $table->string('user_email');
-            $table->string('full_name')->nullable();
+            $table->string('user_email')->unique();
             $table->string('role')->default('user');
-            $table->string('scope_level')->default('المملكة');
             $table->string('region')->nullable();
             $table->string('governorate')->nullable();
             $table->string('port')->nullable();
-            $table->boolean('can_approve')->default(false);
-            $table->boolean('can_export')->default(false);
             $table->boolean('active')->default(true);
-            $table->text('notes')->nullable();
             $table->timestamps();
         });
 
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->id();
+            $table->string('user_email')->nullable();
+            $table->string('role')->nullable();
             $table->string('action');
-            $table->string('entity');
-            $table->string('entity_id')->nullable();
-            $table->string('user')->nullable();
-            $table->string('user_role')->nullable();
+            $table->string('entity')->nullable();
+            $table->string('record_label')->nullable();
             $table->text('details')->nullable();
-            $table->timestamp('timestamp')->nullable();
+            $table->string('ip')->nullable();
             $table->timestamps();
         });
 
         Schema::create('ui_translations', function (Blueprint $table) {
             $table->id();
-            $table->text('source_ar');
-            $table->text('target_en')->nullable();
+            $table->string('key')->unique();
+            $table->text('ar');
+            $table->text('en')->nullable();
             $table->string('context')->nullable();
-            $table->string('status')->default('مترجم');
             $table->timestamps();
         });
 

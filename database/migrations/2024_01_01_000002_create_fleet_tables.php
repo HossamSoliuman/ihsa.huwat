@@ -10,25 +10,23 @@ return new class extends Migration
     {
         Schema::create('species', function (Blueprint $table) {
             $table->id();
-            $table->unsignedInteger('code')->nullable();
-            $table->string('name_ar');
+            $table->unsignedInteger('code')->nullable()->unique();
+            $table->string('name_ar')->unique();
             $table->string('name_sci')->nullable();
-            $table->string('corrected_name_sci')->nullable();
             $table->string('name_en')->nullable();
+            $table->string('corrected_name_sci')->nullable();
             $table->string('name_local_gulf')->nullable();
             $table->string('name_local_red_sea')->nullable();
-            $table->string('record_type')->nullable();
-            $table->string('image_url')->nullable();
+            $table->string('record_type')->default('نوع سمك');
             $table->string('category')->default('أسماك');
-            $table->decimal('avg_weight_kg', 8, 3)->nullable();
+            $table->decimal('avg_weight_kg', 8, 2)->nullable();
             $table->decimal('avg_length_cm', 8, 2)->nullable();
             $table->string('season')->nullable();
             $table->string('regions')->nullable();
-            $table->decimal('catch_kg', 12, 2)->default(0);
+            $table->decimal('catch_kg', 14, 2)->default(0);
             $table->unsignedInteger('trips_count')->default(0);
             $table->unsignedInteger('boats_count')->default(0);
             $table->string('top_port')->nullable();
-            $table->decimal('trend', 8, 2)->nullable();
             $table->string('status')->default('مستقر');
             $table->string('directory_status')->default('نشط');
             $table->string('review_status')->nullable();
@@ -42,67 +40,50 @@ return new class extends Migration
 
         Schema::create('gear_types', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->unique();
             $table->string('code')->nullable();
             $table->string('category')->nullable();
-            $table->string('isscfg_code')->nullable();
-            $table->decimal('min_mesh_size_mm', 8, 2)->nullable();
-            $table->boolean('selective')->default(true);
-            $table->boolean('active')->default(true);
-            $table->text('notes')->nullable();
+            $table->string('selectivity')->nullable();
+            $table->string('status')->default('نشط');
             $table->timestamps();
         });
 
         Schema::create('boats', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('port_id')->constrained()->cascadeOnDelete();
             $table->string('name');
-            $table->string('boat_number')->nullable();
-            $table->string('port')->nullable();
-            $table->string('region')->nullable();
-            $table->string('governorate')->nullable();
-            $table->string('captain')->nullable();
+            $table->string('boat_number')->unique();
             $table->string('boat_type')->nullable();
-            $table->decimal('length_m', 8, 2)->nullable();
-            $table->unsignedInteger('crew_capacity')->default(0);
-            $table->string('license_type')->nullable();
-            $table->string('license_number')->nullable();
-            $table->date('license_expiry')->nullable();
+            $table->decimal('length_m', 6, 2)->nullable();
+            $table->string('owner')->nullable();
+            $table->string('captain')->nullable();
+            $table->unsignedInteger('crew_count')->default(0);
+            $table->decimal('total_catch_kg', 14, 2)->default(0);
             $table->string('license_status')->default('سارية');
-            $table->unsignedInteger('trips_count')->default(0);
-            $table->decimal('total_catch_kg', 12, 2)->default(0);
-            $table->unsignedInteger('violations_count')->default(0);
             $table->string('status')->default('نشط');
+            $table->unsignedInteger('violations_count')->default(0);
             $table->timestamps();
         });
 
         Schema::create('fishers', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('port_id')->constrained()->cascadeOnDelete();
             $table->string('name');
-            $table->string('national_id')->nullable();
-            $table->string('phone')->nullable();
-            $table->string('role')->default('صياد');
-            $table->string('port')->nullable();
-            $table->string('region')->nullable();
-            $table->string('governorate')->nullable();
-            $table->string('boat')->nullable();
+            $table->string('national_id')->unique();
             $table->string('license_number')->nullable();
-            $table->date('license_expiry')->nullable();
-            $table->unsignedInteger('experience_years')->default(0);
-            $table->unsignedInteger('trips_count')->default(0);
+            $table->string('license_status')->default('سارية');
+            $table->string('role')->default('صياد');
+            $table->string('phone')->nullable();
             $table->string('status')->default('نشط');
             $table->timestamps();
         });
 
         Schema::create('statistics_officers', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('port_id')->constrained()->cascadeOnDelete();
             $table->string('name');
-            $table->string('employee_number')->nullable();
-            $table->string('email')->nullable();
-            $table->string('phone')->nullable();
-            $table->string('port')->nullable();
-            $table->string('region')->nullable();
-            $table->string('governorate')->nullable();
-            $table->string('shift')->nullable();
+            $table->string('employee_number')->unique();
+            $table->string('shift')->default('صباحية');
             $table->unsignedInteger('trips_counted')->default(0);
             $table->string('status')->default('نشط');
             $table->timestamps();

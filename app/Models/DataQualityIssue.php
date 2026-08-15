@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class DataQualityIssue extends MasterDataModel
+class DataQualityIssue extends BaseModel
 {
     protected $casts = [
         'due_date' => 'date',

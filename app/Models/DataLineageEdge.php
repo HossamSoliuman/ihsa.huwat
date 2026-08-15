@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class DataLineageEdge extends MasterDataModel
+class DataLineageEdge extends BaseModel
 {
     protected $casts = [
         'active' => 'boolean',

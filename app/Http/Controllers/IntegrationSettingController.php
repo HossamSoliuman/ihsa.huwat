@@ -10,7 +10,7 @@ class IntegrationSettingController extends Controller
 {
     public function update(Request $request, string $tab, string $provider): RedirectResponse
     {
-        $definition = config("hawat.integrations.{$provider}");
+        $definition = config("info.integrations.{$provider}");
 
         abort_if(! $definition, 404);
 

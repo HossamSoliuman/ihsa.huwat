@@ -1,6 +1,13 @@
-# حوات إحصاء — وحدة مركز إدارة النظام (Laravel)
+# حوات إحصاء — منصّة المصايد البحرية (Laravel)
 
-نسخة Laravel كاملة من وحدة **مركز إدارة النظام — HAWAT Administration Center**، بنفس التصميم والخطوط والاتجاه RTL ونفس التبويبات العشرين، مع Migrations وSeeders وعمليات CRUD كاملة.
+تطبيق Laravel واحد يقدّم بوابتين على مضيفين مختلفين فوق نفس قاعدة البيانات:
+
+| المضيف | البوابة | الوصف |
+|---|---|---|
+| `hawat.sa` | **لوحة الوزارة** | لوحة عرض وتحليل: المؤشرات الوطنية، الخريطة البحرية، الإنتاج، الموانئ، الاستدامة، الأسواق والأمن الغذائي. |
+| `info.hawat.sa` | **بوابة المعلومات — مركز إدارة النظام** | تحرير البيانات الأساسية (Master Data) عبر عشرين تبويبًا، مع سجل عمليات غير قابل للتعديل. |
+
+محليًا: `ihsa.test` و`info.ihsa.test`.
 
 ---
 
@@ -8,7 +15,7 @@
 
 - PHP ≥ 8.2 مع الإضافات: `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`, `fileinfo`
 - Composer ≥ 2
-- MySQL 8 / MariaDB 10.6 (أو SQLite للتجربة السريعة)
+- MySQL 8 / MariaDB 10.6
 
 لا حاجة إلى Node.js أو خطوة build — نظام التصميم مضمّن في Blade.
 
@@ -17,107 +24,103 @@
 ## 2) التشغيل
 
 ```bash
-composer create-project laravel/laravel hawat-admin
-cd hawat-admin
-
-# انسخ محتويات مجلد laravel/ فوق المشروع:
-#   app/Models, app/Support, app/Http/Controllers
-#   config/hawat.php, config/hawat_resources.php
-#   database/migrations, database/seeders
-#   resources/views, routes/web.php
-
+composer install
 cp .env.example .env
 php artisan key:generate
-
-# عدّل في .env:
-#   APP_NAME="حوات إحصاء"
-#   APP_LOCALE=ar
-#   APP_FALLBACK_LOCALE=ar
-#   APP_TIMEZONE=Asia/Riyadh
-#   DB_DATABASE=hawat
-
-php artisan migrate --seed
-php artisan serve
-```
-
-افتح `http://127.0.0.1:8000` → تُفتح وحدة مركز إدارة النظام على تبويب "البيانات الجغرافية".
-
-للتجربة على SQLite:
-
-```bash
-touch database/database.sqlite
-# في .env: DB_CONNECTION=sqlite ثم احذف بقية متغيرات DB_
 php artisan migrate --seed
 ```
+
+ثم اضبط المضيفين في `.env`:
+
+```dotenv
+APP_URL=http://ihsa.test          # مضيف لوحة الوزارة
+INFO_PORTAL_DOMAIN=info.ihsa.test # مضيف بوابة المعلومات
+SESSION_DOMAIN=.ihsa.test         # النطاق الأب المشترك بين المضيفين
+```
+
+وأضف المضيفين إلى `hosts` (يفعل ذلك Herd تلقائيًا لمجلد المشروع ونطاقاته الفرعية).
+
+### تشغيل البوابة بلا مضيف مستقل
+
+اترك `INFO_PORTAL_DOMAIN` فارغًا فتُقدَّم بوابة المعلومات تحت البادئة `/info`
+على نفس مضيف اللوحة، وتصبح تبويباتها على `/info/admin/{tab}`. لا يتغيّر شيء آخر.
 
 ---
 
-## 3) المعمارية
+## 3) فصل المضيفين
 
-الوحدة مبنية على نمط **Config-Driven Resources**: تعريف واحد لكل مورد في ملف إعدادات، وطبقة عرض عامة تتولّى الجدول والنموذج والتحقق. إضافة جدول جديد لا تحتاج Controller ولا View جديدة.
+`routes/web.php` يسجّل بوابة المعلومات **قبل** لوحة الوزارة: المسار بلا قيد نطاق
+يلتقط أي مضيف، فلو جاءت اللوحة أولًا لابتلعت `/` على `info.hawat.sa`.
+
+ولوحة الوزارة بدورها مقيَّدة بـ `config('hawat.domain')` (يُشتق من `APP_URL`) كي
+لا تظهر صفحاتها أيضًا على مضيف البوابة. حين تُترك `INFO_PORTAL_DOMAIN` فارغة
+يسقط هذا القيد تلقائيًا.
+
+يحرس `tests/Feature/InfoPortalTest.php` هذا الفصل في الاتجاهين.
+
+---
+
+## 4) معمارية بوابة المعلومات
+
+مبنية على نمط **Config-Driven Resources**: تعريف واحد لكل مورد في ملف إعدادات،
+وطبقة عرض عامة تتولّى الجدول والنموذج والتحقق. إضافة جدول جديد لا تحتاج
+Controller ولا View جديدة.
 
 ```
-config/hawat.php              تعريف التبويبات العشرين + إعدادات التكاملات
-config/hawat_resources.php    تعريف كل مورد: النموذج، الأعمدة، الحقول، الشارات
+config/info.php                تعريف التبويبات العشرين + المضيف + إعدادات التكاملات
+config/info_resources.php      تعريف كل مورد: النموذج، الأعمدة، الحقول، الشارات
 app/Support/AdminRegistry.php  حلّ التبويبات/الموارد، بناء الحقول، توليد قواعد التحقق
 app/Support/ToolData.php       بيانات تبويبات الأدوات (الإحصاءات، الاستيراد، Power BI)
 app/Http/Controllers/
-  AdminController.php          عرض التبويب وتحديد نوع اللوحة (مورد/تكامل/أداة)
-  AdminResourceController.php  إنشاء/تعديل/حذف مع تسجيل تلقائي في سجل العمليات
+  AdminController.php               عرض التبويب وتحديد نوع اللوحة (مورد/تكامل/أداة)
+  AdminResourceController.php       إنشاء/تعديل/حذف مع تسجيل تلقائي في سجل العمليات
   IntegrationSettingController.php  حفظ إعدادات التكاملات
-routes/web.php                 مسارات admin/{tab} وعمليات الموارد
+```
+
+### الحقول المرتبطة بمفاتيح أجنبية
+
+المخطط علائقي (`region_id` / `governorate_id` / `port_id` / `boat_id` …)، لذا
+تدعم `options_from` شكلين:
+
+```php
+// قائمة قيم نصية — القيمة هي التسمية
+['key' => 'top_port', 'type' => 'select',
+ 'options_from' => ['model' => Port::class, 'column' => 'name']],
+
+// مفتاح أجنبي — تُخزَّن id وتُعرض التسمية
+['key' => 'port_id', 'type' => 'select',
+ 'options_from' => ['model' => Port::class, 'value' => 'id', 'label' => 'name']],
+```
+
+وتُعرض في الجدول بمسار نقطي مع تحميل مسبق تفاديًا لاستعلامات N+1:
+
+```php
+'with' => ['governorate.region'],
+'columns' => ['name' => 'الاسم', 'governorate.region.name' => 'المنطقة'],
 ```
 
 ### إضافة مورد جديد
 
-1. أضف الجدول في Migration والموديل في `app/Models` (بالوراثة من `MasterDataModel`).
-2. أضف تعريفه في `config/hawat_resources.php` (columns / fields / badges).
-3. أضف مفتاحه في مصفوفة `resources` للتبويب المناسب في `config/hawat.php`.
+1. أضف الجدول في Migration والموديل في `app/Models` (بالوراثة من `BaseModel`).
+2. أضف تعريفه في `config/info_resources.php` (columns / fields / badges / with).
+3. أضف مفتاحه في مصفوفة `resources` للتبويب المناسب في `config/info.php`.
 
-يظهر تلقائيًا بجدول قابل للفرز والترقيم ونموذج إضافة/تعديل مع تحقق كامل.
-
----
-
-## 4) التبويبات (20)
-
-| التبويب | النوع | المحتوى |
-|---|---|---|
-| البيانات الجغرافية | موارد | المناطق، المحافظات، الموانئ، مواقع الصيد |
-| الأسطول والثروة السمكية | موارد | القوارب، الصيادون، الأنواع السمكية، أدوات الصيد، موظفو الإحصاء |
-| مواسم الصيد | موارد | المواسم وفترات الحظر والحصص |
-| الأسواق والمزادات | موارد | الأسواق، حركة المزادات والأسعار |
-| الرخص | موارد | رخص المواسم والحصص المستخدمة |
-| الصلاحيات | موارد | الأدوار والنطاق الجغرافي لكل مستخدم |
-| الترجمة | موارد | كتالوج النصوص العربية ومقابلها الإنجليزي |
-| الاستيراد الجماعي | أداة | جداول الاستيراد والأعمدة المطلوبة |
-| إحصاءات الإنتاج | أداة | مؤشرات مجمّعة + جداول المناطق والموانئ |
-| تكامل Power BI | تكامل | Workspace / Report / Dataset / نمط التضمين |
-| مخطط Power BI | أداة | النموذج النجمي والمقاييس القياسية |
-| بيانات Power BI | أداة | الجداول المتاحة للتغذية ودورية التحديث |
-| تكامل ArcGIS | تكامل | طبقات الخرائط البحرية والخريطة الأساسية |
-| تكامل Microsoft Fabric | تكامل | Lakehouse / Warehouse / SQL Endpoint |
-| حوات AI | تكامل | النموذج، حدود السياق، وفرض النطاق الجغرافي |
-| معايير وتقارير FAO | موارد | ربط ASFIS / ISSCAAP / ISSCFG وحالة التحقق |
-| حوكمة وجودة البيانات | موارد | تذاكر الجودة والأولويات والاستحقاق |
-| كتالوج ومسارات البيانات | موارد | أصول البيانات + مسارات الاعتماد بينها |
-| قاموس الأعمال والمؤشرات | موارد | المصطلحات المعتمدة + سجل المؤشرات ومعادلاتها |
-| سجل العمليات | موارد (عرض فقط) | سجل غير قابل للتعديل لكل العمليات |
+يظهر تلقائيًا بجدول قابل للترقيم ونموذج إضافة/تعديل مع تحقق كامل.
 
 ---
 
 ## 5) قاعدة البيانات
 
-خمسة Migrations مجمّعة حسب المجال، وتغطي 23 جدولًا:
-
 | Migration | الجداول |
 |---|---|
 | `create_geographic_tables` | regions, governorates, ports, fishing_sites |
 | `create_fleet_tables` | species, gear_types, boats, fishers, statistics_officers |
-| `create_seasons_and_markets_tables` | fishing_seasons, season_licenses, markets, market_auctions |
+| `create_seasons_tables` | fishing_seasons, season_licenses |
+| `create_operations_tables` | trips, catch_records, bycatch_records, alerts, violations |
+| `create_market_tables` | markets, market_auctions |
 | `create_governance_tables` | data_catalog_assets, data_lineage_edges, business_glossary_terms, kpi_registries, data_quality_issues, fao_standard_mappings |
 | `create_system_tables` | user_permissions, audit_logs, ui_translations, integration_settings |
-
-خمسة Seeders ببيانات واقعية: 4 مناطق، 8 محافظات، 8 موانئ، 6 مواقع صيد، 6 أنواع، 5 أدوات صيد، 5 قوارب، 5 صيادين، 4 موظفي إحصاء، 4 مواسم، 4 رخص، 4 أسواق، 5 مزادات، 8 أصول بيانات، 5 مسارات، 4 مصطلحات، 5 مؤشرات، 5 روابط FAO، 4 تذاكر جودة، 5 صلاحيات، 8 ترجمات، 4 تكاملات، و5 سجلات عمليات.
+| `extend_tables_for_info_portal` | الحقول المرجعية الإضافية التي تحرّرها البوابة ولا تحتاجها اللوحة |
 
 جميع الـ Seeders تستخدم `updateOrCreate` — تشغيلها أكثر من مرة آمن ولا يُكرّر البيانات.
 
@@ -125,21 +128,49 @@ routes/web.php                 مسارات admin/{tab} وعمليات المو�
 
 ## 6) نظام التصميم
 
-مطابق لتوكنز التطبيق الأصلي:
-
 - الخط: **Tajawal** (400/500/700/800) من Google Fonts، والاتجاه RTL على مستوى الصفحة.
-- التوكنز في `resources/views/admin/partials/styles.blade.php` بنفس قيم HSL: `--primary: 199 89% 28%`، `--background: 210 40% 98%`، `--border: 214 25% 88%`، `--accent: 199 85% 90%`، `--radius: 0.5rem`.
-- ترويسة الصفحة بأيقونة الدرع، صندوق تنبيه Master Data الكهرماني، شريط التبويبات بالتبويب النشط بلون primary، بطاقة لوحة بحدود ناعمة وظل خفيف.
-- الجداول: ترويسة رمادية خفيفة، تباين صفوف بالتناوب، شارات حالة بنقطة لونية (`badge-ok` / `badge-warn` / `badge-danger`)، أزرار تعديل/حذف أيقونية.
-- الأيقونات SVG داخلية (`partials/icon.blade.php`) بنفس أسلوب lucide المستخدم في التطبيق — بدون أي اعتماد خارجي.
+- توكنز البوابة في `resources/views/admin/partials/styles.blade.php`، وتوكنز اللوحة
+  في `resources/views/partials/styles.blade.php`.
+- الجداول: ترويسة رمادية خفيفة، تباين صفوف بالتناوب، شارات حالة بنقطة لونية
+  (`badge-ok` / `badge-warn` / `badge-danger`)، أزرار تعديل/حذف أيقونية.
+- الأيقونات SVG داخلية — بدون أي اعتماد خارجي.
 
 ---
 
 ## 7) الأمان
 
-- عمليات الكتابة تمر عبر `AdminResourceController` مع تحقق مُولّد من تعريف الحقول (`required` / `numeric` / `date` / `in:` للقوائم).
+- عمليات الكتابة تمر عبر `AdminResourceController` مع تحقق مُولّد من تعريف الحقول
+  (`required` / `numeric` / `date` / `in:` للقوائم، بما فيها قيم المفاتيح الأجنبية).
 - تبويب سجل العمليات معرّف `readonly` — أي محاولة كتابة عليه تُرفض بـ 403.
-- كل إنشاء/تعديل/حذف يُسجّل تلقائيًا في `audit_logs` مع المستخدم والدور والتوقيت.
+- كل إنشاء/تعديل/حذف يُسجّل تلقائيًا في `audit_logs` مع المستخدم والدور و IP.
 - الحذف محمي بتأكيد، وكل النماذج تحمل `@csrf`.
 
-لتقييد الوصول للوحة بالمصادقة، أضف `->middleware(['auth'])` على مجموعة مسارات `admin` في `routes/web.php`.
+> بوابة المعلومات **غير محمية بمصادقة بعد**. لتقييد الوصول أضف
+> `->middleware(['auth'])` على مجموعة مسارات البوابة في `routes/web.php`.
+
+---
+
+## 8) الاختبارات
+
+```bash
+php artisan test
+```
+
+تعمل على SQLite في الذاكرة، وتضبط المضيفين عبر `phpunit.xml`
+(`hawat.test` / `info.hawat.test`) حتى لا تعتمد على `.env` المحلي.
+
+---
+
+## 9) النشر
+
+الدفع إلى `main` يشغّل `.github/workflows/deploy.yml` الذي ينفّذ على الخادم:
+
+```bash
+cd /www/wwwroot/ihsa
+git pull --ff-only origin main
+php artisan migrate --force
+php artisan optimize
+```
+
+المضيفان `hawat.sa` و`info.hawat.sa` يشيران إلى نفس الجذر `/www/wwwroot/ihsa/public`،
+والفصل بينهما يتم داخل Laravel لا في إعدادات الخادم.

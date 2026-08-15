@@ -10,7 +10,7 @@ class AdminRegistry
 {
     public function tabs(): array
     {
-        return config('hawat.tabs', []);
+        return config('info.tabs', []);
     }
 
     public function tab(string $key): array
@@ -26,18 +26,18 @@ class AdminRegistry
 
     public function defaultTab(): string
     {
-        return config('hawat.default_tab', array_key_first($this->tabs()));
+        return config('info.default_tab', array_key_first($this->tabs()));
     }
 
     public function resource(string $key): array
     {
-        $resource = config("hawat_resources.{$key}");
+        $resource = config("info_resources.{$key}");
 
         if (! $resource) {
             throw new InvalidArgumentException("Unknown admin resource [{$key}].");
         }
 
-        return $resource + ['key' => $key, 'readonly' => false, 'badges' => []];
+        return $resource + ['key' => $key, 'readonly' => false, 'badges' => [], 'with' => []];
     }
 
     public function resourcesForTab(string $tabKey): array
@@ -60,6 +60,7 @@ class AdminRegistry
     {
         return $this->model($resourceKey)
             ->newQuery()
+            ->with($this->resource($resourceKey)['with'])
             ->latest('id')
             ->paginate(25)
             ->withQueryString();
@@ -83,16 +84,27 @@ class AdminRegistry
         return collect($this->fields($resourceKey))
             ->mapWithKeys(function (array $field) {
                 $rules = [$field['required'] ? 'required' : 'nullable'];
+                $isBoundSelect = $field['type'] === 'select' && ! empty($field['options']);
 
-                $rules[] = match ($field['type']) {
-                    'number' => 'numeric',
-                    'boolean' => 'boolean',
-                    'date' => 'date',
+                /*
+                 * القائمة المحصورة بـ in: تحكم قيمتها بالكامل، فلا يُفرض عليها نوع.
+                 * فرض `string` هنا يرفض مفاتيح الجداول المرتبطة حين تصل أعدادًا صحيحة.
+                 */
+                $typeRule = match (true) {
+                    $isBoundSelect => null,
+                    $field['type'] === 'number' => 'numeric',
+                    $field['type'] === 'boolean' => 'boolean',
+                    $field['type'] === 'date' => 'date',
                     default => 'string',
                 };
 
-                if ($field['type'] === 'select' && ! empty($field['options'])) {
-                    $rules[] = 'in:' . implode(',', $field['options']);
+                if ($typeRule !== null) {
+                    $rules[] = $typeRule;
+                }
+
+                // القوائم مخزّنة كـ [القيمة => التسمية]، والتحقق يجري على القيمة لا على ما يُعرض.
+                if ($isBoundSelect) {
+                    $rules[] = 'in:' . implode(',', array_keys($field['options']));
                 }
 
                 if (in_array($field['type'], ['text', 'textarea'], true)) {
@@ -123,25 +135,41 @@ class AdminRegistry
         return $data;
     }
 
+    /**
+     * تُعيد القائمة دائمًا بالشكل [القيمة => التسمية]. القوائم الثابتة تُخزَّن قيمتها
+     * كنصّها، أما القوائم المشتقّة من موديل فتدعم شكلين: عمود واحد (القيمة هي التسمية)،
+     * أو `value` + `label` لحقول المفاتيح الأجنبية حيث تُخزَّن id وتُعرض التسمية.
+     */
     private function resolveOptions(array $field): array
     {
         if (! empty($field['options'])) {
-            return $field['options'];
+            $options = $field['options'];
+
+            return array_is_list($options) ? array_combine($options, $options) : $options;
         }
 
         if (empty($field['options_from'])) {
             return [];
         }
 
-        $class = $field['options_from']['model'];
-        $column = $field['options_from']['column'];
+        $source = $field['options_from'];
+        $query = (new $source['model'])->newQuery();
 
-        return (new $class)->newQuery()
-            ->whereNotNull($column)
+        if (isset($source['value'], $source['label'])) {
+            return $query->orderBy($source['label'])
+                ->pluck($source['label'], $source['value'])
+                ->all();
+        }
+
+        $column = $source['column'];
+
+        $values = $query->whereNotNull($column)
             ->orderBy($column)
             ->pluck($column)
             ->unique()
             ->values()
             ->all();
+
+        return array_combine($values, $values);
     }
 }

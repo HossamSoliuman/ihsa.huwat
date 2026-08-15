@@ -2,14 +2,19 @@
 
 namespace App\Models;
 
-class MarketAuction extends MasterDataModel
+class MarketAuction extends BaseModel
 {
     protected $casts = [
-        'date' => 'date',
-        'offered_kg' => 'float',
-        'sold_kg' => 'float',
-        'min_price' => 'float',
-        'max_price' => 'float',
-        'avg_price' => 'float',
+        'auction_date' => 'date',
     ];
+
+    public function market()
+    {
+        return $this->belongsTo(Market::class);
+    }
+
+    public function species()
+    {
+        return $this->belongsTo(Species::class);
+    }
 }

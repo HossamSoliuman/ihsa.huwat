@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
-class StatisticsOfficer extends MasterDataModel
+class StatisticsOfficer extends BaseModel
 {
+    public function port()
+    {
+        return $this->belongsTo(Port::class);
+    }
 }

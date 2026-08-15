@@ -1,13 +1,13 @@
 @extends('layouts.admin')
 
-@section('title', config('hawat.title'))
+@section('title', config('info.title'))
 
 @section('content')
     <div class="page-header">
         <div class="icon">@include('admin.partials.icon', ['name' => 'shield'])</div>
         <div>
-            <h1>{{ config('hawat.title') }}</h1>
-            <p>{{ config('hawat.subtitle') }}</p>
+            <h1>{{ config('info.title') }}</h1>
+            <p>{{ config('info.subtitle') }}</p>
         </div>
     </div>
 

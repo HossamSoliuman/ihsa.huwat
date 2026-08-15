@@ -58,7 +58,7 @@
             @forelse ($data['ports'] as $port)
                 <tr>
                     <td>{{ $port->name }}</td>
-                    <td>{{ $port->region ?? '—' }}</td>
+                    <td>{{ $port->governorate?->region?->name ?? '—' }}</td>
                     <td>{{ number_format($port->boats_count) }}</td>
                     <td>{{ number_format($port->monthly_trips) }}</td>
                     <td>{{ number_format($port->total_catch_tons, 2) }}</td>

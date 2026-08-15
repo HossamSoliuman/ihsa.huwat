@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
-class KpiRegistry extends MasterDataModel
+class KpiRegistry extends BaseModel
 {
+    protected $table = 'kpi_registries';
 }

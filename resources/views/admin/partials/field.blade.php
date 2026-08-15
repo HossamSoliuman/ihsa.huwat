@@ -21,8 +21,8 @@
         @if ($type === 'select')
             <select id="field-{{ $key }}" name="{{ $key }}" data-field="{{ $key }}">
                 <option value="">— اختر —</option>
-                @foreach ($field['options'] as $option)
-                    <option value="{{ $option }}" @selected($old === $option)>{{ $option }}</option>
+                @foreach ($field['options'] as $value => $label)
+                    <option value="{{ $value }}" @selected($old !== null && (string) $old === (string) $value)>{{ $label }}</option>
                 @endforeach
             </select>
         @elseif ($type === 'textarea')

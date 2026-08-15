@@ -2,13 +2,10 @@
 
 namespace App\Models;
 
-class FishingSite extends MasterDataModel
+class FishingSite extends BaseModel
 {
-    protected $casts = [
-        'lat' => 'float',
-        'lng' => 'float',
-        'depth_m' => 'float',
-        'catch_kg' => 'float',
-        'avg_catch_per_trip' => 'float',
-    ];
+    public function port()
+    {
+        return $this->belongsTo(Port::class);
+    }
 }

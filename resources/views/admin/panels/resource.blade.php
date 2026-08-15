@@ -3,6 +3,12 @@
     $columns = $resource['columns'];
     $readonly = ! empty($resource['readonly']);
     $updateTemplate = route('admin.resource.update', ['tab' => $activeTab, 'resource' => $activeResource, 'id' => '__ID__']);
+    $fieldKeys = collect($fields)->pluck('key')->all();
+
+    // حقول التاريخ تُحوَّل إلى Y-m-d لأن <input type="date"> لا يقبل صيغة ISO الكاملة.
+    $editPayload = fn ($record) => collect($record->only($fieldKeys))
+        ->map(fn ($value) => $value instanceof \DateTimeInterface ? $value->format('Y-m-d') : $value)
+        ->all();
 @endphp
 
 @if (count($resources) > 1)
@@ -58,7 +64,7 @@
                             <td class="cell-actions">
                                 <button type="button" class="btn-icon" title="تعديل"
                                         data-record-edit="{{ $record->id }}"
-                                        data-record='@json($record->only(collect($fields)->pluck('key')->all()))'>
+                                        data-record='@json($editPayload($record))'>
                                     @include('admin.partials.icon', ['name' => 'pencil'])
                                 </button>
                                 <form class="inline-form" method="POST"

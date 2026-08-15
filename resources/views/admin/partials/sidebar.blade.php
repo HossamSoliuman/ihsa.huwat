@@ -1,9 +1,9 @@
 @php
-    $allTabs = config('hawat.tabs', []);
+    $allTabs = config('info.tabs', []);
     $groups = [];
     $placed = [];
 
-    foreach (config('hawat.sidebar', []) as $group => $keys) {
+    foreach (config('info.sidebar', []) as $group => $keys) {
         $items = array_values(array_intersect(array_unique($keys), array_keys($allTabs)));
 
         if ($items) {

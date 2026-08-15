@@ -2,6 +2,6 @@
 
 namespace App\Models;
 
-class UiTranslation extends MasterDataModel
+class UiTranslation extends BaseModel
 {
 }

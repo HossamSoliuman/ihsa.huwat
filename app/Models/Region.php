@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-class Region extends MasterDataModel
+class Region extends BaseModel
 {
-    protected $casts = [
-        'coast_length_km' => 'float',
-        'total_catch_tons' => 'float',
-    ];
+    public function governorates()
+    {
+        return $this->hasMany(Governorate::class);
+    }
 }

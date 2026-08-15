@@ -2,9 +2,6 @@
 
 namespace App\Models;
 
-class AuditLog extends MasterDataModel
+class AuditLog extends BaseModel
 {
-    protected $casts = [
-        'timestamp' => 'datetime',
-    ];
 }

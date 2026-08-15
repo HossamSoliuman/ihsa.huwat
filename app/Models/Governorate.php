@@ -2,10 +2,19 @@
 
 namespace App\Models;
 
-class Governorate extends MasterDataModel
+class Governorate extends BaseModel
 {
     protected $casts = [
         'coastal' => 'boolean',
-        'total_catch_tons' => 'float',
     ];
+
+    public function region()
+    {
+        return $this->belongsTo(Region::class);
+    }
+
+    public function ports()
+    {
+        return $this->hasMany(Port::class);
+    }
 }

@@ -4,12 +4,13 @@
             <img class="brand-logo" src="{{ asset('images/logo.png') }}" width="389" height="160"
                  alt="{{ config('app.name') }}">
             <span class="brand-text">
-                <span class="brand-title">{{ config('hawat.brand_title', config('hawat.title')) }}</span>
-                <span class="brand-sub">{{ config('hawat.brand_subtitle') }}</span>
+                <span class="brand-title">{{ config('info.brand_title', config('info.title')) }}</span>
+                <span class="brand-sub">{{ config('info.brand_subtitle') }}</span>
             </span>
         </a>
 
-        <a class="topbar-ministry" href="{{ route('admin.index') }}">
+        {{-- يعود إلى لوحة الوزارة على النطاق الرئيسي، خارج بوابة المعلومات. --}}
+        <a class="topbar-ministry" href="{{ route('home') }}">
             @include('admin.partials.icon', ['name' => 'grid'])
             لوحة الوزارة
         </a>
