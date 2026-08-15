@@ -1,4 +1,4 @@
-# حوات — وحدة مركز إدارة النظام (Laravel)
+# حوات إحصاء — وحدة مركز إدارة النظام (Laravel)
 
 نسخة Laravel كاملة من وحدة **مركز إدارة النظام — HAWAT Administration Center**، بنفس التصميم والخطوط والاتجاه RTL ونفس التبويبات العشرين، مع Migrations وSeeders وعمليات CRUD كاملة.
 
@@ -30,7 +30,7 @@ cp .env.example .env
 php artisan key:generate
 
 # عدّل في .env:
-#   APP_NAME="حوات"
+#   APP_NAME="حوات إحصاء"
 #   APP_LOCALE=ar
 #   APP_FALLBACK_LOCALE=ar
 #   APP_TIMEZONE=Asia/Riyadh

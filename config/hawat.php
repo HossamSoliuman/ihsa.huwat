@@ -3,13 +3,13 @@
 return [
 
     'title' => 'مركز إدارة النظام',
-    'subtitle' => 'HAWAT Administration Center — المرجع الأساسي للبيانات الأساسية والإعدادات',
+    'subtitle' => 'HAWAT IHSA Administration Center — المرجع الأساسي للبيانات الأساسية والإعدادات',
     'notice' => 'هذه اللوحة لإدارة البيانات الأساسية (Master Data) فقط. لا تُعدّل بيانات الرحلات أو المصيد المعتمد مباشرةً — تمرّ عبر مسارها التشغيلي مع سجل العمليات.',
     'default_tab' => 'geo',
 
     // هوية الشريط العلوي — سطر عربي وسطر إنجليزي أسفله.
-    'brand_title' => 'مركز إدارة حوات',
-    'brand_subtitle' => 'HAWAT Administration Center',
+    'brand_title' => 'حوات إحصاء',
+    'brand_subtitle' => 'HAWAT IHSA — مركز إدارة النظام',
 
     // تجميع روابط القائمة الجانبية — كل مفتاح يظهر مرة واحدة فقط حتى يبقى تبويب واحد نشطًا.
     'sidebar' => [

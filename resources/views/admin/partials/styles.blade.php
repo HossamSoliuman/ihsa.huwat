@@ -53,10 +53,9 @@
         padding-block: 14px;
         display: flex; align-items: center; justify-content: space-between; gap: 16px;
     }
-    .topbar-brand { display: inline-flex; align-items: center; gap: 12px; }
-    .topbar-brand .brand-mark { width: 44px; height: 44px; border-radius: 14px; background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); display: grid; place-items: center; flex-shrink: 0; }
-    .topbar-brand .brand-mark .icon { width: 22px; height: 22px; }
-    .topbar-brand .brand-text { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.35; }
+    .topbar-brand { display: inline-flex; align-items: center; gap: 14px; }
+    .topbar-brand .brand-logo { height: 32px; width: auto; flex-shrink: 0; }
+    .topbar-brand .brand-text { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.35; border-inline-start: 1px solid hsl(var(--border)); padding-inline-start: 14px; }
     .topbar-brand .brand-title { font-weight: 800; font-size: 16px; }
     .topbar-brand .brand-sub { font-size: 11.5px; color: hsl(var(--muted-foreground)); }
     .topbar-ministry { display: inline-flex; align-items: center; gap: 8px; border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 9px 14px; font-size: 12.5px; font-weight: 600; }
@@ -210,7 +209,9 @@
     @media (max-width: 900px) {
         .sidebar { display: none; }
         .shell-content { padding-block: 20px 32px; }
-        .topbar-brand .brand-mark { width: 38px; height: 38px; border-radius: 12px; }
+        .topbar-brand { gap: 10px; }
+        .topbar-brand .brand-logo { height: 26px; }
+        .topbar-brand .brand-text { padding-inline-start: 10px; }
         .topbar-brand .brand-title { font-size: 14px; }
     }
 </style>
