@@ -109,7 +109,11 @@ $govDashboard = function (): void {
 };
 
 /*
- * المنصة التشغيلية — السجلات والعمليات، تبقى على المسارات العليا.
+ * المنصة التشغيلية — السجلات والعمليات، تحت البادئة /admin.
+ *
+ * أسماء المسارات تبقى بلا بادئة (governorates، boats…) لأن البادئة `admin.`
+ * محجوزة لبوابة المعلومات أعلاه (admin.index، admin.tab)، ولأن القائمة الجانبية
+ * والاختبارات تشير إلى هذه الأسماء لا إلى مساراتها.
  */
 $operationsConsole = function (): void {
     Route::get('/governorates', [GovernorateController::class, 'index'])->name('governorates');
@@ -159,14 +163,14 @@ $operationsConsole = function (): void {
 
 /*
  * البوابتان تتشاركان النطاق الرئيسي: صفحة اختيار على "/"، ثم لوحة الحكومة
- * تحت /gov والمنصة التشغيلية على ما تبقّى من المسارات.
+ * تحت /gov والمنصة التشغيلية تحت /admin.
  */
 $governmentPortal = function () use ($govDashboard, $operationsConsole): void {
     Route::view('/', 'portal')->name('portal');
 
     Route::prefix('gov')->name('gov.')->group($govDashboard);
 
-    $operationsConsole();
+    Route::prefix('admin')->group($operationsConsole);
 };
 
 $governmentDomain = config('hawat.domain');

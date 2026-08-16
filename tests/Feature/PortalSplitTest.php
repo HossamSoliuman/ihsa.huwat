@@ -10,9 +10,9 @@ use Tests\TestCase;
 
 /**
  * لوحة الوزارة مقسومة إلى بوابتين على النطاق الرئيسي: لوحة الحكومة التنفيذية
- * تحت /gov، والمنصة التشغيلية على المسارات العليا. هذه الاختبارات تحرس الحدّ
- * بينهما — أن كل صفحة تُقدَّم من موضعها الجديد فقط، وأن القائمة الجانبية
- * تتبدّل مع البوابة، وهما ما ينكسر بصمت عند إضافة مسار في المكان الخطأ.
+ * تحت /gov، والمنصة التشغيلية تحت /admin. هذه الاختبارات تحرس الحدّ بينهما —
+ * أن كل صفحة تُقدَّم من موضعها الجديد فقط، وأن القائمة الجانبية تتبدّل مع
+ * البوابة، وهما ما ينكسر بصمت عند إضافة مسار في المكان الخطأ.
  */
 class PortalSplitTest extends TestCase
 {
@@ -46,23 +46,53 @@ class PortalSplitTest extends TestCase
         $this->get($url)->assertOk();
     }
 
+    /** المسارات التي تُقدَّم من المنصة التشغيلية تحت /admin. */
+    public static function opsPages(): array
+    {
+        return [
+            ['/admin/governorates'],
+            ['/admin/regions'],
+            ['/admin/species'],
+            ['/admin/fishing-seasons'],
+            ['/admin/season-licenses'],
+            ['/admin/boats'],
+            ['/admin/fishers'],
+            ['/admin/trips'],
+            ['/admin/boat-timeline'],
+            ['/admin/ports'],
+            ['/admin/fishing-sites'],
+            ['/admin/statistics-officers'],
+            ['/admin/catch-trace'],
+            ['/admin/discrepancy-review'],
+            ['/admin/bycatch'],
+            ['/admin/markets'],
+            ['/admin/supply-chain'],
+            ['/admin/analytics'],
+            ['/admin/audit-log'],
+            ['/admin/users'],
+            ['/admin/settings'],
+        ];
+    }
+
+    #[DataProvider('opsPages')]
+    public function test_an_operations_page_answers_under_the_admin_prefix(string $url): void
+    {
+        $this->get($url)->assertOk();
+    }
+
     /** المواضع التي كانت تُقدَّم منها هذه الصفحات قبل النقل. */
     public static function vacatedPaths(): array
     {
-        return [['/production'], ['/sea-map'], ['/compliance'], ['/alerts'], ['/national-indicators'], ['/reports']];
+        return [
+            ['/production'], ['/sea-map'], ['/compliance'], ['/alerts'], ['/national-indicators'], ['/reports'],
+            ['/governorates'], ['/boats'], ['/ports'], ['/markets'], ['/settings'],
+        ];
     }
 
     #[DataProvider('vacatedPaths')]
     public function test_a_moved_page_no_longer_answers_at_its_old_path(string $url): void
     {
         $this->get($url)->assertNotFound();
-    }
-
-    public function test_the_operations_console_keeps_its_top_level_paths(): void
-    {
-        foreach (['/governorates', '/boats', '/ports', '/markets', '/settings'] as $url) {
-            $this->get($url)->assertOk();
-        }
     }
 
     public function test_the_root_offers_both_portals(): void
@@ -83,7 +113,7 @@ class PortalSplitTest extends TestCase
             ->assertSee(route('gov.field-statistics'), false)
             ->assertDontSee(route('boats'), false);
 
-        $this->get('/boats')
+        $this->get('/admin/boats')
             ->assertSee(route('markets'), false)
             ->assertDontSee(route('gov.field-statistics'), false);
     }
