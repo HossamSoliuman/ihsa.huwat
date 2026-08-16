@@ -37,6 +37,21 @@
             document.getElementById(id).classList.toggle('is-open', open);
             document.getElementById(id + '-overlay').classList.toggle('is-open', open);
         }
+
+        // القائمة الجانبية أطول من الشاشة: نُوسّط الرابط النشط داخلها حتى لا يفتح
+        // التبويب وهو خارج مجال العرض.
+        function centerActiveNavLink(box) {
+            const active = box?.querySelector('.is-active');
+
+            if (!active) {
+                return;
+            }
+
+            const offset = active.getBoundingClientRect().top - box.getBoundingClientRect().top;
+            box.scrollTop += offset - (box.clientHeight - active.offsetHeight) / 2;
+        }
+
+        centerActiveNavLink(document.querySelector('.sidebar-nav'));
     </script>
     @stack('scripts')
 </body>

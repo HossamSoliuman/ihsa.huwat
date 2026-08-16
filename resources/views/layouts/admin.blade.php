@@ -37,6 +37,21 @@
         @yield('content')
     </main>
 </div>
+<script>
+    // حاوية التمرير هنا هي .sidebar نفسها — نُوسّط التبويب النشط داخلها حتى لا
+    // يفتح وهو خارج مجال العرض.
+    (function () {
+        const box = document.querySelector('.sidebar');
+        const active = box?.querySelector('.is-active');
+
+        if (!active) {
+            return;
+        }
+
+        const offset = active.getBoundingClientRect().top - box.getBoundingClientRect().top;
+        box.scrollTop += offset - (box.clientHeight - active.offsetHeight) / 2;
+    })();
+</script>
 @stack('scripts')
 </body>
 </html>
