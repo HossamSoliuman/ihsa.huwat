@@ -49,7 +49,7 @@
                 @foreach (['مسجلة', 'قيد المراجعة', 'تم الإجراء', 'مغلقة'] as $s)<option value="{{ $s }}" @selected(request('status') === $s)>{{ $s }}</option>@endforeach
             </select>
         </label>
-        <a href="{{ route('compliance') }}" class="btn btn-outline">إعادة تعيين</a>
+        <a href="{{ route('gov.compliance') }}" class="btn btn-outline">إعادة تعيين</a>
     </form>
 
     <div class="table-card">
@@ -80,7 +80,7 @@
             <h3>تسجيل مخالفة</h3>
             <button type="button" class="icon-action" onclick="toggleDrawer('violationDrawer', false)">@include('partials.icon', ['name' => 'x'])</button>
         </div>
-        <form method="POST" action="{{ route('compliance.store') }}" class="drawer-body">
+        <form method="POST" action="{{ route('gov.compliance.store') }}" class="drawer-body">
             @csrf
             <div class="form-grid">
                 <label class="field"><span>نوع المخالفة *</span><input class="input" name="violation_type" required></label>

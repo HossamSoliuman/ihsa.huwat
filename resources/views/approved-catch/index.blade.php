@@ -36,7 +36,7 @@
                 @foreach (['بانتظار الاعتماد', 'معتمدة'] as $s)<option value="{{ $s }}" @selected(request('status') === $s)>{{ $s }}</option>@endforeach
             </select>
         </label>
-        <a href="{{ route('approved-catch') }}" class="btn btn-outline">إعادة تعيين</a>
+        <a href="{{ route('gov.approved-catch') }}" class="btn btn-outline">إعادة تعيين</a>
     </form>
 
     <div class="table-card">
@@ -56,7 +56,7 @@
                         <td><span class="badge {{ $trip->status === 'معتمدة' ? 'badge-ok' : 'badge-warn' }}">{{ $trip->status }}</span></td>
                         <td>
                             @if ($trip->status !== 'معتمدة')
-                                <form method="POST" action="{{ route('approved-catch.approve', $trip) }}" onsubmit="return confirm('اعتماد مصيد الرحلة {{ $trip->trip_number }}؟')">
+                                <form method="POST" action="{{ route('gov.approved-catch.approve', $trip) }}" onsubmit="return confirm('اعتماد مصيد الرحلة {{ $trip->trip_number }}؟')">
                                     @csrf
                                     <button class="btn btn-primary" style="padding:.35rem .75rem;font-size:.72rem">@include('partials.icon', ['name' => 'badge-check']) اعتماد</button>
                                 </form>

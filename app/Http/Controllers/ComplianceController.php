@@ -50,6 +50,6 @@ class ComplianceController extends Controller
             'status' => ['nullable', 'string', 'max:255'],
         ]));
 
-        return redirect()->route('compliance')->with('status', 'تم تسجيل المخالفة بنجاح');
+        return redirect()->route('gov.compliance')->with('status', 'تم تسجيل المخالفة بنجاح');
     }
 }

@@ -1,9 +1,7 @@
 @extends('layouts.app')
 
 @php
-    $label = collect(config('hawat.nav'))
-        ->flatMap(fn ($section) => $section['items'])
-        ->firstWhere('route', $routeName)['label'] ?? $routeName;
+    $label = App\Support\Nav::label($routeName) ?? $routeName;
 @endphp
 
 @section('title', $label)

@@ -31,7 +31,7 @@
                 @foreach (['عادت للميناء', 'بانتظار الإحصاء', 'تحت الإحصاء', 'بانتظار الاعتماد'] as $s)<option value="{{ $s }}" @selected(request('status') === $s)>{{ $s }}</option>@endforeach
             </select>
         </label>
-        <a href="{{ route('field-statistics') }}" class="btn btn-outline">إعادة تعيين</a>
+        <a href="{{ route('gov.field-statistics') }}" class="btn btn-outline">إعادة تعيين</a>
     </form>
 
     <div class="table-card">

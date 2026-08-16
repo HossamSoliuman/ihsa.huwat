@@ -77,12 +77,41 @@ if ($onSeparateHost) {
 |
 */
 
-$governmentPortal = function (): void {
+/*
+ * لوحة الحكومة التنفيذية — تحت البادئة /gov بقائمة جانبية خاصة بها
+ * (config/hawat.php → nav_gov). صفحاتها لم تعد تُقدَّم من المسارات العليا.
+ */
+$govDashboard = function (): void {
     Route::get('/', [DashboardController::class, 'index'])->name('home');
-
     Route::get('/national-indicators', [NationalIndicatorsController::class, 'index'])->name('national-indicators');
     Route::get('/sea-map', [SeaMapController::class, 'index'])->name('sea-map');
 
+    Route::get('/production', [ProductionController::class, 'index'])->name('production');
+    Route::get('/ports-compare', [PortController::class, 'compare'])->name('ports-compare');
+
+    Route::get('/field-statistics', [FieldStatisticsController::class, 'index'])->name('field-statistics');
+    Route::post('/field-statistics/{trip}/record', [FieldStatisticsController::class, 'record'])->name('field-statistics.record');
+
+    Route::get('/approved-catch', [ApprovedCatchController::class, 'index'])->name('approved-catch');
+    Route::post('/approved-catch/{trip}/approve', [ApprovedCatchController::class, 'approve'])->name('approved-catch.approve');
+
+    Route::get('/sustainability', [SustainabilityController::class, 'index'])->name('sustainability');
+
+    Route::get('/compliance', [ComplianceController::class, 'index'])->name('compliance');
+    Route::post('/compliance', [ComplianceController::class, 'store'])->name('compliance.store');
+
+    Route::get('/food-security', [FoodSecurityController::class, 'index'])->name('food-security');
+
+    // شاشات لم تُبنَ بعد ضمن لوحة الحكومة.
+    foreach (['ai-assistant', 'alerts', 'reports', 'monthly-reports', 'annual-bulletin'] as $slug) {
+        Route::get('/'.$slug, fn () => view('pages.pending', ['routeName' => 'gov.'.$slug]))->name($slug);
+    }
+};
+
+/*
+ * المنصة التشغيلية — السجلات والعمليات، تبقى على المسارات العليا.
+ */
+$operationsConsole = function (): void {
     Route::get('/governorates', [GovernorateController::class, 'index'])->name('governorates');
     Route::get('/governorates/{governorate:name}', [GovernorateController::class, 'show'])->name('governorates.show');
 
@@ -90,8 +119,6 @@ $governmentPortal = function (): void {
     Route::post('/regions', [RegionController::class, 'store'])->name('regions.store');
     Route::put('/regions/{region}', [RegionController::class, 'update'])->name('regions.update');
     Route::delete('/regions/{region}', [RegionController::class, 'destroy'])->name('regions.destroy');
-
-    Route::get('/production', [ProductionController::class, 'index'])->name('production');
 
     Route::get('/species', [SpeciesController::class, 'index'])->name('species');
     Route::put('/species/{species}', [SpeciesController::class, 'update'])->name('species.update');
@@ -110,14 +137,7 @@ $governmentPortal = function (): void {
     Route::get('/trips', [TripController::class, 'index'])->name('trips');
     Route::get('/boat-timeline', [BoatTimelineController::class, 'index'])->name('boat-timeline');
     Route::get('/ports', [PortController::class, 'index'])->name('ports');
-    Route::get('/ports-compare', [PortController::class, 'compare'])->name('ports-compare');
     Route::get('/fishing-sites', [FishingSiteController::class, 'index'])->name('fishing-sites');
-
-    Route::get('/field-statistics', [FieldStatisticsController::class, 'index'])->name('field-statistics');
-    Route::post('/field-statistics/{trip}/record', [FieldStatisticsController::class, 'record'])->name('field-statistics.record');
-
-    Route::get('/approved-catch', [ApprovedCatchController::class, 'index'])->name('approved-catch');
-    Route::post('/approved-catch/{trip}/approve', [ApprovedCatchController::class, 'approve'])->name('approved-catch.approve');
 
     Route::get('/statistics-officers', [StatisticsOfficerController::class, 'index'])->name('statistics-officers');
     Route::get('/catch-trace', [CatchTraceController::class, 'index'])->name('catch-trace');
@@ -125,27 +145,28 @@ $governmentPortal = function (): void {
     Route::get('/discrepancy-review', [DiscrepancyReviewController::class, 'index'])->name('discrepancy-review');
     Route::post('/discrepancy-review/{trip}/resolve', [DiscrepancyReviewController::class, 'resolve'])->name('discrepancy-review.resolve');
 
-    Route::get('/sustainability', [SustainabilityController::class, 'index'])->name('sustainability');
-
     Route::get('/bycatch', [BycatchController::class, 'index'])->name('bycatch');
     Route::post('/bycatch', [BycatchController::class, 'store'])->name('bycatch.store');
 
-    Route::get('/compliance', [ComplianceController::class, 'index'])->name('compliance');
-    Route::post('/compliance', [ComplianceController::class, 'store'])->name('compliance.store');
-
     Route::get('/markets', [MarketController::class, 'index'])->name('markets');
     Route::get('/supply-chain', [SupplyChainController::class, 'index'])->name('supply-chain');
-    Route::get('/food-security', [FoodSecurityController::class, 'index'])->name('food-security');
 
     // شاشات لم تُبنَ بعد — "مركز الإدارة" ليس منها، فهو يشير إلى بوابة المعلومات.
-    $pending = [
-        'analytics', 'ai-assistant', 'alerts',
-        'reports', 'monthly-reports', 'annual-bulletin', 'audit-log', 'users', 'settings',
-    ];
-
-    foreach ($pending as $slug) {
+    foreach (['analytics', 'audit-log', 'users', 'settings'] as $slug) {
         Route::get('/'.$slug, fn () => view('pages.pending', ['routeName' => $slug]))->name($slug);
     }
+};
+
+/*
+ * البوابتان تتشاركان النطاق الرئيسي: صفحة اختيار على "/"، ثم لوحة الحكومة
+ * تحت /gov والمنصة التشغيلية على ما تبقّى من المسارات.
+ */
+$governmentPortal = function () use ($govDashboard, $operationsConsole): void {
+    Route::view('/', 'portal')->name('portal');
+
+    Route::prefix('gov')->name('gov.')->group($govDashboard);
+
+    $operationsConsole();
 };
 
 $governmentDomain = config('hawat.domain');

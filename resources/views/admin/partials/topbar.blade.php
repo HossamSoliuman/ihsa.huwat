@@ -10,7 +10,7 @@
         </a>
 
         {{-- يعود إلى لوحة الوزارة على النطاق الرئيسي، خارج بوابة المعلومات. --}}
-        <a class="topbar-ministry" href="{{ route('home') }}">
+        <a class="topbar-ministry" href="{{ route('portal') }}">
             @include('admin.partials.icon', ['name' => 'grid'])
             لوحة الوزارة
         </a>

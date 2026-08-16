@@ -47,11 +47,14 @@ class InfoPortalTest extends TestCase
     public function test_the_ministry_dashboard_answers_on_the_main_host(): void
     {
         $this->get(self::MINISTRY.'/')->assertOk();
+        $this->get(self::MINISTRY.'/gov')->assertOk();
     }
 
     public function test_the_two_portals_do_not_leak_onto_each_other(): void
     {
-        $this->get(self::PORTAL.'/production')->assertNotFound();
+        // صفحة من لوحة الحكومة وأخرى من المنصة التشغيلية — كلتاهما محجوبتان عن مضيف البوابة.
+        $this->get(self::PORTAL.'/gov/production')->assertNotFound();
+        $this->get(self::PORTAL.'/boats')->assertNotFound();
         $this->get(self::MINISTRY.'/admin/geo')->assertNotFound();
     }
 

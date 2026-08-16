@@ -52,6 +52,6 @@ class FieldStatisticsController extends Controller
             'details' => "تسجيل الوزن الفعلي {$data['actual_weight_kg']} كجم بفرق {$data['diff_kg']} كجم",
         ]);
 
-        return redirect()->route('field-statistics')->with('status', "تم تسجيل إحصاء الرحلة {$trip->trip_number}");
+        return redirect()->route('gov.field-statistics')->with('status', "تم تسجيل إحصاء الرحلة {$trip->trip_number}");
     }
 }

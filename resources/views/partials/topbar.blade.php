@@ -1,7 +1,5 @@
 @php
-    $pageLabel = collect(config('hawat.nav'))
-        ->flatMap(fn ($section) => $section['items'])
-        ->firstWhere('route', request()->route()?->getName())['label'] ?? 'الرئيسية';
+    $pageLabel = App\Support\Nav::label(request()->route()?->getName()) ?? 'الرئيسية';
 @endphp
 <header class="topbar">
     <button class="menu-btn" onclick="toggleSidebar(true)">
