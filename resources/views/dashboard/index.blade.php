@@ -8,21 +8,8 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'layout-dashboard'])</div>
             <div>
                 <h1>لوحة وزارة البيئة والمياه والزراعة</h1>
-                <p>اللوحة التنفيذية الرسمية لقطاع المصايد البحرية — مبنية على مؤشرات حوات المعتمدة</p>
             </div>
         </div>
-        <div class="actions">
-            <span class="badge badge-ok">15/15 مؤشرات معتمدة</span>
-            <span class="badge badge-info">آخر تحديث: {{ now()->format('Y/m/d H:i') }}</span>
-        </div>
-    </div>
-
-    <div class="banner">
-        <div>
-            <p class="b-title">نطاق العرض المعتمد</p>
-            <p class="b-value">المملكة</p>
-        </div>
-        <div class="b-note">الفترة القياسية للمؤشرات الاتجاهية: آخر 30 يومًا مقارنة بالـ30 يومًا السابقة</div>
     </div>
 
     <div class="kpi-grid">

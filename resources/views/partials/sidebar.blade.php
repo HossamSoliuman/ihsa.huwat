@@ -1,7 +1,6 @@
 @php
     use App\Support\Nav;
 
-    $portal = Nav::portal();
     $other = Nav::portalKey() === Nav::GOV ? Nav::portal(Nav::OPS) : Nav::portal(Nav::GOV);
 @endphp
 <aside class="sidebar" id="sidebar">
@@ -9,17 +8,11 @@
         <img src="{{ config('hawat.logo') }}" alt="{{ config('hawat.name') }}">
         <div style="min-width:0">
             <p class="app-name">{{ config('hawat.name') }}</p>
-            <p class="app-sub">{{ $portal['tagline'] }}</p>
         </div>
         <button class="sidebar-close" onclick="toggleSidebar(false)">
             @include('partials.icon', ['name' => 'x'])
         </button>
     </div>
-
-    <a href="{{ route($portal['home']) }}" class="portal-badge">
-        @include('partials.icon', ['name' => $portal['icon']])
-        <span>{{ $portal['label'] }}</span>
-    </a>
 
     <nav class="sidebar-nav">
         @foreach (Nav::sections() as $section)

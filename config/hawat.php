@@ -23,13 +23,11 @@ return [
     'portals' => [
         'gov' => [
             'label' => 'لوحة الحكومة',
-            'tagline' => 'اللوحة التنفيذية لقطاع المصايد',
             'icon' => 'shield-check',
             'home' => 'gov.home',
         ],
         'ops' => [
             'label' => 'المنصة التشغيلية',
-            'tagline' => 'السجلات والعمليات الميدانية',
             'icon' => 'layers',
             'home' => 'governorates',
         ],

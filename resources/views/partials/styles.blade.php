@@ -56,7 +56,6 @@ a { color: inherit; text-decoration: none; }
 .sidebar-head { display: flex; align-items: center; gap: .75rem; border-bottom: 1px solid hsl(var(--border)); padding: 1rem 1.25rem; }
 .sidebar-head img { height: 44px; width: 44px; border-radius: .75rem; object-fit: cover; }
 .sidebar-head .app-name { font-size: 1rem; font-weight: 700; line-height: 1.2; }
-.sidebar-head .app-sub { font-size: .72rem; color: hsl(var(--muted-foreground)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sidebar-close { margin-right: auto; border: 0; background: none; color: hsl(var(--muted-foreground)); border-radius: .5rem; padding: .35rem; cursor: pointer; }
 
 .sidebar-nav { flex: 1; overflow-y: auto; padding: 1rem .75rem; }
@@ -76,13 +75,6 @@ a { color: inherit; text-decoration: none; }
 }
 .nav-link svg { width: 18px; height: 18px; flex-shrink: 0; }
 .nav-link span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.portal-badge {
-    display: flex; align-items: center; gap: .5rem; margin: .75rem 1rem 0; padding: .5rem .75rem;
-    border-radius: .5rem; background: hsl(var(--primary) / .1); color: hsl(var(--primary));
-    font-size: .78rem; font-weight: 700;
-}
-.portal-badge svg { width: 16px; height: 16px; flex-shrink: 0; }
 
 .sidebar-foot { border-top: 1px solid hsl(var(--border)); padding: .75rem 1rem; }
 .portal-switch {
@@ -166,13 +158,6 @@ html.dark .kpi-icon.danger { background: hsl(0 55% 30% / .26); color: hsl(0 75% 
 
 .grid-3 { display: grid; gap: 1rem; grid-template-columns: 1fr; }
 @media (min-width: 1024px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } .span-2 { grid-column: span 2; } }
-
-.banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; border-radius: .75rem; border: 1px solid #e0f2fe; background: hsl(199 85% 96% / .6); padding: .75rem 1rem; margin-bottom: 1.5rem; }
-html.dark .banner { border-color: hsl(199 55% 30% / .4); background: hsl(199 55% 30% / .2); }
-.banner .b-title { font-size: .72rem; font-weight: 600; color: #075985; }
-html.dark .banner .b-title { color: hsl(199 80% 78%); }
-.banner .b-value { margin-top: .125rem; font-size: .875rem; font-weight: 700; }
-.banner .b-note { font-size: .72rem; color: hsl(var(--muted-foreground)); }
 
 .alert-item { display: flex; align-items: flex-start; gap: .75rem; border-radius: .5rem; border: 1px solid hsl(var(--border)); background: hsl(var(--muted) / .3); padding: .75rem; margin-bottom: .5rem; }
 .alert-item .sev-dot { margin-top: .3rem; height: 8px; width: 8px; flex-shrink: 0; border-radius: 9999px; }

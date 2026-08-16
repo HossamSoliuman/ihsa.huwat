@@ -28,9 +28,9 @@ class Nav
     }
 
     /**
-     * بيانات البوابة النشطة (الاسم، الوصف، الأيقونة، مسار الرئيسية).
+     * بيانات البوابة النشطة (الاسم، الأيقونة، مسار الرئيسية).
      *
-     * @return array{label: string, tagline: string, icon: string, home: string}
+     * @return array{label: string, icon: string, home: string}
      */
     public static function portal(?string $key = null): array
     {
