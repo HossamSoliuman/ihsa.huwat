@@ -76,21 +76,6 @@ a { color: inherit; text-decoration: none; }
 .nav-link svg { width: 18px; height: 18px; flex-shrink: 0; }
 .nav-link span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.sidebar-foot { border-top: 1px solid hsl(var(--border)); padding: .75rem 1rem; }
-.portal-switch {
-    display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; padding: .5rem .75rem;
-    border: 1px solid hsl(var(--border)); border-radius: .5rem;
-    color: hsl(var(--muted-foreground)); font-size: .72rem; font-weight: 600;
-    transition: background .15s ease, color .15s ease;
-}
-.portal-switch:hover { background: hsl(var(--muted) / .6); color: hsl(var(--foreground)); }
-.portal-switch svg { width: 15px; height: 15px; flex-shrink: 0; }
-.portal-switch svg:last-child { margin-right: auto; }
-.ministry-card { display: flex; align-items: center; gap: .5rem; border-radius: .5rem; background: hsl(var(--muted) / .6); padding: .5rem .75rem; }
-.ministry-card .avatar { display: flex; align-items: center; justify-content: center; height: 2rem; width: 2rem; flex-shrink: 0; border-radius: 9999px; background: hsl(var(--primary) / .15); color: hsl(var(--primary)); font-size: .72rem; font-weight: 700; }
-.ministry-card .name { font-size: .72rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ministry-card .sub { font-size: 10px; color: hsl(var(--muted-foreground)); }
-
 .topbar {
     position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: .75rem;
     height: 4rem; border-bottom: 1px solid hsl(var(--border));
