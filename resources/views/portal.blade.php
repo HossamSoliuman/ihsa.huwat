@@ -30,10 +30,8 @@
     @include('partials.styles')
     <style>
         .portal-page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.5rem; padding: 3rem 1.5rem; }
-        .portal-brand { display: flex; align-items: center; gap: .875rem; }
-        .portal-brand img { height: 56px; width: 56px; border-radius: .875rem; object-fit: cover; }
-        .portal-brand h1 { font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
-        .portal-brand p { font-size: .82rem; color: hsl(var(--muted-foreground)); }
+        .portal-brand { display: flex; justify-content: center; }
+        .portal-brand img { height: 200px; width: auto; max-width: 100%; object-fit: contain; }
         .portal-grid { display: grid; gap: 1.25rem; width: 100%; max-width: 30rem; }
         @media (min-width: 720px) { .portal-grid { grid-template-columns: 1fr 1fr; max-width: 56rem; } }
         @media (min-width: 1080px) { .portal-grid { grid-template-columns: repeat(3, 1fr); max-width: 78rem; } }
@@ -67,10 +65,6 @@
     <div class="portal-page">
         <div class="portal-brand">
             <img src="{{ config('hawat.logo') }}" alt="{{ config('hawat.name') }}">
-            <div>
-                <h1>{{ config('hawat.name') }}</h1>
-                <p>{{ config('hawat.tagline') }}</p>
-            </div>
         </div>
 
         <div class="portal-grid">
