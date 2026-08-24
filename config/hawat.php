@@ -14,17 +14,25 @@ return [
     'logo' => 'https://media.base44.com/images/public/6a7a814ea23d8fee1b1c5058/2b4d90b35_logo-arabic-png.png',
 
     /*
-     * لوحة الوزارة مقسومة إلى بوابتين تتشاركان النطاق الرئيسي والتخطيط نفسه:
-     * "لوحة الحكومة" التنفيذية تحت البادئة /gov، و"المنصة التشغيلية" تحت
-     * البادئة /admin. App\Support\Nav يختار بينهما حسب اسم المسار.
+     * لوحة الوزارة مقسومة إلى ثلاث بوابات تتشارك النطاق الرئيسي والتخطيط نفسه:
+     * "لوحة الحكومة" التنفيذية تحت البادئة /gov، و"قسم الإحصاء" تحت /stats،
+     * و"المنصة التشغيلية" تحت /admin. App\Support\Nav يختار بينها حسب اسم المسار.
      *
-     * بوابة المعلومات (مركز الإدارة) ليست منهما — لها مضيفها وتخطيطها.
+     * لوحات قسم الإحصاء لا تظهر إلا في قائمته: البوابة الواحدة تعرض قائمتها وحدها،
+     * ولا يُكرَّر التبويب في بوابتين.
+     *
+     * بوابة المعلومات (مركز الإدارة) ليست منها — لها مضيفها وتخطيطها.
      */
     'portals' => [
         'gov' => [
             'label' => 'لوحة الحكومة',
             'icon' => 'shield-check',
             'home' => 'gov.home',
+        ],
+        'stats' => [
+            'label' => 'قسم الإحصاء',
+            'icon' => 'database',
+            'home' => 'stats.home',
         ],
         'ops' => [
             'label' => 'المنصة التشغيلية',
@@ -38,7 +46,6 @@ return [
             'title' => 'عام',
             'items' => [
                 ['label' => 'الرئيسية', 'route' => 'gov.home', 'icon' => 'layout-dashboard'],
-                ['label' => 'المؤشرات الوطنية', 'route' => 'gov.national-indicators', 'icon' => 'bar-chart'],
                 ['label' => 'الخريطة البحرية', 'route' => 'gov.sea-map', 'icon' => 'map'],
             ],
         ],
@@ -50,33 +57,55 @@ return [
             ],
         ],
         [
-            'title' => 'الإحصاء والاعتماد',
-            'items' => [
-                ['label' => 'الإحصاء الميداني', 'route' => 'gov.field-statistics', 'icon' => 'clipboard'],
-                ['label' => 'المصيد المعتمد', 'route' => 'gov.approved-catch', 'icon' => 'badge-check'],
-            ],
-        ],
-        [
             'title' => 'الاستدامة والرقابة',
             'items' => [
                 ['label' => 'الاستدامة والمخزون', 'route' => 'gov.sustainability', 'icon' => 'leaf'],
                 ['label' => 'الرقابة والامتثال', 'route' => 'gov.compliance', 'icon' => 'shield-alert'],
-                ['label' => 'الأمن الغذائي', 'route' => 'gov.food-security', 'icon' => 'utensils'],
-            ],
-        ],
-        [
-            'title' => 'التحليلات والذكاء',
-            'items' => [
-                ['label' => 'حوات AI', 'route' => 'gov.ai-assistant', 'icon' => 'bot'],
                 ['label' => 'مركز الإنذارات', 'route' => 'gov.alerts', 'icon' => 'bell-ring'],
             ],
         ],
+    ],
+
+    /*
+     * قسم الإحصاء — ست عشرة لوحة كانت موزّعة بين البوابتين فجُمعت في بوابة واحدة.
+     * ترتيب المجموعات يتبع مسار البيانات: مؤشرات، ثم رصد ميداني واعتماد، ثم تحليل
+     * وتقارير، ثم ما بعد الاعتماد من أسواق وأمن غذائي.
+     */
+    'nav_stats' => [
         [
-            'title' => 'التقارير',
+            'title' => 'المؤشرات واللوحات التنفيذية',
             'items' => [
-                ['label' => 'التقارير', 'route' => 'gov.reports', 'icon' => 'file-text'],
-                ['label' => 'تقارير الإنتاج الشهرية', 'route' => 'gov.monthly-reports', 'icon' => 'file-chart'],
-                ['label' => 'النشرة السنوية', 'route' => 'gov.annual-bulletin', 'icon' => 'book-open'],
+                ['label' => 'بوابة الإحصاء', 'route' => 'stats.home', 'icon' => 'database'],
+                ['label' => 'موجز الإدارة العليا', 'route' => 'stats.executive-briefing', 'icon' => 'crown'],
+                ['label' => 'المؤشرات الوطنية', 'route' => 'stats.national-indicators', 'icon' => 'bar-chart'],
+                ['label' => 'مقارنة الأداء', 'route' => 'stats.performance-compare', 'icon' => 'gauge'],
+            ],
+        ],
+        [
+            'title' => 'الرصد الميداني والاعتماد',
+            'items' => [
+                ['label' => 'الإحصاء الميداني', 'route' => 'stats.field-statistics', 'icon' => 'clipboard'],
+                ['label' => 'المصيد المعتمد', 'route' => 'stats.approved-catch', 'icon' => 'badge-check'],
+                ['label' => 'موظفو الإحصاء', 'route' => 'stats.statistics-officers', 'icon' => 'user-cog'],
+                ['label' => 'تتبع المصيد', 'route' => 'stats.catch-trace', 'icon' => 'link'],
+            ],
+        ],
+        [
+            'title' => 'التحليلات والتقارير',
+            'items' => [
+                ['label' => 'التحليلات والمؤشرات', 'route' => 'stats.analytics', 'icon' => 'line-chart'],
+                ['label' => 'حوات AI', 'route' => 'stats.ai-assistant', 'icon' => 'bot'],
+                ['label' => 'التقارير', 'route' => 'stats.reports', 'icon' => 'file-text'],
+                ['label' => 'تقارير الإنتاج الشهرية', 'route' => 'stats.monthly-reports', 'icon' => 'file-chart'],
+                ['label' => 'النشرة السنوية', 'route' => 'stats.annual-bulletin', 'icon' => 'book-open'],
+            ],
+        ],
+        [
+            'title' => 'الأسواق والأمن الغذائي',
+            'items' => [
+                ['label' => 'الأسواق والمزادات', 'route' => 'stats.markets', 'icon' => 'store'],
+                ['label' => 'سلسلة الإمداد', 'route' => 'stats.supply-chain', 'icon' => 'truck'],
+                ['label' => 'الأمن الغذائي', 'route' => 'stats.food-security', 'icon' => 'utensils'],
             ],
         ],
     ],
@@ -109,30 +138,15 @@ return [
             ],
         ],
         [
-            'title' => 'الإحصاء والاعتماد',
+            'title' => 'المراجعة والاستدامة',
             'items' => [
-                ['label' => 'موظفو الإحصاء', 'route' => 'statistics-officers', 'icon' => 'user-cog'],
-                ['label' => 'تتبع المصيد', 'route' => 'catch-trace', 'icon' => 'link'],
                 ['label' => 'مراجعة الفروقات', 'route' => 'discrepancy-review', 'icon' => 'alert-triangle'],
-            ],
-        ],
-        [
-            'title' => 'الاستدامة والرقابة',
-            'items' => [
                 ['label' => 'الصيد العرضي', 'route' => 'bycatch', 'icon' => 'waves'],
-            ],
-        ],
-        [
-            'title' => 'السلاسل والأسواق',
-            'items' => [
-                ['label' => 'الأسواق والمزادات', 'route' => 'markets', 'icon' => 'store'],
-                ['label' => 'سلسلة الإمداد', 'route' => 'supply-chain', 'icon' => 'truck'],
             ],
         ],
         [
             'title' => 'النظام',
             'items' => [
-                ['label' => 'التحليلات والمؤشرات', 'route' => 'analytics', 'icon' => 'line-chart'],
                 // يقود إلى بوابة المعلومات على مضيفها المستقل (info.hawat.sa).
                 ['label' => 'مركز الإدارة', 'route' => 'admin.index', 'icon' => 'shield-check'],
                 ['label' => 'سجل العمليات', 'route' => 'audit-log', 'icon' => 'history'],

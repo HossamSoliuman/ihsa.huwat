@@ -4,12 +4,17 @@
     $portals = [
         [
             'portal' => Nav::portal(Nav::GOV),
-            'blurb' => 'المؤشرات الوطنية، الإنتاج السمكي، الاستدامة، الأمن الغذائي، والتقارير الرسمية.',
+            'blurb' => 'الإنتاج السمكي، الخريطة البحرية، الاستدامة والمخزون، والرقابة والامتثال.',
             'sections' => Nav::sections(Nav::GOV),
         ],
         [
+            'portal' => Nav::portal(Nav::STATS),
+            'blurb' => 'المؤشرات الوطنية، الرصد الميداني والاعتماد، التحليلات والتقارير، والأسواق والأمن الغذائي.',
+            'sections' => Nav::sections(Nav::STATS),
+        ],
+        [
             'portal' => Nav::portal(Nav::OPS),
-            'blurb' => 'سجلات القوارب والصيادين والرحلات، الموانئ، المواسم والرخص، والأسواق.',
+            'blurb' => 'سجلات القوارب والصيادين والرحلات، الموانئ، المواسم والرخص، ومراجعة الفروقات.',
             'sections' => Nav::sections(Nav::OPS),
         ],
     ];
@@ -29,8 +34,9 @@
         .portal-brand img { height: 56px; width: 56px; border-radius: .875rem; object-fit: cover; }
         .portal-brand h1 { font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
         .portal-brand p { font-size: .82rem; color: hsl(var(--muted-foreground)); }
-        .portal-grid { display: grid; gap: 1.25rem; width: 100%; max-width: 56rem; }
-        @media (min-width: 768px) { .portal-grid { grid-template-columns: 1fr 1fr; } }
+        .portal-grid { display: grid; gap: 1.25rem; width: 100%; max-width: 30rem; }
+        @media (min-width: 720px) { .portal-grid { grid-template-columns: 1fr 1fr; max-width: 56rem; } }
+        @media (min-width: 1080px) { .portal-grid { grid-template-columns: repeat(3, 1fr); max-width: 78rem; } }
         .portal-card {
             display: flex; flex-direction: column; gap: 1rem; padding: 1.75rem;
             border: 1px solid hsl(var(--border)); border-radius: calc(var(--radius) * 2);

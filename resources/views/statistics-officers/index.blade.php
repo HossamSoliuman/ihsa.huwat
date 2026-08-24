@@ -40,7 +40,7 @@
                 @foreach (['نشط', 'إجازة', 'موقوف'] as $s)<option value="{{ $s }}" @selected(request('status') === $s)>{{ $s }}</option>@endforeach
             </select>
         </label>
-        <a href="{{ route('statistics-officers') }}" class="btn btn-outline">إعادة تعيين</a>
+        <a href="{{ route('stats.statistics-officers') }}" class="btn btn-outline">إعادة تعيين</a>
     </form>
 
     <div class="table-card">

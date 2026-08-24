@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminResourceController;
+use App\Http\Controllers\AiAssistantController;
+use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\AnnualBulletinController;
 use App\Http\Controllers\ApprovedCatchController;
 use App\Http\Controllers\BoatController;
 use App\Http\Controllers\BoatTimelineController;
@@ -10,6 +13,7 @@ use App\Http\Controllers\CatchTraceController;
 use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscrepancyReviewController;
+use App\Http\Controllers\ExecutiveBriefingController;
 use App\Http\Controllers\FieldStatisticsController;
 use App\Http\Controllers\FisherController;
 use App\Http\Controllers\FishingSeasonController;
@@ -18,14 +22,18 @@ use App\Http\Controllers\FoodSecurityController;
 use App\Http\Controllers\GovernorateController;
 use App\Http\Controllers\IntegrationSettingController;
 use App\Http\Controllers\MarketController;
+use App\Http\Controllers\MonthlyReportsController;
 use App\Http\Controllers\NationalIndicatorsController;
+use App\Http\Controllers\PerformanceCompareController;
 use App\Http\Controllers\PortController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\RegionController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SeaMapController;
 use App\Http\Controllers\SeasonLicenseController;
 use App\Http\Controllers\SpeciesController;
 use App\Http\Controllers\StatisticsOfficerController;
+use App\Http\Controllers\StatisticsPortalController;
 use App\Http\Controllers\SupplyChainController;
 use App\Http\Controllers\SustainabilityController;
 use App\Http\Controllers\TripController;
@@ -83,11 +91,36 @@ if ($onSeparateHost) {
  */
 $govDashboard = function (): void {
     Route::get('/', [DashboardController::class, 'index'])->name('home');
-    Route::get('/national-indicators', [NationalIndicatorsController::class, 'index'])->name('national-indicators');
     Route::get('/sea-map', [SeaMapController::class, 'index'])->name('sea-map');
 
     Route::get('/production', [ProductionController::class, 'index'])->name('production');
     Route::get('/ports-compare', [PortController::class, 'compare'])->name('ports-compare');
+
+    Route::get('/sustainability', [SustainabilityController::class, 'index'])->name('sustainability');
+
+    Route::get('/compliance', [ComplianceController::class, 'index'])->name('compliance');
+    Route::post('/compliance', [ComplianceController::class, 'store'])->name('compliance.store');
+
+    // شاشات لم تُبنَ بعد ضمن لوحة الحكومة.
+    Route::get('/alerts', fn () => view('pages.pending', ['routeName' => 'gov.alerts']))->name('alerts');
+};
+
+/*
+ * قسم الإحصاء — بوابة قائمة بذاتها تحت البادئة /stats.
+ *
+ * لوحاته الست عشرة كانت موزّعة بين لوحة الحكومة والمنصة التشغيلية، فجُمعت هنا
+ * ليصبح للقسم قائمته الجانبية وحده: من الرصد الميداني والاعتماد، إلى التحليل
+ * والتقارير، إلى الأسواق والأمن الغذائي.
+ */
+$statisticsSection = function (): void {
+    Route::get('/', [StatisticsPortalController::class, 'index'])->name('home');
+
+    Route::get('/executive-briefing', [ExecutiveBriefingController::class, 'index'])->name('executive-briefing');
+    Route::get('/executive-briefing/export.csv', [ExecutiveBriefingController::class, 'exportCsv'])->name('executive-briefing.csv');
+    Route::get('/executive-briefing/export.json', [ExecutiveBriefingController::class, 'exportJson'])->name('executive-briefing.json');
+
+    Route::get('/national-indicators', [NationalIndicatorsController::class, 'index'])->name('national-indicators');
+    Route::get('/performance-compare', [PerformanceCompareController::class, 'index'])->name('performance-compare');
 
     Route::get('/field-statistics', [FieldStatisticsController::class, 'index'])->name('field-statistics');
     Route::post('/field-statistics/{trip}/record', [FieldStatisticsController::class, 'record'])->name('field-statistics.record');
@@ -95,17 +128,26 @@ $govDashboard = function (): void {
     Route::get('/approved-catch', [ApprovedCatchController::class, 'index'])->name('approved-catch');
     Route::post('/approved-catch/{trip}/approve', [ApprovedCatchController::class, 'approve'])->name('approved-catch.approve');
 
-    Route::get('/sustainability', [SustainabilityController::class, 'index'])->name('sustainability');
+    Route::get('/statistics-officers', [StatisticsOfficerController::class, 'index'])->name('statistics-officers');
+    Route::get('/catch-trace', [CatchTraceController::class, 'index'])->name('catch-trace');
 
-    Route::get('/compliance', [ComplianceController::class, 'index'])->name('compliance');
-    Route::post('/compliance', [ComplianceController::class, 'store'])->name('compliance.store');
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+    Route::get('/ai-assistant', [AiAssistantController::class, 'index'])->name('ai-assistant');
 
+    Route::get('/reports', [ReportsController::class, 'index'])->name('reports');
+    Route::get('/reports/{report}/export.csv', [ReportsController::class, 'export'])->name('reports.export');
+    Route::get('/reports/{report}/print', [ReportsController::class, 'print'])->name('reports.print');
+
+    Route::get('/monthly-reports', [MonthlyReportsController::class, 'index'])->name('monthly-reports');
+    Route::get('/monthly-reports/export.csv', [MonthlyReportsController::class, 'export'])->name('monthly-reports.export');
+    Route::get('/monthly-reports/print', [MonthlyReportsController::class, 'print'])->name('monthly-reports.print');
+
+    Route::get('/annual-bulletin', [AnnualBulletinController::class, 'index'])->name('annual-bulletin');
+    Route::get('/annual-bulletin/print', [AnnualBulletinController::class, 'print'])->name('annual-bulletin.print');
+
+    Route::get('/markets', [MarketController::class, 'index'])->name('markets');
+    Route::get('/supply-chain', [SupplyChainController::class, 'index'])->name('supply-chain');
     Route::get('/food-security', [FoodSecurityController::class, 'index'])->name('food-security');
-
-    // شاشات لم تُبنَ بعد ضمن لوحة الحكومة.
-    foreach (['ai-assistant', 'alerts', 'reports', 'monthly-reports', 'annual-bulletin'] as $slug) {
-        Route::get('/'.$slug, fn () => view('pages.pending', ['routeName' => 'gov.'.$slug]))->name($slug);
-    }
 };
 
 /*
@@ -143,34 +185,55 @@ $operationsConsole = function (): void {
     Route::get('/ports', [PortController::class, 'index'])->name('ports');
     Route::get('/fishing-sites', [FishingSiteController::class, 'index'])->name('fishing-sites');
 
-    Route::get('/statistics-officers', [StatisticsOfficerController::class, 'index'])->name('statistics-officers');
-    Route::get('/catch-trace', [CatchTraceController::class, 'index'])->name('catch-trace');
-
     Route::get('/discrepancy-review', [DiscrepancyReviewController::class, 'index'])->name('discrepancy-review');
     Route::post('/discrepancy-review/{trip}/resolve', [DiscrepancyReviewController::class, 'resolve'])->name('discrepancy-review.resolve');
 
     Route::get('/bycatch', [BycatchController::class, 'index'])->name('bycatch');
     Route::post('/bycatch', [BycatchController::class, 'store'])->name('bycatch.store');
 
-    Route::get('/markets', [MarketController::class, 'index'])->name('markets');
-    Route::get('/supply-chain', [SupplyChainController::class, 'index'])->name('supply-chain');
-
     // شاشات لم تُبنَ بعد — "مركز الإدارة" ليس منها، فهو يشير إلى بوابة المعلومات.
-    foreach (['analytics', 'audit-log', 'users', 'settings'] as $slug) {
+    foreach (['audit-log', 'users', 'settings'] as $slug) {
         Route::get('/'.$slug, fn () => view('pages.pending', ['routeName' => $slug]))->name($slug);
     }
 };
 
 /*
- * البوابتان تتشاركان النطاق الرئيسي: صفحة اختيار على "/"، ثم لوحة الحكومة
- * تحت /gov والمنصة التشغيلية تحت /admin.
+ * البوابات الثلاث تتشارك النطاق الرئيسي: صفحة اختيار على "/"، ثم لوحة الحكومة
+ * تحت /gov، وقسم الإحصاء تحت /stats، والمنصة التشغيلية تحت /admin.
  */
-$governmentPortal = function () use ($govDashboard, $operationsConsole): void {
+$governmentPortal = function () use ($govDashboard, $statisticsSection, $operationsConsole): void {
     Route::view('/', 'portal')->name('portal');
 
     Route::prefix('gov')->name('gov.')->group($govDashboard);
 
+    Route::prefix('stats')->name('stats.')->group($statisticsSection);
+
     Route::prefix('admin')->group($operationsConsole);
+
+    /*
+     * مواضع لوحات قسم الإحصاء قبل استقلاله ببوابته. التحويل دائم حفاظًا على
+     * الروابط المحفوظة والمُرسلة، وليست مسارات مكرّرة: لا شيء يُقدَّم منها.
+     */
+    foreach ([
+        '/gov/statistics' => '/stats',
+        '/gov/executive-briefing' => '/stats/executive-briefing',
+        '/gov/national-indicators' => '/stats/national-indicators',
+        '/gov/performance-compare' => '/stats/performance-compare',
+        '/gov/field-statistics' => '/stats/field-statistics',
+        '/gov/approved-catch' => '/stats/approved-catch',
+        '/gov/ai-assistant' => '/stats/ai-assistant',
+        '/gov/reports' => '/stats/reports',
+        '/gov/monthly-reports' => '/stats/monthly-reports',
+        '/gov/annual-bulletin' => '/stats/annual-bulletin',
+        '/gov/food-security' => '/stats/food-security',
+        '/admin/statistics-officers' => '/stats/statistics-officers',
+        '/admin/catch-trace' => '/stats/catch-trace',
+        '/admin/analytics' => '/stats/analytics',
+        '/admin/markets' => '/stats/markets',
+        '/admin/supply-chain' => '/stats/supply-chain',
+    ] as $vacated => $destination) {
+        Route::permanentRedirect($vacated, $destination);
+    }
 };
 
 $governmentDomain = config('hawat.domain');

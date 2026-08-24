@@ -54,6 +54,6 @@ class ApprovedCatchController extends Controller
             'details' => "اعتماد مصيد الرحلة بمقدار {$trip->approved_kg} كجم",
         ]);
 
-        return redirect()->route('gov.approved-catch')->with('status', "تم اعتماد مصيد الرحلة {$trip->trip_number}");
+        return redirect()->route('stats.approved-catch')->with('status', "تم اعتماد مصيد الرحلة {$trip->trip_number}");
     }
 }

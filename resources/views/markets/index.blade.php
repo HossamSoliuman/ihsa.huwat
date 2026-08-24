@@ -40,7 +40,7 @@
                 @foreach ($types as $type)<option value="{{ $type }}" @selected(request('type') === $type)>{{ $type }}</option>@endforeach
             </select>
         </label>
-        <a href="{{ route('markets') }}" class="btn btn-outline">إعادة تعيين</a>
+        <a href="{{ route('stats.markets') }}" class="btn btn-outline">إعادة تعيين</a>
     </form>
 
     <div class="cards-grid cols-3" style="margin-bottom:1.25rem">

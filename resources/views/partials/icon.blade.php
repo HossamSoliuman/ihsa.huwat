@@ -61,6 +61,21 @@ $paths = [
     'globe' => '<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
     'ban' => '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
     'trending-down' => '<path d="m22 17-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/>',
+    'crown' => '<path d="m2 6 4 4 6-7 6 7 4-4-2 12H4z"/><path d="M4 21h16"/>',
+    'gauge' => '<path d="M12 14 8.5 9.5"/><path d="M3.3 17a9 9 0 1 1 17.4 0"/><circle cx="12" cy="14" r="1.5"/>',
+    'trophy' => '<path d="M7 4h10v6a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3"/><path d="M7 5H4v2a3 3 0 0 0 3 3"/><path d="M10 15v4"/><path d="M14 15v4"/><path d="M8 21h8"/>',
+    'minus' => '<path d="M5 12h14"/>',
+    'arrow-left' => '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
+    'arrow-left-right' => '<path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>',
+    'download' => '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+    'printer' => '<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/>',
+    'file-spreadsheet' => '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h6"/><path d="M8 13h8"/><path d="M8 17h8"/><path d="M12 13v8"/>',
+    'file-json' => '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h6"/><path d="M9 13c-1 0-1 1-1 2s0 2-1 2c1 0 1 1 1 2s0 2 1 2"/><path d="M15 13c1 0 1 1 1 2s0 2 1 2c-1 0-1 1-1 2s0 2-1 2"/>',
+    'sparkles' => '<path d="M12 3 13.7 8.3 19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7z"/><path d="M18 4v3"/><path d="M19.5 5.5h-3"/><path d="M6 17v3"/><path d="M7.5 18.5h-3"/>',
+    'user' => '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
+    'coins' => '<circle cx="9" cy="9" r="6"/><path d="M15.5 4.2a6 6 0 0 1 0 15.6"/><path d="M9 6v6l3 1.5"/>',
+    'calculator' => '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8"/><path d="M8 11h.01"/><path d="M12 11h.01"/><path d="M16 11h.01"/><path d="M8 15h.01"/><path d="M12 15h.01"/><path d="M16 15v4"/><path d="M8 19h4"/>',
+    'refresh-cw' => '<path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/>',
 ];
 @endphp
 {{-- قياس افتراضي بالسمات: أي قاعدة CSS للأيقونة تتقدّم عليه، وبدونه تتمدد الأيقونة لتملأ حاويتها. --}}

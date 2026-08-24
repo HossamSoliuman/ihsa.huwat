@@ -7,9 +7,10 @@ use Illuminate\Support\Facades\Route;
 /**
  * يحدّد البوابة النشطة داخل لوحة الوزارة وقائمتها الجانبية.
  *
- * اللوحة مقسومة إلى بوابتين تتشاركان نفس التخطيط: لوحة الحكومة تحت /gov،
- * والمنصة التشغيلية تحت /admin. التمييز من اسم المسار لا من المسار نفسه: كل
- * مسارات لوحة الحكومة تحمل البادئة `gov.`، ومسارات المنصة التشغيلية بلا بادئة.
+ * اللوحة مقسومة إلى ثلاث بوابات تتشارك نفس التخطيط: لوحة الحكومة تحت /gov،
+ * وقسم الإحصاء تحت /stats، والمنصة التشغيلية تحت /admin. التمييز من اسم المسار
+ * لا من المسار نفسه: مسارات البوابتين الأوليين تحمل بادئتيهما، ومسارات المنصة
+ * التشغيلية بلا بادئة.
  *
  * بوابة المعلومات (مركز الإدارة) خارج هذا التقسيم — لها تخطيطها وقائمتها.
  */
@@ -17,14 +18,44 @@ class Nav
 {
     public const GOV = 'gov';
 
+    public const STATS = 'stats';
+
     public const OPS = 'ops';
+
+    /**
+     * مفتاح كل بوابة ومصدر قائمتها. المنصة التشغيلية آخرها لأنها الافتراضية:
+     * أسماء مساراتها بلا بادئة، فتلتقط كل ما لم يطابق بادئة قبلها.
+     */
+    private const SECTIONS = [
+        self::GOV => 'hawat.nav_gov',
+        self::STATS => 'hawat.nav_stats',
+        self::OPS => 'hawat.nav',
+    ];
+
+    /**
+     * مفاتيح البوابات بترتيب عرضها.
+     *
+     * @return array<int, string>
+     */
+    public static function keys(): array
+    {
+        return array_keys(self::SECTIONS);
+    }
 
     /**
      * مفتاح البوابة النشطة في الطلب الحالي.
      */
     public static function portalKey(): string
     {
-        return str_starts_with(Route::currentRouteName() ?? '', 'gov.') ? self::GOV : self::OPS;
+        $route = Route::currentRouteName() ?? '';
+
+        foreach ([self::GOV, self::STATS] as $key) {
+            if (str_starts_with($route, $key.'.')) {
+                return $key;
+            }
+        }
+
+        return self::OPS;
     }
 
     /**
@@ -38,15 +69,30 @@ class Nav
     }
 
     /**
+     * البوابات الأخرى غير النشطة — روابط التنقّل في أسفل القائمة الجانبية.
+     *
+     * @return array<int, array{label: string, icon: string, home: string}>
+     */
+    public static function otherPortals(): array
+    {
+        $active = self::portalKey();
+
+        return array_map(
+            fn (string $key) => self::portal($key),
+            array_values(array_filter(self::keys(), fn (string $key) => $key !== $active)),
+        );
+    }
+
+    /**
      * أقسام القائمة الجانبية للبوابة النشطة.
      */
     public static function sections(?string $key = null): array
     {
-        return config(($key ?? self::portalKey()) === self::GOV ? 'hawat.nav_gov' : 'hawat.nav');
+        return config(self::SECTIONS[$key ?? self::portalKey()]);
     }
 
     /**
-     * عنوان الصفحة المقابل لاسم مسار، بالبحث في قائمتَي البوابتين.
+     * عنوان الصفحة المقابل لاسم مسار، بالبحث في قوائم البوابات كلها.
      */
     public static function label(?string $routeName): ?string
     {
@@ -54,7 +100,7 @@ class Nav
             return null;
         }
 
-        foreach ([self::GOV, self::OPS] as $key) {
+        foreach (self::keys() as $key) {
             foreach (self::sections($key) as $section) {
                 foreach ($section['items'] as $item) {
                     if ($item['route'] === $routeName) {

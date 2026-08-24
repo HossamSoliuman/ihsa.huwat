@@ -64,7 +64,7 @@
         <p style="font-size:.82rem;font-weight:600;margin-bottom:.5rem">رحلات معتمدة حديثة</p>
         <div class="cards-grid cols-4">
             @foreach ($recent as $item)
-                <a href="{{ route('catch-trace', ['search' => $item->trip_number]) }}" class="entity-card" style="padding:1rem">
+                <a href="{{ route('stats.catch-trace', ['search' => $item->trip_number]) }}" class="entity-card" style="padding:1rem">
                     <span style="font-family:monospace;font-size:.72rem;font-weight:700;color:hsl(var(--primary))">{{ $item->trip_number }}</span>
                     <p style="margin-top:.35rem;font-size:.875rem;font-weight:600">{{ $item->boat?->name ?? '—' }}</p>
                     <p style="font-size:.72rem;color:hsl(var(--muted-foreground))">المعتمد: {{ number_format($item->approved_kg) }} كجم</p>

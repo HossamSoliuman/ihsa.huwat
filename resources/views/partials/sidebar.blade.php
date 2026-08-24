@@ -1,7 +1,5 @@
 @php
     use App\Support\Nav;
-
-    $other = Nav::portalKey() === Nav::GOV ? Nav::portal(Nav::OPS) : Nav::portal(Nav::GOV);
 @endphp
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-head">
@@ -29,11 +27,13 @@
     </nav>
 
     <div class="sidebar-foot">
-        <a href="{{ route($other['home']) }}" class="portal-switch">
-            @include('partials.icon', ['name' => $other['icon']])
-            <span>الانتقال إلى {{ $other['label'] }}</span>
-            @include('partials.icon', ['name' => 'chevron-left'])
-        </a>
+        @foreach (Nav::otherPortals() as $other)
+            <a href="{{ route($other['home']) }}" class="portal-switch">
+                @include('partials.icon', ['name' => $other['icon']])
+                <span>الانتقال إلى {{ $other['label'] }}</span>
+                @include('partials.icon', ['name' => 'chevron-left'])
+            </a>
+        @endforeach
         <div class="ministry-card">
             <div class="avatar">وز</div>
             <div style="min-width:0;flex:1">
