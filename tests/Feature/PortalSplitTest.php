@@ -9,11 +9,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * لوحة الوزارة مقسومة إلى أربع بوابات على النطاق الرئيسي: لوحة الحكومة التنفيذية
- * تحت /gov، وقسم الإحصاء تحت /stats، وقسم الإدارة الفرعية تحت /subadmin، والمنصة
- * التشغيلية تحت /admin. هذه الاختبارات تحرس الحدّ بينها — أن كل صفحة تُقدَّم من
- * موضعها الجديد فقط، وأن القائمة الجانبية تتبدّل مع البوابة، وهما ما ينكسر بصمت
- * عند إضافة مسار في المكان الخطأ.
+ * لوحة الوزارة مقسومة إلى خمس بوابات على النطاق الرئيسي: لوحة الحكومة التنفيذية
+ * تحت /gov، وقسم الإحصاء تحت /stats، وقسم الإدارة الفرعية تحت /subadmin، وقسم
+ * الخدمات والتراخيص تحت /services، والمنصة التشغيلية تحت /admin. هذه الاختبارات
+ * تحرس الحدّ بينها — أن كل صفحة تُقدَّم من موضعها الجديد فقط، وأن القائمة الجانبية
+ * تتبدّل مع البوابة، وهما ما ينكسر بصمت عند إضافة مسار في المكان الخطأ.
  */
 class PortalSplitTest extends TestCase
 {
@@ -28,7 +28,6 @@ class PortalSplitTest extends TestCase
             ['/gov/production'],
             ['/gov/ports-compare'],
             ['/gov/sustainability'],
-            ['/gov/compliance'],
         ];
     }
 
@@ -75,7 +74,6 @@ class PortalSplitTest extends TestCase
             ['/admin/regions'],
             ['/admin/species'],
             ['/admin/fishing-seasons'],
-            ['/admin/season-licenses'],
             ['/admin/boats'],
             ['/admin/fishers'],
             ['/admin/trips'],
@@ -114,6 +112,27 @@ class PortalSplitTest extends TestCase
         $this->get($url)->assertOk();
     }
 
+    /** المسارات التي تُقدَّم من قسم الخدمات والتراخيص تحت /services. */
+    public static function servicesPages(): array
+    {
+        return [
+            ['/services'],
+            ['/services/fisher-services'],
+            ['/services/my-workspace'],
+            ['/services/staff-dashboard'],
+            ['/services/staff-management'],
+            ['/services/season-licenses'],
+            ['/services/compliance'],
+            ['/services/support'],
+        ];
+    }
+
+    #[DataProvider('servicesPages')]
+    public function test_a_services_page_answers_under_its_prefix(string $url): void
+    {
+        $this->get($url)->assertOk();
+    }
+
     /** المواضع التي كانت تُقدَّم منها هذه الصفحات قبل النقل. */
     public static function vacatedPaths(): array
     {
@@ -142,6 +161,8 @@ class PortalSplitTest extends TestCase
             ['/admin/audit-log', '/subadmin/audit-log'],
             ['/admin/users', '/subadmin/users'],
             ['/admin/settings', '/subadmin/settings'],
+            ['/gov/compliance', '/services/compliance'],
+            ['/admin/season-licenses', '/services/season-licenses'],
         ];
     }
 
@@ -152,17 +173,19 @@ class PortalSplitTest extends TestCase
         $this->get($old)->assertMovedPermanently()->assertRedirect($new);
     }
 
-    public function test_the_root_offers_the_four_portals(): void
+    public function test_the_root_offers_every_portal(): void
     {
         $this->get('/')
             ->assertOk()
             ->assertSee('لوحة الحكومة', false)
             ->assertSee('قسم الإحصاء', false)
             ->assertSee('قسم الإدارة الفرعية', false)
+            ->assertSee('قسم الخدمات والتراخيص', false)
             ->assertSee('المنصة التشغيلية', false)
             ->assertSee('href="'.route('gov.home').'"', false)
             ->assertSee('href="'.route('stats.home').'"', false)
             ->assertSee('href="'.route('subadmin.home').'"', false)
+            ->assertSee('href="'.route('services.home').'"', false)
             ->assertSee('href="'.route('governorates').'"', false);
     }
 
@@ -190,16 +213,22 @@ class PortalSplitTest extends TestCase
             ->assertDontSee(route('boats'), false)
             ->assertDontSee(route('gov.production'), false)
             ->assertDontSee(route('stats.field-statistics'), false);
+
+        $this->get('/services/fisher-services')
+            ->assertSee(route('services.support'), false)
+            ->assertDontSee(route('boats'), false)
+            ->assertDontSee(route('gov.production'), false)
+            ->assertDontSee(route('subadmin.audit-log'), false);
     }
 
     public function test_a_sections_tabs_are_gone_from_the_other_portals(): void
     {
         // اللوحة الواحدة في بوابة واحدة: لو عاد تبويب من تبويبات قسم إلى قائمة
         // بوابة أخرى لظهرت بادئته هنا.
-        foreach ([Nav::GOV, Nav::STATS, Nav::SUBADMIN, Nav::OPS] as $portal) {
+        foreach (Nav::keys() as $portal) {
             foreach (Nav::sections($portal) as $section) {
                 foreach ($section['items'] as $item) {
-                    foreach ([Nav::STATS, Nav::SUBADMIN] as $owner) {
+                    foreach ([Nav::STATS, Nav::SUBADMIN, Nav::SERVICES] as $owner) {
                         if ($portal === $owner) {
                             continue;
                         }

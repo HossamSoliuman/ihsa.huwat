@@ -9,6 +9,20 @@
 
 محليًا: `ihsa.test` و`info.ihsa.test`.
 
+ولوحة الوزارة نفسها مقسومة إلى **خمس بوابات** على النطاق الرئيسي، تُختار من صفحة `/`
+ويحدّدها `App\Support\Nav` من اسم المسار — والتبويب الواحد يظهر في قائمة بوابته وحدها:
+
+| البادئة | البوابة | القائمة |
+|---|---|---|
+| `/gov` | لوحة الحكومة | `hawat.nav_gov` |
+| `/stats` | قسم الإحصاء | `hawat.nav_stats` |
+| `/subadmin` | قسم الإدارة الفرعية | `hawat.nav_subadmin` |
+| `/services` | قسم الخدمات والتراخيص | `hawat.nav_services` |
+| `/admin` | المنصة التشغيلية | `hawat.nav` |
+
+نقل لوحة بين البوابات يستلزم `Route::permanentRedirect` من موضعها القديم — يحرس ذلك
+`tests/Feature/PortalSplitTest.php`.
+
 ---
 
 ## 1) المتطلبات
@@ -121,6 +135,8 @@ app/Http/Controllers/
 | `create_governance_tables` | data_catalog_assets, data_lineage_edges, business_glossary_terms, kpi_registries, data_quality_issues, fao_standard_mappings |
 | `create_system_tables` | user_permissions, audit_logs, ui_translations, integration_settings |
 | `extend_tables_for_info_portal` | الحقول المرجعية الإضافية التي تحرّرها البوابة ولا تحتاجها اللوحة |
+| `create_sub_administration_tables` | org_positions, org_staff, admin_tasks, staff_notifications, notification_settings |
+| `create_services_licensing_tables` | fisher_service_types, fisher_service_staff, fisher_service_staff_type, fisher_service_requests, support_tickets |
 
 جميع الـ Seeders تستخدم `updateOrCreate` — تشغيلها أكثر من مرة آمن ولا يُكرّر البيانات.
 

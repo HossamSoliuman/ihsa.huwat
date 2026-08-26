@@ -43,7 +43,7 @@
                 @endforeach
             </select>
         </label>
-        <a href="{{ route('season-licenses') }}" class="btn btn-outline">إعادة تعيين</a>
+        <a href="{{ route('services.season-licenses') }}" class="btn btn-outline">إعادة تعيين</a>
     </form>
 
     <div class="table-card">
@@ -84,7 +84,7 @@
             </div>
             <button type="button" class="icon-action" onclick="toggleDrawer('licenseDrawer', false)">@include('partials.icon', ['name' => 'x'])</button>
         </div>
-        <form method="POST" id="licenseForm" action="{{ route('season-licenses.store') }}" class="drawer-body">
+        <form method="POST" id="licenseForm" action="{{ route('services.season-licenses.store') }}" class="drawer-body">
             @csrf
             <input type="hidden" name="_method" id="licenseMethod" value="POST">
             <div class="form-grid">
@@ -123,7 +123,7 @@
 
 @push('scripts')
 <script>
-    const licenseStoreUrl = @json(route('season-licenses.store'));
+    const licenseStoreUrl = @json(route('services.season-licenses.store'));
 
     function openLicenseForm(license = null) {
         const form = document.getElementById('licenseForm');

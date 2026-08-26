@@ -77,7 +77,8 @@ class StatisticsSection
                 'icon' => 'shield-alert',
                 'tone' => 'rose',
                 'items' => [
-                    ['route' => 'gov.compliance', 'label' => 'الرقابة والامتثال', 'icon' => 'shield-alert', 'desc' => 'المخالفات والإجراءات ومؤشرات الالتزام'],
+                    // اللوحة تعيش في قسم الخدمات والتراخيص — تُذكر هنا مرجعًا لا تبويبًا.
+                    ['route' => 'services.compliance', 'label' => 'الرقابة والامتثال', 'icon' => 'shield-alert', 'desc' => 'المخالفات والإجراءات ومؤشرات الالتزام'],
                     // اللوحة تعيش في قسم الإدارة الفرعية — تُذكر هنا مرجعًا لا تبويبًا.
                     ['route' => 'subadmin.alerts', 'label' => 'مركز الإنذارات', 'icon' => 'bell-ring', 'desc' => 'تنبيهات المصيد والرخص والمواسم'],
                 ],

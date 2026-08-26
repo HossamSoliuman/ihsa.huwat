@@ -19,6 +19,7 @@ use App\Http\Controllers\DiscrepancyReviewController;
 use App\Http\Controllers\ExecutiveBriefingController;
 use App\Http\Controllers\FieldStatisticsController;
 use App\Http\Controllers\FisherController;
+use App\Http\Controllers\FisherServiceRequestController;
 use App\Http\Controllers\FishingSeasonController;
 use App\Http\Controllers\FishingSiteController;
 use App\Http\Controllers\FoodSecurityController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\GovernorateController;
 use App\Http\Controllers\IntegrationSettingController;
 use App\Http\Controllers\MarketController;
 use App\Http\Controllers\MonthlyReportsController;
+use App\Http\Controllers\MyWorkspaceController;
 use App\Http\Controllers\NationalIndicatorsController;
 use App\Http\Controllers\OrgStructureController;
 use App\Http\Controllers\PerformanceCompareController;
@@ -35,6 +37,9 @@ use App\Http\Controllers\RegionController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SeaMapController;
 use App\Http\Controllers\SeasonLicenseController;
+use App\Http\Controllers\ServicesPortalController;
+use App\Http\Controllers\ServiceStaffController;
+use App\Http\Controllers\ServiceStaffDashboardController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SpeciesController;
 use App\Http\Controllers\StaffNotificationController;
@@ -42,6 +47,7 @@ use App\Http\Controllers\StatisticsOfficerController;
 use App\Http\Controllers\StatisticsPortalController;
 use App\Http\Controllers\SubAdminPortalController;
 use App\Http\Controllers\SupplyChainController;
+use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\SustainabilityController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\UserAccessController;
@@ -105,10 +111,6 @@ $govDashboard = function (): void {
     Route::get('/ports-compare', [PortController::class, 'compare'])->name('ports-compare');
 
     Route::get('/sustainability', [SustainabilityController::class, 'index'])->name('sustainability');
-
-    Route::get('/compliance', [ComplianceController::class, 'index'])->name('compliance');
-    Route::post('/compliance', [ComplianceController::class, 'store'])->name('compliance.store');
-
 };
 
 /*
@@ -151,6 +153,46 @@ $subAdministration = function (): void {
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+};
+
+/*
+ * قسم الخدمات والتراخيص — بوابة قائمة بذاتها تحت البادئة /services.
+ *
+ * سبع لوحات تغطّي دورة الخدمة كاملة: الطلب يصل ويُعالَج ويُعتمد فتُصدر رخصته،
+ * ويُتابَع من يخالف شروطها. "رخص المواسم" جاءت من المنصة التشغيلية و"الرقابة
+ * والامتثال" من لوحة الحكومة — طرفا الدورة نفسها التي يفتحها الطلب.
+ */
+$servicesSection = function (): void {
+    Route::get('/', [ServicesPortalController::class, 'index'])->name('home');
+
+    Route::get('/fisher-services', [FisherServiceRequestController::class, 'index'])->name('fisher-services');
+    Route::post('/fisher-services', [FisherServiceRequestController::class, 'store'])->name('fisher-services.store');
+    Route::post('/fisher-services/{serviceRequest}/process', [FisherServiceRequestController::class, 'process'])->name('fisher-services.process');
+    Route::post('/fisher-services/{serviceRequest}/decide', [FisherServiceRequestController::class, 'decide'])->name('fisher-services.decide');
+    Route::get('/fisher-services/{serviceRequest}/license', [FisherServiceRequestController::class, 'license'])->name('fisher-services.license');
+
+    Route::get('/my-workspace', [MyWorkspaceController::class, 'index'])->name('my-workspace');
+    Route::post('/my-workspace/notifications/{notification}/read', [MyWorkspaceController::class, 'markRead'])->name('my-workspace.read');
+
+    Route::get('/staff-dashboard', [ServiceStaffDashboardController::class, 'index'])->name('staff-dashboard');
+
+    Route::get('/staff-management', [ServiceStaffController::class, 'index'])->name('staff-management');
+    Route::post('/staff-management', [ServiceStaffController::class, 'store'])->name('staff-management.store');
+    Route::put('/staff-management/{staff}', [ServiceStaffController::class, 'update'])->name('staff-management.update');
+    Route::post('/staff-management/{staff}/section', [ServiceStaffController::class, 'reassign'])->name('staff-management.reassign');
+    Route::delete('/staff-management/{staff}', [ServiceStaffController::class, 'destroy'])->name('staff-management.destroy');
+
+    Route::get('/season-licenses', [SeasonLicenseController::class, 'index'])->name('season-licenses');
+    Route::post('/season-licenses', [SeasonLicenseController::class, 'store'])->name('season-licenses.store');
+    Route::put('/season-licenses/{seasonLicense}', [SeasonLicenseController::class, 'update'])->name('season-licenses.update');
+
+    Route::get('/compliance', [ComplianceController::class, 'index'])->name('compliance');
+    Route::post('/compliance', [ComplianceController::class, 'store'])->name('compliance.store');
+
+    Route::get('/support', [SupportTicketController::class, 'index'])->name('support');
+    Route::post('/support', [SupportTicketController::class, 'store'])->name('support.store');
+    Route::post('/support/{ticket}/assign', [SupportTicketController::class, 'assign'])->name('support.assign');
+    Route::post('/support/{ticket}/resolve', [SupportTicketController::class, 'resolve'])->name('support.resolve');
 };
 
 /*
@@ -222,10 +264,6 @@ $operationsConsole = function (): void {
     Route::put('/fishing-seasons/{fishingSeason}', [FishingSeasonController::class, 'update'])->name('fishing-seasons.update');
     Route::post('/fishing-seasons/{fishingSeason}/status', [FishingSeasonController::class, 'updateStatus'])->name('fishing-seasons.status');
 
-    Route::get('/season-licenses', [SeasonLicenseController::class, 'index'])->name('season-licenses');
-    Route::post('/season-licenses', [SeasonLicenseController::class, 'store'])->name('season-licenses.store');
-    Route::put('/season-licenses/{seasonLicense}', [SeasonLicenseController::class, 'update'])->name('season-licenses.update');
-
     Route::get('/boats', [BoatController::class, 'index'])->name('boats');
     Route::get('/fishers', [FisherController::class, 'index'])->name('fishers');
     Route::get('/trips', [TripController::class, 'index'])->name('trips');
@@ -241,11 +279,11 @@ $operationsConsole = function (): void {
 };
 
 /*
- * البوابات الأربع تتشارك النطاق الرئيسي: صفحة اختيار على "/"، ثم لوحة الحكومة
- * تحت /gov، وقسم الإحصاء تحت /stats، وقسم الإدارة الفرعية تحت /subadmin،
- * والمنصة التشغيلية تحت /admin.
+ * البوابات الخمس تتشارك النطاق الرئيسي: صفحة اختيار على "/"، ثم لوحة الحكومة
+ * تحت /gov، وقسم الإحصاء تحت /stats، وقسم الإدارة الفرعية تحت /subadmin، وقسم
+ * الخدمات والتراخيص تحت /services، والمنصة التشغيلية تحت /admin.
  */
-$governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdministration, $operationsConsole): void {
+$governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdministration, $servicesSection, $operationsConsole): void {
     Route::view('/', 'portal')->name('portal');
 
     Route::prefix('gov')->name('gov.')->group($govDashboard);
@@ -254,12 +292,14 @@ $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdmi
 
     Route::prefix('subadmin')->name('subadmin.')->group($subAdministration);
 
+    Route::prefix('services')->name('services.')->group($servicesSection);
+
     Route::prefix('admin')->group($operationsConsole);
 
     /*
-     * مواضع لوحات قسمَي الإحصاء والإدارة الفرعية قبل استقلالهما ببوابتيهما.
-     * التحويل دائم حفاظًا على الروابط المحفوظة والمُرسلة، وليست مسارات مكرّرة:
-     * لا شيء يُقدَّم منها.
+     * مواضع اللوحات قبل استقلال أقسام الإحصاء والإدارة الفرعية والخدمات
+     * والتراخيص ببواباتها. التحويل دائم حفاظًا على الروابط المحفوظة والمُرسلة،
+     * وليست مسارات مكرّرة: لا شيء يُقدَّم منها.
      */
     foreach ([
         '/gov/statistics' => '/stats',
@@ -282,6 +322,8 @@ $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdmi
         '/admin/audit-log' => '/subadmin/audit-log',
         '/admin/users' => '/subadmin/users',
         '/admin/settings' => '/subadmin/settings',
+        '/gov/compliance' => '/services/compliance',
+        '/admin/season-licenses' => '/services/season-licenses',
     ] as $vacated => $destination) {
         Route::permanentRedirect($vacated, $destination);
     }

@@ -41,7 +41,7 @@ class SeasonLicenseController extends Controller
         $license = SeasonLicense::create($this->validated($request));
         $this->syncSeasonCounts($license->fishing_season_id);
 
-        return redirect()->route('season-licenses')->with('status', 'تم إصدار رخصة الموسم بنجاح');
+        return redirect()->route('services.season-licenses')->with('status', 'تم إصدار رخصة الموسم بنجاح');
     }
 
     public function update(Request $request, SeasonLicense $seasonLicense): RedirectResponse
@@ -49,7 +49,7 @@ class SeasonLicenseController extends Controller
         $seasonLicense->update($this->validated($request));
         $this->syncSeasonCounts($seasonLicense->fishing_season_id);
 
-        return redirect()->route('season-licenses')->with('status', 'تم تحديث رخصة الموسم بنجاح');
+        return redirect()->route('services.season-licenses')->with('status', 'تم تحديث رخصة الموسم بنجاح');
     }
 
     private function validated(Request $request): array

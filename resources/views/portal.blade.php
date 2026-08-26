@@ -18,8 +18,13 @@
             'sections' => Nav::sections(Nav::SUBADMIN),
         ],
         [
+            'portal' => Nav::portal(Nav::SERVICES),
+            'blurb' => 'طلبات الصيادين ومعالجتها، موظفو الخدمات وصلاحياتهم، رخص المواسم والرقابة، والدعم الفني.',
+            'sections' => Nav::sections(Nav::SERVICES),
+        ],
+        [
             'portal' => Nav::portal(Nav::OPS),
-            'blurb' => 'سجلات القوارب والصيادين والرحلات، الموانئ، المواسم والرخص، ومراجعة الفروقات.',
+            'blurb' => 'سجلات القوارب والصيادين والرحلات، الموانئ، مواسم الصيد، ومراجعة الفروقات.',
             'sections' => Nav::sections(Nav::OPS),
         ],
     ];
@@ -39,7 +44,9 @@
         .portal-brand img { height: 200px; width: auto; max-width: 100%; object-fit: contain; }
         .portal-grid { display: grid; gap: 1.25rem; width: 100%; max-width: 30rem; }
         @media (min-width: 720px) { .portal-grid { grid-template-columns: 1fr 1fr; max-width: 56rem; } }
-        @media (min-width: 1280px) { .portal-grid { grid-template-columns: repeat(4, 1fr); max-width: 88rem; } }
+        {{-- خمس بوابات: ثلاث ثم اثنتان على الشاشة المعتادة، وصفّ واحد على العريضة. --}}
+        @media (min-width: 1080px) { .portal-grid { grid-template-columns: repeat(3, 1fr); max-width: 72rem; } }
+        @media (min-width: 1600px) { .portal-grid { grid-template-columns: repeat(5, 1fr); max-width: 104rem; } }
         .portal-card {
             display: flex; flex-direction: column; gap: 1rem; padding: 1.75rem;
             border: 1px solid hsl(var(--border)); border-radius: calc(var(--radius) * 2);

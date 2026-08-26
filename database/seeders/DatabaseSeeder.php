@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             GovernanceSeeder::class,
             SystemSeeder::class,
             SubAdministrationSeeder::class,
+            ServicesLicensingSeeder::class,
         ]);
     }
 }
