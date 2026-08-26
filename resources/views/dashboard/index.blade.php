@@ -70,7 +70,7 @@
                     @include('partials.icon', ['name' => 'alert-triangle'])
                     <p class="card-title">التنبيهات المفتوحة</p>
                 </div>
-                <a href="{{ route('gov.alerts') }}" class="link-more">عرض الكل @include('partials.icon', ['name' => 'chevron-left'])</a>
+                <a href="{{ route('subadmin.alerts') }}" class="link-more">عرض الكل @include('partials.icon', ['name' => 'chevron-left'])</a>
             </div>
             @forelse ($alerts as $alert)
                 <div class="alert-item">

@@ -2,10 +2,13 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminResourceController;
+use App\Http\Controllers\AdminTaskController;
 use App\Http\Controllers\AiAssistantController;
+use App\Http\Controllers\AlertController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AnnualBulletinController;
 use App\Http\Controllers\ApprovedCatchController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BoatController;
 use App\Http\Controllers\BoatTimelineController;
 use App\Http\Controllers\BycatchController;
@@ -24,6 +27,7 @@ use App\Http\Controllers\IntegrationSettingController;
 use App\Http\Controllers\MarketController;
 use App\Http\Controllers\MonthlyReportsController;
 use App\Http\Controllers\NationalIndicatorsController;
+use App\Http\Controllers\OrgStructureController;
 use App\Http\Controllers\PerformanceCompareController;
 use App\Http\Controllers\PortController;
 use App\Http\Controllers\ProductionController;
@@ -31,12 +35,16 @@ use App\Http\Controllers\RegionController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SeaMapController;
 use App\Http\Controllers\SeasonLicenseController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SpeciesController;
+use App\Http\Controllers\StaffNotificationController;
 use App\Http\Controllers\StatisticsOfficerController;
 use App\Http\Controllers\StatisticsPortalController;
+use App\Http\Controllers\SubAdminPortalController;
 use App\Http\Controllers\SupplyChainController;
 use App\Http\Controllers\SustainabilityController;
 use App\Http\Controllers\TripController;
+use App\Http\Controllers\UserAccessController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -101,8 +109,48 @@ $govDashboard = function (): void {
     Route::get('/compliance', [ComplianceController::class, 'index'])->name('compliance');
     Route::post('/compliance', [ComplianceController::class, 'store'])->name('compliance.store');
 
-    // شاشات لم تُبنَ بعد ضمن لوحة الحكومة.
-    Route::get('/alerts', fn () => view('pages.pending', ['routeName' => 'gov.alerts']))->name('alerts');
+};
+
+/*
+ * قسم الإدارة الفرعية — بوابة قائمة بذاتها تحت البادئة /subadmin.
+ *
+ * لوحاته الثماني تدير القطاع نفسه لا بياناته: مركز الإدارة والصلاحيات والهيكل
+ * التنظيمي، ثم متابعة المهام والتنبيهات، ثم التدقيق والإنذارات والإعدادات. كانت
+ * موزّعة بين لوحة الحكومة والمنصة التشغيلية — وأكثرها شاشات لم تُبنَ — فجُمعت هنا.
+ */
+$subAdministration = function (): void {
+    Route::get('/', [SubAdminPortalController::class, 'index'])->name('home');
+
+    Route::get('/users', [UserAccessController::class, 'index'])->name('users');
+
+    Route::get('/org-structure', [OrgStructureController::class, 'index'])->name('org-structure');
+    Route::post('/org-structure', [OrgStructureController::class, 'store'])->name('org-structure.store');
+    Route::put('/org-structure/{position}', [OrgStructureController::class, 'update'])->name('org-structure.update');
+    Route::delete('/org-structure/{position}', [OrgStructureController::class, 'destroy'])->name('org-structure.destroy');
+
+    Route::post('/org-structure/{position}/staff', [OrgStructureController::class, 'storeStaff'])->name('org-structure.staff.store');
+    Route::put('/org-structure/staff/{staff}', [OrgStructureController::class, 'updateStaff'])->name('org-structure.staff.update');
+    Route::delete('/org-structure/staff/{staff}', [OrgStructureController::class, 'destroyStaff'])->name('org-structure.staff.destroy');
+
+    Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log');
+
+    Route::get('/admin-tasks', [AdminTaskController::class, 'index'])->name('admin-tasks');
+    Route::post('/admin-tasks', [AdminTaskController::class, 'store'])->name('admin-tasks.store');
+    Route::put('/admin-tasks/{task}', [AdminTaskController::class, 'update'])->name('admin-tasks.update');
+    Route::post('/admin-tasks/{task}/complete', [AdminTaskController::class, 'complete'])->name('admin-tasks.complete');
+    Route::delete('/admin-tasks/{task}', [AdminTaskController::class, 'destroy'])->name('admin-tasks.destroy');
+
+    Route::get('/staff-notifications', [StaffNotificationController::class, 'index'])->name('staff-notifications');
+    Route::post('/staff-notifications/read-all', [StaffNotificationController::class, 'markAllRead'])->name('staff-notifications.read-all');
+    Route::post('/staff-notifications/{notification}/read', [StaffNotificationController::class, 'markRead'])->name('staff-notifications.read');
+
+    Route::get('/alerts', [AlertController::class, 'index'])->name('alerts');
+    Route::post('/alerts/generate', [AlertController::class, 'generate'])->name('alerts.generate');
+    Route::post('/alerts/{alert}/assign', [AlertController::class, 'assign'])->name('alerts.assign');
+    Route::post('/alerts/{alert}/resolve', [AlertController::class, 'resolve'])->name('alerts.resolve');
+
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+    Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
 };
 
 /*
@@ -190,29 +238,28 @@ $operationsConsole = function (): void {
 
     Route::get('/bycatch', [BycatchController::class, 'index'])->name('bycatch');
     Route::post('/bycatch', [BycatchController::class, 'store'])->name('bycatch.store');
-
-    // شاشات لم تُبنَ بعد — "مركز الإدارة" ليس منها، فهو يشير إلى بوابة المعلومات.
-    foreach (['audit-log', 'users', 'settings'] as $slug) {
-        Route::get('/'.$slug, fn () => view('pages.pending', ['routeName' => $slug]))->name($slug);
-    }
 };
 
 /*
- * البوابات الثلاث تتشارك النطاق الرئيسي: صفحة اختيار على "/"، ثم لوحة الحكومة
- * تحت /gov، وقسم الإحصاء تحت /stats، والمنصة التشغيلية تحت /admin.
+ * البوابات الأربع تتشارك النطاق الرئيسي: صفحة اختيار على "/"، ثم لوحة الحكومة
+ * تحت /gov، وقسم الإحصاء تحت /stats، وقسم الإدارة الفرعية تحت /subadmin،
+ * والمنصة التشغيلية تحت /admin.
  */
-$governmentPortal = function () use ($govDashboard, $statisticsSection, $operationsConsole): void {
+$governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdministration, $operationsConsole): void {
     Route::view('/', 'portal')->name('portal');
 
     Route::prefix('gov')->name('gov.')->group($govDashboard);
 
     Route::prefix('stats')->name('stats.')->group($statisticsSection);
 
+    Route::prefix('subadmin')->name('subadmin.')->group($subAdministration);
+
     Route::prefix('admin')->group($operationsConsole);
 
     /*
-     * مواضع لوحات قسم الإحصاء قبل استقلاله ببوابته. التحويل دائم حفاظًا على
-     * الروابط المحفوظة والمُرسلة، وليست مسارات مكرّرة: لا شيء يُقدَّم منها.
+     * مواضع لوحات قسمَي الإحصاء والإدارة الفرعية قبل استقلالهما ببوابتيهما.
+     * التحويل دائم حفاظًا على الروابط المحفوظة والمُرسلة، وليست مسارات مكرّرة:
+     * لا شيء يُقدَّم منها.
      */
     foreach ([
         '/gov/statistics' => '/stats',
@@ -231,6 +278,10 @@ $governmentPortal = function () use ($govDashboard, $statisticsSection, $operati
         '/admin/analytics' => '/stats/analytics',
         '/admin/markets' => '/stats/markets',
         '/admin/supply-chain' => '/stats/supply-chain',
+        '/gov/alerts' => '/subadmin/alerts',
+        '/admin/audit-log' => '/subadmin/audit-log',
+        '/admin/users' => '/subadmin/users',
+        '/admin/settings' => '/subadmin/settings',
     ] as $vacated => $destination) {
         Route::permanentRedirect($vacated, $destination);
     }

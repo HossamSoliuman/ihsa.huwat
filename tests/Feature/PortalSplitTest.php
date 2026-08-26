@@ -9,10 +9,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * لوحة الوزارة مقسومة إلى ثلاث بوابات على النطاق الرئيسي: لوحة الحكومة التنفيذية
- * تحت /gov، وقسم الإحصاء تحت /stats، والمنصة التشغيلية تحت /admin. هذه الاختبارات
- * تحرس الحدّ بينها — أن كل صفحة تُقدَّم من موضعها الجديد فقط، وأن القائمة الجانبية
- * تتبدّل مع البوابة، وهما ما ينكسر بصمت عند إضافة مسار في المكان الخطأ.
+ * لوحة الوزارة مقسومة إلى أربع بوابات على النطاق الرئيسي: لوحة الحكومة التنفيذية
+ * تحت /gov، وقسم الإحصاء تحت /stats، وقسم الإدارة الفرعية تحت /subadmin، والمنصة
+ * التشغيلية تحت /admin. هذه الاختبارات تحرس الحدّ بينها — أن كل صفحة تُقدَّم من
+ * موضعها الجديد فقط، وأن القائمة الجانبية تتبدّل مع البوابة، وهما ما ينكسر بصمت
+ * عند إضافة مسار في المكان الخطأ.
  */
 class PortalSplitTest extends TestCase
 {
@@ -28,7 +29,6 @@ class PortalSplitTest extends TestCase
             ['/gov/ports-compare'],
             ['/gov/sustainability'],
             ['/gov/compliance'],
-            ['/gov/alerts'],
         ];
     }
 
@@ -84,14 +84,32 @@ class PortalSplitTest extends TestCase
             ['/admin/fishing-sites'],
             ['/admin/discrepancy-review'],
             ['/admin/bycatch'],
-            ['/admin/audit-log'],
-            ['/admin/users'],
-            ['/admin/settings'],
         ];
     }
 
     #[DataProvider('opsPages')]
     public function test_an_operations_page_answers_under_the_admin_prefix(string $url): void
+    {
+        $this->get($url)->assertOk();
+    }
+
+    /** المسارات التي تُقدَّم من قسم الإدارة الفرعية تحت /subadmin. */
+    public static function subAdministrationPages(): array
+    {
+        return [
+            ['/subadmin'],
+            ['/subadmin/users'],
+            ['/subadmin/org-structure'],
+            ['/subadmin/audit-log'],
+            ['/subadmin/admin-tasks'],
+            ['/subadmin/staff-notifications'],
+            ['/subadmin/alerts'],
+            ['/subadmin/settings'],
+        ];
+    }
+
+    #[DataProvider('subAdministrationPages')]
+    public function test_a_sub_administration_page_answers_under_its_prefix(string $url): void
     {
         $this->get($url)->assertOk();
     }
@@ -111,8 +129,8 @@ class PortalSplitTest extends TestCase
         $this->get($url)->assertNotFound();
     }
 
-    /** مواضع لوحات قسم الإحصاء قبل استقلاله ببوابته، ووجهة كل منها. */
-    public static function statisticsRedirects(): array
+    /** مواضع اللوحات قبل استقلال قسمَي الإحصاء والإدارة الفرعية، ووجهة كل منها. */
+    public static function sectionRedirects(): array
     {
         return [
             ['/gov/statistics', '/stats'],
@@ -120,25 +138,31 @@ class PortalSplitTest extends TestCase
             ['/gov/annual-bulletin', '/stats/annual-bulletin'],
             ['/admin/markets', '/stats/markets'],
             ['/admin/analytics', '/stats/analytics'],
+            ['/gov/alerts', '/subadmin/alerts'],
+            ['/admin/audit-log', '/subadmin/audit-log'],
+            ['/admin/users', '/subadmin/users'],
+            ['/admin/settings', '/subadmin/settings'],
         ];
     }
 
-    #[DataProvider('statisticsRedirects')]
-    public function test_a_statistics_page_redirects_from_where_it_used_to_live(string $old, string $new): void
+    #[DataProvider('sectionRedirects')]
+    public function test_a_moved_page_redirects_from_where_it_used_to_live(string $old, string $new): void
     {
         // الروابط المحفوظة قبل النقل تبقى عاملة، ولا تُقدَّم الصفحة من موضعين.
         $this->get($old)->assertMovedPermanently()->assertRedirect($new);
     }
 
-    public function test_the_root_offers_the_three_portals(): void
+    public function test_the_root_offers_the_four_portals(): void
     {
         $this->get('/')
             ->assertOk()
             ->assertSee('لوحة الحكومة', false)
             ->assertSee('قسم الإحصاء', false)
+            ->assertSee('قسم الإدارة الفرعية', false)
             ->assertSee('المنصة التشغيلية', false)
             ->assertSee('href="'.route('gov.home').'"', false)
             ->assertSee('href="'.route('stats.home').'"', false)
+            ->assertSee('href="'.route('subadmin.home').'"', false)
             ->assertSee('href="'.route('governorates').'"', false);
     }
 
@@ -160,20 +184,32 @@ class PortalSplitTest extends TestCase
             ->assertSee(route('stats.reports'), false)
             ->assertDontSee(route('boats'), false)
             ->assertDontSee(route('gov.production'), false);
+
+        $this->get('/subadmin/org-structure')
+            ->assertSee(route('subadmin.audit-log'), false)
+            ->assertDontSee(route('boats'), false)
+            ->assertDontSee(route('gov.production'), false)
+            ->assertDontSee(route('stats.field-statistics'), false);
     }
 
-    public function test_the_statistics_tabs_are_gone_from_the_other_portals(): void
+    public function test_a_sections_tabs_are_gone_from_the_other_portals(): void
     {
-        // اللوحة الواحدة في بوابة واحدة: لو عاد تبويب من تبويبات القسم إلى قائمة
-        // لوحة الحكومة أو المنصة التشغيلية لظهر رابطه هنا.
-        foreach ([Nav::GOV, Nav::OPS] as $portal) {
+        // اللوحة الواحدة في بوابة واحدة: لو عاد تبويب من تبويبات قسم إلى قائمة
+        // بوابة أخرى لظهرت بادئته هنا.
+        foreach ([Nav::GOV, Nav::STATS, Nav::SUBADMIN, Nav::OPS] as $portal) {
             foreach (Nav::sections($portal) as $section) {
                 foreach ($section['items'] as $item) {
-                    $this->assertStringStartsNotWith(
-                        'stats.',
-                        $item['route'],
-                        "تبويب من قسم الإحصاء ما زال في قائمة بوابة أخرى: {$item['route']}"
-                    );
+                    foreach ([Nav::STATS, Nav::SUBADMIN] as $owner) {
+                        if ($portal === $owner) {
+                            continue;
+                        }
+
+                        $this->assertStringStartsNotWith(
+                            $owner.'.',
+                            $item['route'],
+                            "تبويب من قسم {$owner} ما زال في قائمة بوابة أخرى: {$item['route']}"
+                        );
+                    }
                 }
             }
         }

@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             MarketsSeeder::class,
             GovernanceSeeder::class,
             SystemSeeder::class,
+            SubAdministrationSeeder::class,
         ]);
     }
 }

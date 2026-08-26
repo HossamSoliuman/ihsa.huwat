@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\Route;
 /**
  * يحدّد البوابة النشطة داخل لوحة الوزارة وقائمتها الجانبية.
  *
- * اللوحة مقسومة إلى ثلاث بوابات تتشارك نفس التخطيط: لوحة الحكومة تحت /gov،
- * وقسم الإحصاء تحت /stats، والمنصة التشغيلية تحت /admin. التمييز من اسم المسار
- * لا من المسار نفسه: مسارات البوابتين الأوليين تحمل بادئتيهما، ومسارات المنصة
- * التشغيلية بلا بادئة.
+ * اللوحة مقسومة إلى أربع بوابات تتشارك نفس التخطيط: لوحة الحكومة تحت /gov،
+ * وقسم الإحصاء تحت /stats، وقسم الإدارة الفرعية تحت /subadmin، والمنصة التشغيلية
+ * تحت /admin. التمييز من اسم المسار لا من المسار نفسه: مسارات البوابات الثلاث
+ * الأولى تحمل بادئاتها، ومسارات المنصة التشغيلية بلا بادئة.
  *
  * بوابة المعلومات (مركز الإدارة) خارج هذا التقسيم — لها تخطيطها وقائمتها.
  */
@@ -19,6 +19,8 @@ class Nav
     public const GOV = 'gov';
 
     public const STATS = 'stats';
+
+    public const SUBADMIN = 'subadmin';
 
     public const OPS = 'ops';
 
@@ -29,6 +31,7 @@ class Nav
     private const SECTIONS = [
         self::GOV => 'hawat.nav_gov',
         self::STATS => 'hawat.nav_stats',
+        self::SUBADMIN => 'hawat.nav_subadmin',
         self::OPS => 'hawat.nav',
     ];
 
@@ -49,7 +52,7 @@ class Nav
     {
         $route = Route::currentRouteName() ?? '';
 
-        foreach ([self::GOV, self::STATS] as $key) {
+        foreach ([self::GOV, self::STATS, self::SUBADMIN] as $key) {
             if (str_starts_with($route, $key.'.')) {
                 return $key;
             }

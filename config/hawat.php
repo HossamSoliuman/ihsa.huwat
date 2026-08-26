@@ -14,14 +14,16 @@ return [
     'logo' => 'https://media.base44.com/images/public/6a7a814ea23d8fee1b1c5058/2b4d90b35_logo-arabic-png.png',
 
     /*
-     * لوحة الوزارة مقسومة إلى ثلاث بوابات تتشارك النطاق الرئيسي والتخطيط نفسه:
+     * لوحة الوزارة مقسومة إلى أربع بوابات تتشارك النطاق الرئيسي والتخطيط نفسه:
      * "لوحة الحكومة" التنفيذية تحت البادئة /gov، و"قسم الإحصاء" تحت /stats،
-     * و"المنصة التشغيلية" تحت /admin. App\Support\Nav يختار بينها حسب اسم المسار.
+     * و"قسم الإدارة الفرعية" تحت /subadmin، و"المنصة التشغيلية" تحت /admin.
+     * App\Support\Nav يختار بينها حسب اسم المسار.
      *
-     * لوحات قسم الإحصاء لا تظهر إلا في قائمته: البوابة الواحدة تعرض قائمتها وحدها،
+     * لوحات كل قسم لا تظهر إلا في قائمته: البوابة الواحدة تعرض قائمتها وحدها،
      * ولا يُكرَّر التبويب في بوابتين.
      *
-     * بوابة المعلومات (مركز الإدارة) ليست منها — لها مضيفها وتخطيطها.
+     * بوابة المعلومات (مركز الإدارة) ليست منها — لها مضيفها وتخطيطها، وتُوصَل
+     * إليها من قائمة قسم الإدارة الفرعية بوصفها أداته المركزية.
      */
     'portals' => [
         'gov' => [
@@ -33,6 +35,11 @@ return [
             'label' => 'قسم الإحصاء',
             'icon' => 'database',
             'home' => 'stats.home',
+        ],
+        'subadmin' => [
+            'label' => 'قسم الإدارة الفرعية',
+            'icon' => 'network',
+            'home' => 'subadmin.home',
         ],
         'ops' => [
             'label' => 'المنصة التشغيلية',
@@ -61,7 +68,6 @@ return [
             'items' => [
                 ['label' => 'الاستدامة والمخزون', 'route' => 'gov.sustainability', 'icon' => 'leaf'],
                 ['label' => 'الرقابة والامتثال', 'route' => 'gov.compliance', 'icon' => 'shield-alert'],
-                ['label' => 'مركز الإنذارات', 'route' => 'gov.alerts', 'icon' => 'bell-ring'],
             ],
         ],
     ],
@@ -110,6 +116,46 @@ return [
         ],
     ],
 
+    /*
+     * قسم الإدارة الفرعية — ثماني لوحات لإدارة القطاع نفسه لا لبياناته: مركز
+     * الإدارة والصلاحيات والهيكل التنظيمي، ثم متابعة المهام والتنبيهات، ثم
+     * التدقيق والإنذارات والإعدادات.
+     *
+     * "مركز الإدارة" يقود إلى بوابة المعلومات على مضيفها المستقل، فاسم مساره
+     * بلا بادئة القسم.
+     */
+    'nav_subadmin' => [
+        [
+            'title' => 'المدخل',
+            'items' => [
+                ['label' => 'بوابة الإدارة الفرعية', 'route' => 'subadmin.home', 'icon' => 'network'],
+                ['label' => 'مركز الإدارة', 'route' => 'admin.index', 'icon' => 'shield-check'],
+            ],
+        ],
+        [
+            'title' => 'الأشخاص والصلاحيات',
+            'items' => [
+                ['label' => 'المستخدمون والصلاحيات', 'route' => 'subadmin.users', 'icon' => 'user-cog'],
+                ['label' => 'الهيكل التنظيمي', 'route' => 'subadmin.org-structure', 'icon' => 'git-branch'],
+            ],
+        ],
+        [
+            'title' => 'المهام والتنبيهات',
+            'items' => [
+                ['label' => 'تقويم المهام الإدارية', 'route' => 'subadmin.admin-tasks', 'icon' => 'calendar-days'],
+                ['label' => 'التنبيهات الإدارية', 'route' => 'subadmin.staff-notifications', 'icon' => 'bell-ring'],
+            ],
+        ],
+        [
+            'title' => 'التدقيق والإعدادات',
+            'items' => [
+                ['label' => 'سجل العمليات', 'route' => 'subadmin.audit-log', 'icon' => 'history'],
+                ['label' => 'مركز الإنذارات', 'route' => 'subadmin.alerts', 'icon' => 'bell-ring'],
+                ['label' => 'الإعدادات', 'route' => 'subadmin.settings', 'icon' => 'settings'],
+            ],
+        ],
+    ],
+
     'nav' => [
         [
             'title' => 'عام',
@@ -142,16 +188,6 @@ return [
             'items' => [
                 ['label' => 'مراجعة الفروقات', 'route' => 'discrepancy-review', 'icon' => 'alert-triangle'],
                 ['label' => 'الصيد العرضي', 'route' => 'bycatch', 'icon' => 'waves'],
-            ],
-        ],
-        [
-            'title' => 'النظام',
-            'items' => [
-                // يقود إلى بوابة المعلومات على مضيفها المستقل (info.hawat.sa).
-                ['label' => 'مركز الإدارة', 'route' => 'admin.index', 'icon' => 'shield-check'],
-                ['label' => 'سجل العمليات', 'route' => 'audit-log', 'icon' => 'history'],
-                ['label' => 'المستخدمون والصلاحيات', 'route' => 'users', 'icon' => 'user-cog'],
-                ['label' => 'الإعدادات', 'route' => 'settings', 'icon' => 'settings'],
             ],
         ],
     ],

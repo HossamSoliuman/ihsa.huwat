@@ -13,6 +13,11 @@
             'sections' => Nav::sections(Nav::STATS),
         ],
         [
+            'portal' => Nav::portal(Nav::SUBADMIN),
+            'blurb' => 'مركز الإدارة والصلاحيات، الهيكل التنظيمي، المهام والتنبيهات، سجل العمليات والإنذارات.',
+            'sections' => Nav::sections(Nav::SUBADMIN),
+        ],
+        [
             'portal' => Nav::portal(Nav::OPS),
             'blurb' => 'سجلات القوارب والصيادين والرحلات، الموانئ، المواسم والرخص، ومراجعة الفروقات.',
             'sections' => Nav::sections(Nav::OPS),
@@ -34,7 +39,7 @@
         .portal-brand img { height: 200px; width: auto; max-width: 100%; object-fit: contain; }
         .portal-grid { display: grid; gap: 1.25rem; width: 100%; max-width: 30rem; }
         @media (min-width: 720px) { .portal-grid { grid-template-columns: 1fr 1fr; max-width: 56rem; } }
-        @media (min-width: 1080px) { .portal-grid { grid-template-columns: repeat(3, 1fr); max-width: 78rem; } }
+        @media (min-width: 1280px) { .portal-grid { grid-template-columns: repeat(4, 1fr); max-width: 88rem; } }
         .portal-card {
             display: flex; flex-direction: column; gap: 1rem; padding: 1.75rem;
             border: 1px solid hsl(var(--border)); border-radius: calc(var(--radius) * 2);
