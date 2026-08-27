@@ -10,13 +10,11 @@ use App\Models\Governorate;
 use App\Models\Port;
 use App\Models\Region;
 use App\Models\SupportTicket;
-use App\Support\ServicesSection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 /**
- * قسم الخدمات والتراخيص — بوابته وطلباته وموظفوه وتذاكر دعمه.
+ * قسم الخدمات والتراخيص — طلباته وموظفوه وتذاكر دعمه.
  *
  * الاختبارات تحرس القواعد لا العرض: أن الاعتماد لا يسبق المعالجة، وأن الطلب
  * المغلق لا يُعاد فتحه، وأن الإسناد لا يقع على من لا يملك الصلاحية أو النطاق،
@@ -52,46 +50,6 @@ class ServicesSectionTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | بوابة القسم
-    |--------------------------------------------------------------------------
-    */
-
-    public function test_the_portal_lists_every_dashboard_in_the_section(): void
-    {
-        $response = $this->get('/services')->assertOk();
-
-        foreach (ServicesSection::groups() as $group) {
-            $response->assertSee($group['title'], false);
-
-            foreach ($group['items'] as $item) {
-                $response->assertSee($item['label'], false);
-                $response->assertSee(route($item['route']), false);
-            }
-        }
-    }
-
-    public function test_every_portal_link_points_at_a_registered_route(): void
-    {
-        foreach (ServicesSection::groups() as $group) {
-            foreach ($group['items'] as $item) {
-                $this->assertTrue(
-                    Route::has($item['route']),
-                    "بوابة الخدمات والتراخيص تشير إلى مسار غير مسجَّل: {$item['route']}"
-                );
-            }
-        }
-    }
-
-    public function test_the_portal_search_keeps_matching_dashboards_only(): void
-    {
-        $this->get('/services?q=تذاكر')
-            ->assertOk()
-            ->assertSee('الدعم الفني', false)
-            ->assertDontSee('استقبال الطلبات ومعالجتها', false);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
     | مسار الطلب
     |--------------------------------------------------------------------------
     */
@@ -111,7 +69,7 @@ class ServicesSectionTest extends TestCase
     {
         $fisher = $this->fisher($this->qatif);
 
-        $this->post('/services/fisher-services', [
+        $this->post('/services', [
             'fisher_service_type_id' => $this->seasonal->id,
             'fisher_name' => $fisher->name,
             'nationality_type' => 'سعودي',
@@ -125,7 +83,7 @@ class ServicesSectionTest extends TestCase
     {
         $fisher = $this->fisher($this->qatif);
 
-        $this->post('/services/fisher-services', [
+        $this->post('/services', [
             'fisher_service_type_id' => $this->renewal->id,
             'fisher_name' => $fisher->name,
             'nationality_type' => 'سعودي',
@@ -140,7 +98,7 @@ class ServicesSectionTest extends TestCase
     {
         $request = $this->request();
 
-        $this->post("/services/fisher-services/{$request->id}/process", [
+        $this->post("/services/{$request->id}/process", [
             'status' => 'بانتظار الاعتماد',
             'assigned_staff_id' => $this->clerk->id,
             'new_license_number' => 'LIC-9001',
@@ -160,7 +118,7 @@ class ServicesSectionTest extends TestCase
         // قائمة الحالات.
         $request = $this->request();
 
-        $this->post("/services/fisher-services/{$request->id}/process", ['status' => 'معتمدة'])
+        $this->post("/services/{$request->id}/process", ['status' => 'معتمدة'])
             ->assertSessionHasErrors('status');
 
         $this->assertSame('جديدة', $request->refresh()->status);
@@ -175,7 +133,7 @@ class ServicesSectionTest extends TestCase
 
         $request = $this->request();
 
-        $this->post("/services/fisher-services/{$request->id}/process", [
+        $this->post("/services/{$request->id}/process", [
             'status' => 'قيد المعالجة',
             'assigned_staff_id' => $receptionist->id,
         ])->assertSessionHasErrors('assigned_staff_id');
@@ -193,7 +151,7 @@ class ServicesSectionTest extends TestCase
 
         $request = $this->request();
 
-        $this->post("/services/fisher-services/{$request->id}/process", [
+        $this->post("/services/{$request->id}/process", [
             'status' => 'قيد المعالجة',
             'assigned_staff_id' => $redSeaClerk->id,
         ])->assertSessionHasErrors('assigned_staff_id');
@@ -209,7 +167,7 @@ class ServicesSectionTest extends TestCase
 
         $request = $this->request();
 
-        $this->post("/services/fisher-services/{$request->id}/process", [
+        $this->post("/services/{$request->id}/process", [
             'status' => 'قيد المعالجة',
             'assigned_staff_id' => $specialist->id,
         ])->assertSessionHasErrors('assigned_staff_id');
@@ -219,7 +177,7 @@ class ServicesSectionTest extends TestCase
     {
         $request = $this->request();
 
-        $this->post("/services/fisher-services/{$request->id}/decide", [
+        $this->post("/services/{$request->id}/decide", [
             'decision' => 'اعتماد',
             'approved_by' => 'ماجد الغامدي',
         ])->assertSessionHasErrors('decision');
@@ -231,7 +189,7 @@ class ServicesSectionTest extends TestCase
     {
         $request = $this->request(['status' => 'بانتظار الاعتماد']);
 
-        $this->post("/services/fisher-services/{$request->id}/decide", ['decision' => 'اعتماد'])
+        $this->post("/services/{$request->id}/decide", ['decision' => 'اعتماد'])
             ->assertSessionHasErrors('approved_by');
     }
 
@@ -243,7 +201,7 @@ class ServicesSectionTest extends TestCase
             'new_license_expiry' => now()->addYear()->toDateString(),
         ]);
 
-        $this->post("/services/fisher-services/{$request->id}/decide", [
+        $this->post("/services/{$request->id}/decide", [
             'decision' => 'اعتماد',
             'approved_by' => 'ماجد الغامدي',
             'note' => 'استُوفيت المستندات',
@@ -261,10 +219,10 @@ class ServicesSectionTest extends TestCase
     {
         $request = $this->request(['status' => 'معتمدة', 'approved_by' => 'ماجد الغامدي']);
 
-        $this->post("/services/fisher-services/{$request->id}/process", ['status' => 'قيد المعالجة'])
+        $this->post("/services/{$request->id}/process", ['status' => 'قيد المعالجة'])
             ->assertSessionHasErrors('status');
 
-        $this->post("/services/fisher-services/{$request->id}/decide", [
+        $this->post("/services/{$request->id}/decide", [
             'decision' => 'رفض',
         ])->assertSessionHasErrors('status');
 
@@ -274,7 +232,7 @@ class ServicesSectionTest extends TestCase
     public function test_the_licence_card_prints_only_for_an_approved_request(): void
     {
         $pending = $this->request(['status' => 'بانتظار الاعتماد']);
-        $this->get("/services/fisher-services/{$pending->id}/license")->assertNotFound();
+        $this->get("/services/{$pending->id}/license")->assertNotFound();
 
         $approved = $this->request([
             'request_number' => 'SR-0900',
@@ -283,7 +241,7 @@ class ServicesSectionTest extends TestCase
             'new_license_number' => 'LIC-9001',
         ]);
 
-        $this->get("/services/fisher-services/{$approved->id}/license")
+        $this->get("/services/{$approved->id}/license")
             ->assertOk()
             ->assertSee('LIC-9001', false)
             ->assertSee('ماجد الغامدي', false);
@@ -294,7 +252,7 @@ class ServicesSectionTest extends TestCase
         $this->request(['request_number' => 'SR-0101']);
         $this->request(['request_number' => 'SR-0102', 'fisher_name' => 'عبدالله الحربي']);
 
-        $this->get('/services/fisher-services?q=SR-0102')
+        $this->get('/services?q=SR-0102')
             ->assertOk()
             ->assertSee('SR-0102', false)
             ->assertDontSee('SR-0101', false);
@@ -532,7 +490,7 @@ class ServicesSectionTest extends TestCase
     {
         $fisher = $this->fisher($this->qatif);
 
-        return $this->post('/services/fisher-services', array_merge([
+        return $this->post('/services', array_merge([
             'fisher_service_type_id' => $this->renewal->id,
             'fisher_id' => $fisher->id,
             'fisher_name' => $fisher->name,

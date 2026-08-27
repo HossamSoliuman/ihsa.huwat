@@ -17,15 +17,13 @@ use App\Models\Region;
 use App\Models\StaffNotification;
 use App\Models\Trip;
 use App\Models\UserPermission;
-use App\Support\AdminSection;
 use App\Support\AlertGenerator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 /**
- * قسم الإدارة الفرعية — بوابته وهيكله التنظيمي ومهامه وتنبيهاته وإنذاراته.
+ * قسم الإدارة الفرعية — هيكله التنظيمي ومهامه وتنبيهاته وإنذاراته.
  *
  * الاختبارات هنا تحرس القواعد لا العرض: أن الشجرة تبقى شجرة بعد حذف منصب أب،
  * وأن المهمة لا تُسند لمن لا يملك صلاحيتها، وأن الإنذار لا يُغلق بلا مسؤول،
@@ -46,54 +44,6 @@ class SubAdministrationSectionTest extends TestCase
         parent::setUp();
 
         $this->seedOrganisation();
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | بوابة القسم
-    |--------------------------------------------------------------------------
-    */
-
-    public function test_the_portal_lists_every_dashboard_in_the_section(): void
-    {
-        $response = $this->get('/subadmin')->assertOk();
-
-        foreach (AdminSection::groups() as $group) {
-            $response->assertSee($group['title'], false);
-
-            foreach ($group['items'] as $item) {
-                $response->assertSee($item['label'], false);
-                $response->assertSee(route($item['route']), false);
-            }
-        }
-    }
-
-    public function test_every_portal_link_points_at_a_registered_route(): void
-    {
-        foreach (AdminSection::groups() as $group) {
-            foreach ($group['items'] as $item) {
-                $this->assertTrue(
-                    Route::has($item['route']),
-                    "بوابة الإدارة الفرعية تشير إلى مسار غير مسجَّل: {$item['route']}"
-                );
-            }
-        }
-    }
-
-    public function test_the_portal_search_keeps_matching_dashboards_only(): void
-    {
-        // "الإنذارات" لا تقع إلا في مجموعة التدقيق، فتختفي بقية المجموعات.
-        $this->get('/subadmin?q=الإنذارات')
-            ->assertOk()
-            ->assertSee('التدقيق والإنذارات', false)
-            ->assertDontSee('مركز الإدارة والصلاحيات', false);
-    }
-
-    public function test_the_portal_reports_when_nothing_matches_the_search(): void
-    {
-        $this->get('/subadmin?q=زززز')
-            ->assertOk()
-            ->assertSee('لا توجد لوحات مطابقة لبحثك', false);
     }
 
     /*
@@ -433,7 +383,7 @@ class SubAdministrationSectionTest extends TestCase
         UserPermission::create(['user_email' => 'admin@mewa.gov.sa', 'full_name' => 'مدير النظام', 'role' => 'admin', 'active' => true]);
         UserPermission::create(['user_email' => 'east@mewa.gov.sa', 'full_name' => 'مدير الشرقية', 'role' => 'region_manager', 'region' => 'المنطقة الشرقية', 'active' => true]);
 
-        $this->get('/subadmin/users?role=region_manager')
+        $this->get('/subadmin?role=region_manager')
             ->assertOk()
             ->assertSee('مدير الشرقية', false)
             ->assertDontSee('admin@mewa.gov.sa', false);

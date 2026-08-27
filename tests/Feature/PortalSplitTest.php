@@ -96,8 +96,8 @@ class PortalSplitTest extends TestCase
     public static function subAdministrationPages(): array
     {
         return [
+            // رئيسة القسم هي المستخدمون والصلاحيات.
             ['/subadmin'],
-            ['/subadmin/users'],
             ['/subadmin/org-structure'],
             ['/subadmin/audit-log'],
             ['/subadmin/admin-tasks'],
@@ -117,8 +117,8 @@ class PortalSplitTest extends TestCase
     public static function servicesPages(): array
     {
         return [
+            // رئيسة القسم هي خدمات الصيادين.
             ['/services'],
-            ['/services/fisher-services'],
             ['/services/my-workspace'],
             ['/services/staff-dashboard'],
             ['/services/staff-management'],
@@ -162,7 +162,9 @@ class PortalSplitTest extends TestCase
             ['/admin/analytics', '/stats/analytics'],
             ['/gov/alerts', '/subadmin/alerts'],
             ['/admin/audit-log', '/subadmin/audit-log'],
-            ['/admin/users', '/subadmin/users'],
+            ['/admin/users', '/subadmin'],
+            ['/subadmin/users', '/subadmin'],
+            ['/services/fisher-services', '/services'],
             ['/admin/settings', '/subadmin/settings'],
             ['/gov/compliance', '/services/compliance'],
             ['/admin/season-licenses', '/services/season-licenses'],
@@ -188,8 +190,8 @@ class PortalSplitTest extends TestCase
             ->assertSee('مركز المعلومات', false)
             ->assertSee('href="'.route('gov.home').'"', false)
             ->assertSee('href="'.route('stats.executive-briefing').'"', false)
-            ->assertSee('href="'.route('subadmin.home').'"', false)
-            ->assertSee('href="'.route('services.home').'"', false)
+            ->assertSee('href="'.route('subadmin.users').'"', false)
+            ->assertSee('href="'.route('services.fisher-services').'"', false)
             ->assertSee('href="'.route('governorates').'"', false);
     }
 
@@ -219,7 +221,7 @@ class PortalSplitTest extends TestCase
             ->assertDontSee(route('gov.production'), false)
             ->assertDontSee(route('stats.field-statistics'), false);
 
-        $this->get('/services/fisher-services')
+        $this->get('/services')
             ->assertSee(route('services.support'), false)
             ->assertDontSee(route('boats'), false)
             ->assertDontSee(route('gov.production'), false)

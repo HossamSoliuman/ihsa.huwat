@@ -37,14 +37,12 @@ use App\Http\Controllers\RegionController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SeaMapController;
 use App\Http\Controllers\SeasonLicenseController;
-use App\Http\Controllers\ServicesPortalController;
 use App\Http\Controllers\ServiceStaffController;
 use App\Http\Controllers\ServiceStaffDashboardController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SpeciesController;
 use App\Http\Controllers\StaffNotificationController;
 use App\Http\Controllers\StatisticsOfficerController;
-use App\Http\Controllers\SubAdminPortalController;
 use App\Http\Controllers\SupplyChainController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\SustainabilityController;
@@ -123,9 +121,12 @@ $govDashboard = function (): void {
  * موزّعة بين لوحة الحكومة والمنصة التشغيلية — وأكثرها شاشات لم تُبنَ — فجُمعت هنا.
  */
 $subAdministration = function (): void {
-    Route::get('/', [SubAdminPortalController::class, 'index'])->name('home');
-
-    Route::get('/users', [UserAccessController::class, 'index'])->name('users');
+    /*
+     * رئيسة القسم هي المستخدمون والصلاحيات: صفحة سرد اللوحات حُذفت لأن القائمة
+     * الجانبية تعرض اللوحات كلها. "مركز الإدارة" يبقى رابطًا في القائمة لأنه بوابة
+     * المعلومات على مضيفها المستقل، لا صفحة من صفحات هذا القسم.
+     */
+    Route::get('/', [UserAccessController::class, 'index'])->name('users');
 
     Route::get('/org-structure', [OrgStructureController::class, 'index'])->name('org-structure');
     Route::post('/org-structure', [OrgStructureController::class, 'store'])->name('org-structure.store');
@@ -165,13 +166,15 @@ $subAdministration = function (): void {
  * والامتثال" من لوحة الحكومة — طرفا الدورة نفسها التي يفتحها الطلب.
  */
 $servicesSection = function (): void {
-    Route::get('/', [ServicesPortalController::class, 'index'])->name('home');
-
-    Route::get('/fisher-services', [FisherServiceRequestController::class, 'index'])->name('fisher-services');
-    Route::post('/fisher-services', [FisherServiceRequestController::class, 'store'])->name('fisher-services.store');
-    Route::post('/fisher-services/{serviceRequest}/process', [FisherServiceRequestController::class, 'process'])->name('fisher-services.process');
-    Route::post('/fisher-services/{serviceRequest}/decide', [FisherServiceRequestController::class, 'decide'])->name('fisher-services.decide');
-    Route::get('/fisher-services/{serviceRequest}/license', [FisherServiceRequestController::class, 'license'])->name('fisher-services.license');
+    /*
+     * رئيسة القسم هي خدمات الصيادين: صفحة سرد اللوحات حُذفت لأن القائمة الجانبية
+     * تعرض اللوحات كلها، فكانت وسيطًا يُنقر مرتين للوصول إلى الطلبات.
+     */
+    Route::get('/', [FisherServiceRequestController::class, 'index'])->name('fisher-services');
+    Route::post('/', [FisherServiceRequestController::class, 'store'])->name('fisher-services.store');
+    Route::post('/{serviceRequest}/process', [FisherServiceRequestController::class, 'process'])->name('fisher-services.process');
+    Route::post('/{serviceRequest}/decide', [FisherServiceRequestController::class, 'decide'])->name('fisher-services.decide');
+    Route::get('/{serviceRequest}/license', [FisherServiceRequestController::class, 'license'])->name('fisher-services.license');
 
     Route::get('/my-workspace', [MyWorkspaceController::class, 'index'])->name('my-workspace');
     Route::post('/my-workspace/notifications/{notification}/read', [MyWorkspaceController::class, 'markRead'])->name('my-workspace.read');
@@ -331,8 +334,10 @@ $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdmi
         '/admin/supply-chain' => '/stats/supply-chain',
         '/gov/alerts' => '/subadmin/alerts',
         '/admin/audit-log' => '/subadmin/audit-log',
-        '/admin/users' => '/subadmin/users',
+        '/admin/users' => '/subadmin',
+        '/subadmin/users' => '/subadmin',
         '/admin/settings' => '/subadmin/settings',
+        '/services/fisher-services' => '/services',
         '/gov/compliance' => '/services/compliance',
         '/admin/season-licenses' => '/services/season-licenses',
     ] as $vacated => $destination) {

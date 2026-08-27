@@ -40,12 +40,12 @@ return [
         'subadmin' => [
             'label' => 'الإدارات',
             'icon' => 'network',
-            'home' => 'subadmin.home',
+            'home' => 'subadmin.users',
         ],
         'services' => [
             'label' => 'الخدمات والتراخيص',
             'icon' => 'headset',
-            'home' => 'services.home',
+            'home' => 'services.fisher-services',
         ],
         'ops' => [
             'label' => 'مركز المعلومات',
@@ -140,7 +140,6 @@ return [
         [
             'title' => 'المدخل',
             'items' => [
-                ['label' => 'بوابة الإدارة الفرعية', 'route' => 'subadmin.home', 'icon' => 'network'],
                 ['label' => 'مركز الإدارة', 'route' => 'admin.index', 'icon' => 'shield-check'],
             ],
         ],
@@ -177,12 +176,6 @@ return [
      * الحكومة — الرخصة والمخالفة طرفا الدورة نفسها التي يفتحها الطلب.
      */
     'nav_services' => [
-        [
-            'title' => 'المدخل',
-            'items' => [
-                ['label' => 'بوابة الخدمات والتراخيص', 'route' => 'services.home', 'icon' => 'headset'],
-            ],
-        ],
         [
             'title' => 'الطلبات والمعالجة',
             'items' => [
