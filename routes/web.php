@@ -279,12 +279,18 @@ $operationsConsole = function (): void {
 };
 
 /*
- * البوابات الخمس تتشارك النطاق الرئيسي: صفحة اختيار على "/"، ثم لوحة الحكومة
+ * البوابات الخمس تتشارك النطاق الرئيسي: صفحة اختيار على "/sections"، ثم لوحة الحكومة
  * تحت /gov، وقسم الإحصاء تحت /stats، وقسم الإدارة الفرعية تحت /subadmin، وقسم
  * الخدمات والتراخيص تحت /services، والمنصة التشغيلية تحت /admin.
  */
 $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdministration, $servicesSection, $operationsConsole): void {
-    Route::view('/', 'portal')->name('portal');
+    /*
+     * الجذر يعرض الشعار وحده حتى تكتمل البوابات؛ صفحة اختيار البوابات تبقى
+     * متاحة على /sections لمن يعرف مسارها.
+     */
+    Route::view('/', 'landing')->name('landing');
+
+    Route::view('/sections', 'portal')->name('portal');
 
     Route::prefix('gov')->name('gov.')->group($govDashboard);
 
