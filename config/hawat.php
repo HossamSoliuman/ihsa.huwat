@@ -54,11 +54,17 @@ return [
         ],
     ],
 
+    /*
+     * لوحة الحكومة تُعرض على شاشة كبيرة، فرئيستها (gov.home) شاشة اختيار: مربّعات
+     * كبيرة لبقية تبويبات هذه القائمة، ونقر المربّع يفتح لوحته بملء الشاشة. أي
+     * تبويب يُضاف هنا يظهر مربّعًا تلقائيًا، عدا gov.home نفسها.
+     */
     'nav_gov' => [
         [
             'title' => 'عام',
             'items' => [
-                ['label' => 'الرئيسية', 'route' => 'gov.home', 'icon' => 'layout-dashboard'],
+                ['label' => 'شاشة العرض', 'route' => 'gov.home', 'icon' => 'layout-dashboard'],
+                ['label' => 'المؤشرات العامة', 'route' => 'gov.overview', 'icon' => 'gauge'],
                 ['label' => 'الخريطة البحرية', 'route' => 'gov.sea-map', 'icon' => 'map'],
             ],
         ],

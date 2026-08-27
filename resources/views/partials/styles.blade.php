@@ -460,4 +460,73 @@ html.dark .set-row .s-value.ok { color: hsl(152 60% 72%); }
 .switch span::after { content: ''; position: absolute; top: .175rem; right: .175rem; height: 1.15rem; width: 1.15rem; border-radius: 9999px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .2s; }
 .switch input:checked + span { background: hsl(var(--primary)); }
 .switch input:checked + span::after { transform: translateX(-1.25rem); }
+
+/* لوحة الحكومة — شاشة الاختيار بمربّعاتها، ووضع العرض على شاشة القاعة */
+.screen-launcher { display: flex; flex-direction: column; gap: clamp(1rem, 2vh, 2rem); }
+.screen-launcher-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+.screen-launcher-head .kicker { font-size: .72rem; font-weight: 700; letter-spacing: .08em; color: hsl(var(--muted-foreground)); }
+.screen-launcher-head h1 { margin-top: .25rem; font-size: clamp(1.35rem, 2.2vw, 2.25rem); font-weight: 800; letter-spacing: -.01em; }
+
+.screen-grid { display: grid; gap: clamp(.75rem, 1.2vw, 1.5rem); grid-template-columns: 1fr; }
+@media (min-width: 720px) { .screen-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1280px) {
+    .screen-grid { grid-template-columns: repeat(3, 1fr); }
+    /* عدد المربّعات لا يقسم على ثلاثة: يتمدّد الأول عمودين فلا يبقى صفٌّ ناقصًا. */
+    .screen-grid > :first-child:nth-last-child(3n + 2) { grid-column: span 2; }
+}
+.screen-tile {
+    display: flex; flex-direction: column; gap: .75rem;
+    min-height: clamp(9rem, 21vh, 16rem);
+    border-radius: 1.25rem; border: 1px solid hsl(var(--border));
+    background: hsl(var(--card)); padding: clamp(1rem, 1.6vw, 1.75rem); color: inherit;
+    box-shadow: 0 1px 2px hsl(var(--foreground) / .04), 0 10px 28px -16px hsl(var(--foreground) / .5);
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.screen-tile:hover, .screen-tile:focus-visible {
+    outline: none; transform: translateY(-3px);
+    border-color: hsl(var(--primary) / .55);
+    box-shadow: 0 18px 40px -20px hsl(var(--primary) / .6);
+}
+.screen-tile .t-top { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.screen-tile .t-icon {
+    display: flex; align-items: center; justify-content: center;
+    height: clamp(3rem, 3.6vw, 4.5rem); width: clamp(3rem, 3.6vw, 4.5rem);
+    border-radius: 1rem; background: hsl(var(--primary) / .1); color: hsl(var(--primary));
+    box-shadow: inset 0 0 0 1px hsl(var(--primary) / .16);
+}
+.screen-tile .t-icon svg { width: 52%; height: 52%; }
+.screen-tile .t-group { font-size: .7rem; font-weight: 700; letter-spacing: .06em; color: hsl(var(--muted-foreground) / .9); }
+.screen-tile h2 { font-size: clamp(1.05rem, 1.4vw, 1.6rem); font-weight: 800; }
+.screen-tile p { margin-top: .35rem; font-size: clamp(.75rem, .8vw, 1rem); line-height: 1.8; color: hsl(var(--muted-foreground)); }
+.screen-tile .t-go { display: flex; align-items: center; gap: .35rem; margin-top: auto; font-size: .8rem; font-weight: 700; color: hsl(var(--primary)); }
+.screen-tile .t-go svg { width: 16px; height: 16px; }
+
+/* قياس الجذر يكبر مع الشاشة، وبقية اللوحة مبنية على rem فتكبر معه. */
+html.screen-mode { font-size: clamp(16px, 1vw, 22px); }
+html.screen-mode .main { margin-right: 0; }
+html.screen-mode .content { padding: clamp(1rem, 2vw, 2.5rem); }
+html.screen-mode .chart-wrap { height: clamp(260px, 32vh, 520px); }
+html.screen-mode .screen-launcher { min-height: calc(100dvh - 2 * clamp(1rem, 2vw, 2.5rem)); justify-content: center; }
+{{-- على شاشة القاعة تملأ المربّعات الارتفاع بدل أن تتكوّم في أعلاها. --}}
+html.screen-mode .screen-grid { flex: 1; grid-auto-rows: 1fr; }
+
+.screen-bar {
+    position: fixed; top: 1rem; left: 1rem; z-index: 60;
+    display: flex; align-items: center; gap: .25rem;
+    border-radius: 9999px; border: 1px solid hsl(var(--border));
+    background: hsl(var(--card) / .9); backdrop-filter: saturate(180%) blur(12px);
+    padding: .25rem; box-shadow: 0 10px 26px -14px hsl(var(--foreground) / .6);
+    opacity: .4; transition: opacity .2s;
+}
+.screen-bar:hover, .screen-bar:focus-within { opacity: 1; }
+.screen-bar a, .screen-bar button {
+    display: inline-flex; align-items: center; gap: .35rem;
+    border: 0; background: none; cursor: pointer; color: hsl(var(--foreground));
+    border-radius: 9999px; padding: .45rem .7rem;
+    font-family: inherit; font-size: .8rem; font-weight: 600;
+}
+.screen-bar a:hover, .screen-bar button:hover { background: hsl(var(--muted)); }
+.screen-bar svg { width: 18px; height: 18px; }
+.fs-btn .fs-off, .fs-btn.is-full .fs-on { display: none; }
+.fs-btn.is-full .fs-off { display: inline-flex; }
 </style>

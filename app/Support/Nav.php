@@ -91,6 +91,17 @@ class Nav
     }
 
     /**
+     * وضع العرض: تُطوى القائمة الجانبية والشريط العلوي ويُكبَّر القياس.
+     *
+     * لوحة الحكومة تُفتح عليه افتراضًا لأنها تُعرض على شاشة قاعة، وبقية البوابات
+     * لا تدخله إلا بطلبه في ?screen=1. و?screen=0 يعيد التخطيط الكامل في أي منها.
+     */
+    public static function screenMode(): bool
+    {
+        return request()->boolean('screen', self::portalKey() === self::GOV);
+    }
+
+    /**
      * أقسام القائمة الجانبية للبوابة النشطة.
      */
     public static function sections(?string $key = null): array

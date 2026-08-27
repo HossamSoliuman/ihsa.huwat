@@ -104,7 +104,10 @@ if ($onSeparateHost) {
  * (config/hawat.php → nav_gov). صفحاتها لم تعد تُقدَّم من المسارات العليا.
  */
 $govDashboard = function (): void {
-    Route::get('/', [DashboardController::class, 'index'])->name('home');
+    // الرئيسة شاشة اختيار بمربّعات كبيرة (تُعرض على شاشة قاعة)، ولوحة المؤشرات
+    // التي كانت عليها انتقلت إلى /gov/overview لتُفتح من مربّعها بملء الشاشة.
+    Route::get('/', [DashboardController::class, 'screens'])->name('home');
+    Route::get('/overview', [DashboardController::class, 'index'])->name('overview');
     Route::get('/sea-map', [SeaMapController::class, 'index'])->name('sea-map');
 
     Route::get('/production', [ProductionController::class, 'index'])->name('production');

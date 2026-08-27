@@ -24,6 +24,7 @@ class PortalSplitTest extends TestCase
     {
         return [
             ['/gov'],
+            ['/gov/overview'],
             ['/gov/sea-map'],
             ['/gov/production'],
             ['/gov/ports-compare'],
@@ -194,7 +195,8 @@ class PortalSplitTest extends TestCase
     {
         // الإنتاج السمكي في لوحة الحكومة، والقوارب في المنصة التشغيلية، والإحصاء
         // الميداني في قسم الإحصاء: كل صفحة ترى روابط بوابتها ولا ترى روابط غيرها.
-        $this->get('/gov/production')
+        // لوحة الحكومة تُفتح على وضع العرض بلا قائمة جانبية، فنطلبها بتخطيطها الكامل.
+        $this->get('/gov/production?screen=0')
             ->assertSee(route('gov.sustainability'), false)
             ->assertDontSee(route('boats'), false)
             ->assertDontSee(route('stats.field-statistics'), false);

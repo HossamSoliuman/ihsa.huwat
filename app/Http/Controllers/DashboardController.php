@@ -13,6 +13,15 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    /**
+     * شاشة اختيار لوحة الحكومة: مربّعات تبويبات القائمة الجانبية، بلا بيانات —
+     * تُبنى من config/hawat.php → nav_gov داخل العرض نفسه.
+     */
+    public function screens(): View
+    {
+        return view('dashboard.screens');
+    }
+
     public function index(): View
     {
         $trips = Trip::with('departurePort.governorate.region')->get();
