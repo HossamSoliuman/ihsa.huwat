@@ -43,10 +43,9 @@
         .portal-brand { display: flex; justify-content: center; }
         .portal-brand img { height: 200px; width: auto; max-width: 100%; object-fit: contain; }
         .portal-grid { display: grid; gap: 1.25rem; width: 100%; max-width: 30rem; }
+        {{-- البوابات الخمس في صفّ واحد على الشاشة العريضة، وتتكدّس دونها. --}}
         @media (min-width: 720px) { .portal-grid { grid-template-columns: 1fr 1fr; max-width: 56rem; } }
-        {{-- خمس بوابات: ثلاث ثم اثنتان على الشاشة المعتادة، وصفّ واحد على العريضة. --}}
-        @media (min-width: 1080px) { .portal-grid { grid-template-columns: repeat(3, 1fr); max-width: 72rem; } }
-        @media (min-width: 1600px) { .portal-grid { grid-template-columns: repeat(5, 1fr); max-width: 104rem; } }
+        @media (min-width: 1100px) { .portal-grid { grid-template-columns: repeat(5, 1fr); max-width: 108rem; } }
         .portal-card {
             display: flex; flex-direction: column; gap: 1rem; padding: 1.75rem;
             border: 1px solid hsl(var(--border)); border-radius: calc(var(--radius) * 2);

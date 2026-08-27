@@ -28,27 +28,27 @@ return [
      */
     'portals' => [
         'gov' => [
-            'label' => 'لوحة الحكومة',
+            'label' => 'التفاعلية',
             'icon' => 'shield-check',
             'home' => 'gov.home',
         ],
         'stats' => [
-            'label' => 'قسم الإحصاء',
+            'label' => 'الإحصاء',
             'icon' => 'database',
             'home' => 'stats.home',
         ],
         'subadmin' => [
-            'label' => 'قسم الإدارة الفرعية',
+            'label' => 'الإدارات',
             'icon' => 'network',
             'home' => 'subadmin.home',
         ],
         'services' => [
-            'label' => 'قسم الخدمات والتراخيص',
+            'label' => 'الخدمات والتراخيص',
             'icon' => 'headset',
             'home' => 'services.home',
         ],
         'ops' => [
-            'label' => 'المنصة التشغيلية',
+            'label' => 'مركز المعلومات',
             'icon' => 'layers',
             'home' => 'governorates',
         ],

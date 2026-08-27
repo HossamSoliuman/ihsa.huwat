@@ -173,15 +173,16 @@ class PortalSplitTest extends TestCase
         $this->get($old)->assertMovedPermanently()->assertRedirect($new);
     }
 
-    public function test_the_root_offers_every_portal(): void
+    public function test_the_sections_page_offers_every_portal(): void
     {
-        $this->get('/')
+        // الجذر يعرض الشعار وحده حتى تكتمل البوابات؛ صفحة الاختيار على /sections.
+        $this->get('/sections')
             ->assertOk()
-            ->assertSee('لوحة الحكومة', false)
-            ->assertSee('قسم الإحصاء', false)
-            ->assertSee('قسم الإدارة الفرعية', false)
-            ->assertSee('قسم الخدمات والتراخيص', false)
-            ->assertSee('المنصة التشغيلية', false)
+            ->assertSee('التفاعلية', false)
+            ->assertSee('الإحصاء', false)
+            ->assertSee('الإدارات', false)
+            ->assertSee('الخدمات والتراخيص', false)
+            ->assertSee('مركز المعلومات', false)
             ->assertSee('href="'.route('gov.home').'"', false)
             ->assertSee('href="'.route('stats.home').'"', false)
             ->assertSee('href="'.route('subadmin.home').'"', false)
