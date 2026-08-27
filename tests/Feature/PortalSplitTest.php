@@ -42,8 +42,8 @@ class PortalSplitTest extends TestCase
     public static function statisticsPages(): array
     {
         return [
+            // رئيسة القسم هي موجز الإدارة العليا.
             ['/stats'],
-            ['/stats/executive-briefing'],
             ['/stats/national-indicators'],
             ['/stats/performance-compare'],
             ['/stats/field-statistics'],
@@ -154,6 +154,8 @@ class PortalSplitTest extends TestCase
     {
         return [
             ['/gov/statistics', '/stats'],
+            ['/gov/executive-briefing', '/stats'],
+            ['/stats/executive-briefing', '/stats'],
             ['/gov/national-indicators', '/stats/national-indicators'],
             ['/gov/annual-bulletin', '/stats/annual-bulletin'],
             ['/admin/markets', '/stats/markets'],
@@ -185,7 +187,7 @@ class PortalSplitTest extends TestCase
             ->assertSee('الخدمات والتراخيص', false)
             ->assertSee('مركز المعلومات', false)
             ->assertSee('href="'.route('gov.home').'"', false)
-            ->assertSee('href="'.route('stats.home').'"', false)
+            ->assertSee('href="'.route('stats.executive-briefing').'"', false)
             ->assertSee('href="'.route('subadmin.home').'"', false)
             ->assertSee('href="'.route('services.home').'"', false)
             ->assertSee('href="'.route('governorates').'"', false);

@@ -12,13 +12,11 @@ use App\Models\Port;
 use App\Models\Region;
 use App\Models\Species;
 use App\Models\Trip;
-use App\Support\StatisticsSection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 /**
- * قسم الإحصاء — بوابته ولوحاته التنفيذية ومخرجاته الورقية.
+ * قسم الإحصاء — لوحاته التنفيذية ومخرجاته الورقية.
  *
  * الاختبارات هنا تحرس الحساب لا العرض: أن الكميات تُجمَّع من سجلات المصيد لا من
  * عدّادات مخزّنة، وأن نسبة الامتثال تُشتق من حالة الرحلة وفرقها، وأن التصدير
@@ -43,64 +41,13 @@ class StatisticsSectionTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | بوابة الإحصاء
-    |--------------------------------------------------------------------------
-    */
-
-    public function test_the_portal_lists_every_dashboard_in_the_section(): void
-    {
-        $response = $this->get('/stats')->assertOk();
-
-        foreach (StatisticsSection::groups() as $group) {
-            $response->assertSee($group['title'], false);
-
-            foreach ($group['items'] as $item) {
-                $response->assertSee($item['label'], false);
-                $response->assertSee(route($item['route']), false);
-            }
-        }
-    }
-
-    public function test_every_portal_link_points_at_a_registered_route(): void
-    {
-        foreach (StatisticsSection::groups() as $group) {
-            foreach ($group['items'] as $item) {
-                $this->assertTrue(
-                    Route::has($item['route']),
-                    "بوابة الإحصاء تشير إلى مسار غير مسجَّل: {$item['route']}"
-                );
-            }
-        }
-    }
-
-    public function test_the_portal_search_keeps_matching_dashboards_only(): void
-    {
-        // "النشرة" لا تقع إلا في مجموعة التحليلات والتقارير، فتختفي بقية المجموعات.
-        // التأكيد على عناوين المجموعات لا على أسماء اللوحات، لأن القائمة الجانبية
-        // تعرض أسماء اللوحات في كل صفحة.
-        $this->get('/stats?q=النشرة')
-            ->assertOk()
-            ->assertSee('التحليلات الذكية والتقارير', false)
-            ->assertDontSee('اللوحات التنفيذية والمؤشرات', false)
-            ->assertDontSee('الامتثال والإنذارات', false);
-    }
-
-    public function test_the_portal_reports_when_nothing_matches_the_search(): void
-    {
-        $this->get('/stats?q=زززز')
-            ->assertOk()
-            ->assertSee('لا توجد لوحات مطابقة لبحثك', false);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | موجز الإدارة العليا
+    | موجز الإدارة العليا — رئيسة القسم
     |--------------------------------------------------------------------------
     */
 
     public function test_the_briefing_shows_the_certified_strategic_indicators(): void
     {
-        $this->get('/stats/executive-briefing')
+        $this->get('/stats')
             ->assertOk()
             ->assertSee('إجمالي المصيد المعتمد', false)
             ->assertSee('القوارب النشطة', false)
@@ -109,7 +56,7 @@ class StatisticsSectionTest extends TestCase
 
     public function test_the_briefing_csv_carries_the_indicators_and_the_charts(): void
     {
-        $csv = $this->get('/stats/executive-briefing/export.csv')
+        $csv = $this->get('/stats/export.csv')
             ->assertOk()
             ->assertDownload()
             ->streamedContent();
@@ -124,7 +71,7 @@ class StatisticsSectionTest extends TestCase
     public function test_the_briefing_json_bundles_the_kpis_with_their_charts(): void
     {
         $payload = json_decode(
-            $this->get('/stats/executive-briefing/export.json')->assertOk()->streamedContent(),
+            $this->get('/stats/export.json')->assertOk()->streamedContent(),
             true,
         );
 

@@ -44,7 +44,6 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SpeciesController;
 use App\Http\Controllers\StaffNotificationController;
 use App\Http\Controllers\StatisticsOfficerController;
-use App\Http\Controllers\StatisticsPortalController;
 use App\Http\Controllers\SubAdminPortalController;
 use App\Http\Controllers\SupplyChainController;
 use App\Http\Controllers\SupportTicketController;
@@ -206,11 +205,13 @@ $servicesSection = function (): void {
  * والتقارير، إلى الأسواق والأمن الغذائي.
  */
 $statisticsSection = function (): void {
-    Route::get('/', [StatisticsPortalController::class, 'index'])->name('home');
-
-    Route::get('/executive-briefing', [ExecutiveBriefingController::class, 'index'])->name('executive-briefing');
-    Route::get('/executive-briefing/export.csv', [ExecutiveBriefingController::class, 'exportCsv'])->name('executive-briefing.csv');
-    Route::get('/executive-briefing/export.json', [ExecutiveBriefingController::class, 'exportJson'])->name('executive-briefing.json');
+    /*
+     * رئيسة القسم هي موجز الإدارة العليا نفسه: صفحة سرد اللوحات حُذفت لأن القائمة
+     * الجانبية تعرض اللوحات كلها، فكانت وسيطًا يُنقر مرتين للوصول إلى الموجز.
+     */
+    Route::get('/', [ExecutiveBriefingController::class, 'index'])->name('executive-briefing');
+    Route::get('/export.csv', [ExecutiveBriefingController::class, 'exportCsv'])->name('executive-briefing.csv');
+    Route::get('/export.json', [ExecutiveBriefingController::class, 'exportJson'])->name('executive-briefing.json');
 
     Route::get('/national-indicators', [NationalIndicatorsController::class, 'index'])->name('national-indicators');
     Route::get('/performance-compare', [PerformanceCompareController::class, 'index'])->name('performance-compare');
@@ -312,7 +313,8 @@ $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdmi
      */
     foreach ([
         '/gov/statistics' => '/stats',
-        '/gov/executive-briefing' => '/stats/executive-briefing',
+        '/gov/executive-briefing' => '/stats',
+        '/stats/executive-briefing' => '/stats',
         '/gov/national-indicators' => '/stats/national-indicators',
         '/gov/performance-compare' => '/stats/performance-compare',
         '/gov/field-statistics' => '/stats/field-statistics',

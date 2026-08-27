@@ -35,7 +35,7 @@ return [
         'stats' => [
             'label' => 'الإحصاء',
             'icon' => 'database',
-            'home' => 'stats.home',
+            'home' => 'stats.executive-briefing',
         ],
         'subadmin' => [
             'label' => 'الإدارات',
@@ -94,7 +94,6 @@ return [
         [
             'title' => 'المؤشرات واللوحات التنفيذية',
             'items' => [
-                ['label' => 'بوابة الإحصاء', 'route' => 'stats.home', 'icon' => 'database'],
                 ['label' => 'موجز الإدارة العليا', 'route' => 'stats.executive-briefing', 'icon' => 'crown'],
                 ['label' => 'المؤشرات الوطنية', 'route' => 'stats.national-indicators', 'icon' => 'bar-chart'],
                 ['label' => 'مقارنة الأداء', 'route' => 'stats.performance-compare', 'icon' => 'gauge'],
