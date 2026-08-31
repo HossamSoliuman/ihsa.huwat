@@ -3,9 +3,13 @@
 @section('title', 'مقارنة الأداء')
 
 @php
-    /** لون الكمية بالنسبة للمتوسط: أخضر أعلى بكثير، أحمر أقل بكثير، أزرق حول المتوسط. */
-    $catchColor = fn ($value) => $value >= $avgCatch * 1.15 ? '#059669' : ($value <= $avgCatch * 0.7 ? '#e11d48' : '#0284c7');
-    $complianceColor = fn ($value) => $value === null ? '#94a3b8' : ($value >= 90 ? '#059669' : ($value >= 75 ? '#d97706' : '#e11d48'));
+    /*
+     * حالة القيمة لا لونها: الاسم يُترجَم إلى لون في مكان واحد — متغيّرات
+     * `--st-*` للنصّ، و`hawatChart.status` للرسوم — فيتبع اللون الوضعَ الفاتح
+     * والداكن بلا تكرار قيمٍ في الصفحة.
+     */
+    $catchStatus = fn ($value) => $value >= $avgCatch * 1.15 ? 'good' : ($value <= $avgCatch * 0.7 ? 'critical' : 'neutral');
+    $complianceStatus = fn ($value) => $value === null ? 'none' : ($value >= 90 ? 'good' : ($value >= 75 ? 'warn' : 'critical'));
 @endphp
 
 @section('content')
@@ -14,7 +18,6 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'gauge'])</div>
             <div>
                 <h1>مقارنة أداء الموانئ والمحافظات</h1>
-                <p>تحليل مقارن لكميات المصيد ونسبة الامتثال في لوحة واحدة مع إبراز الفروقات</p>
             </div>
         </div>
         <div class="actions">
@@ -37,7 +40,9 @@
         </div>
     </div>
 
-    <div class="stat-grid cols-4" style="margin-bottom:1.25rem">
+    @include('partials.section-head', ['icon' => 'scale', 'title' => 'خلاصة الفروقات'])
+
+    <div class="stat-grid cols-4">
         <div class="gap-card primary">
             <p class="g-label">متوسط المصيد (طن)</p>
             <p class="g-value">{{ number_format($avgCatch) }}</p>
@@ -58,15 +63,34 @@
         </div>
     </div>
 
-    <div class="card" style="margin-bottom:1rem">
-        <p class="card-title">{{ $view === 'governorate' ? 'المصيد والامتثال حسب المحافظة' : 'المصيد والامتثال حسب الميناء' }}</p>
-        <p class="card-sub" style="margin-bottom:.75rem">الأعمدة الزرقاء = المصيد (طن) — الأعمدة الفيروزية = نسبة الامتثال %</p>
-        @if ($rows->isEmpty())
-            <p style="padding:4rem 0;text-align:center;font-size:.82rem;color:hsl(var(--muted-foreground))">لا توجد بيانات كافية للمقارنة</p>
-        @else
-            <div class="chart-wrap" style="height:360px"><canvas id="compareChart"></canvas></div>
-        @endif
+    @include('partials.section-head', ['icon' => 'bar-chart', 'title' => $view === 'governorate' ? 'المصيد والامتثال حسب المحافظة' : 'المصيد والامتثال حسب الميناء'])
+
+    {{--
+        رسمان لا رسم واحد بمحورين: الطن والنسبة مقياسان مختلفان، وجمعهما على
+        محورين في إطار واحد يجعل ارتفاع العمودين قابلًا للمقارنة وهو ليس كذلك.
+    --}}
+    <div class="grid-2">
+        <div class="card">
+            <p class="card-title">المصيد</p>
+            <p class="card-sub" style="margin-bottom:.7rem">طن — أخضر أعلى من المتوسط، أحمر أقل منه</p>
+            @if ($rows->isEmpty())
+                <p style="padding:4rem 0;text-align:center;font-size:.8rem;color:hsl(var(--muted-foreground))">لا توجد بيانات كافية للمقارنة</p>
+            @else
+                <div class="chart-wrap" style="min-height:{{ max(200, $rows->count() * 34 + 70) }}px"><canvas id="catchChart"></canvas></div>
+            @endif
+        </div>
+        <div class="card">
+            <p class="card-title">نسبة الامتثال</p>
+            <p class="card-sub" style="margin-bottom:.7rem">% — من صفر إلى مئة</p>
+            @if ($rows->isEmpty())
+                <p style="padding:4rem 0;text-align:center;font-size:.8rem;color:hsl(var(--muted-foreground))">لا توجد بيانات كافية للمقارنة</p>
+            @else
+                <div class="chart-wrap" style="min-height:{{ max(200, $rows->count() * 34 + 70) }}px"><canvas id="complianceChart"></canvas></div>
+            @endif
+        </div>
     </div>
+
+    @include('partials.section-head', ['icon' => 'clipboard', 'title' => 'الجدول التفصيلي'])
 
     <div class="table-card">
         <table class="data-table">
@@ -99,7 +123,7 @@
                             <p style="font-size:11px;color:hsl(var(--muted-foreground))">{{ $row['sub'] }}</p>
                         </td>
                         <td>
-                            <span style="display:inline-flex;align-items:center;gap:.35rem;font-weight:700;color:{{ $catchColor($row['catch']) }}">
+                            <span style="display:inline-flex;align-items:center;gap:.35rem;font-weight:700;color:var(--st-{{ $catchStatus($row['catch']) }})">
                                 @if ($isTopCatch)@include('partials.icon', ['name' => 'trophy'])@endif
                                 {{ number_format($row['catch'], 1) }}
                             </span>
@@ -109,7 +133,7 @@
                             @if ($row['compliance'] === null)
                                 <span style="font-size:.72rem;color:hsl(var(--muted-foreground))">—</span>
                             @else
-                                <span class="score-chip" style="background:{{ $complianceColor($row['compliance']) }}">{{ $row['compliance'] }}%</span>
+                                <span class="score-chip" style="background:var(--st-{{ $complianceStatus($row['compliance']) }})">{{ $row['compliance'] }}%</span>
                             @endif
                         </td>
                         <td>
@@ -129,7 +153,7 @@
         </table>
     </div>
 
-    <div class="card" style="margin-top:1rem">
+    <div class="card">
         <p style="font-size:.75rem;line-height:1.9;color:hsl(var(--muted-foreground))">
             الأخضر: أعلى من المتوسط بوضوح · الأزرق: قريب من المتوسط · الأحمر: أقل من المتوسط بوضوح.
             نسبة الامتثال تُحسب من الرحلات نفسها: الرحلة ممتثلة إذا اعتُمدت ولم يُسجَّل عليها فرق بين إدخال الكابتن والوزن الفعلي،
@@ -139,29 +163,38 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+@include('partials.chart-setup')
 <script>
-    Chart.defaults.font.family = 'Tajawal';
-    Chart.defaults.font.size = 11;
+    const labels = @json($rows->pluck('name'));
 
-    const canvas = document.getElementById('compareChart');
-    if (canvas) {
-        new Chart(canvas, {
+    const catchCanvas = document.getElementById('catchChart');
+    if (catchCanvas) {
+        new Chart(catchCanvas, {
             type: 'bar',
             data: {
-                labels: @json($rows->pluck('name')),
-                datasets: [
-                    { label: 'المصيد (طن)', data: @json($rows->pluck('catch')), backgroundColor: @json($rows->map(fn ($r) => $catchColor($r['catch']))), borderRadius: 4, yAxisID: 'y' },
-                    { label: 'الامتثال %', data: @json($rows->map(fn ($r) => $r['compliance'] ?? 0)), backgroundColor: '#0891b2', borderRadius: 4, yAxisID: 'y1' }
-                ]
+                labels,
+                datasets: [{ label: 'المصيد (طن)', data: @json($rows->pluck('catch')), backgroundColor: hawatChart.statusColors(@json($rows->map(fn ($r) => $catchStatus($r['catch'])))) }]
             },
             options: {
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
-                scales: {
-                    y: { beginAtZero: true, position: 'right', title: { display: true, text: 'طن' } },
-                    y1: { beginAtZero: true, max: 100, position: 'left', grid: { drawOnChartArea: false }, title: { display: true, text: '%' } }
-                }
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: { x: { beginAtZero: true, title: { display: true, text: 'طن' } }, y: { grid: { display: false } } }
+            }
+        });
+    }
+
+    const complianceCanvas = document.getElementById('complianceChart');
+    if (complianceCanvas) {
+        new Chart(complianceCanvas, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{ label: 'الامتثال %', data: @json($rows->map(fn ($r) => $r['compliance'] ?? 0)), backgroundColor: hawatChart.statusColors(@json($rows->map(fn ($r) => $complianceStatus($r['compliance'])))) }]
+            },
+            options: {
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: { x: { beginAtZero: true, max: 100, title: { display: true, text: '%' } }, y: { grid: { display: false } } }
             }
         });
     }

@@ -8,12 +8,13 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'hammer'])</div>
             <div>
                 <h1>الأسواق</h1>
-                <p>أسواق ومزادات الأسماك: الكميات المعروضة والمباعة ومتوسطات الأسعار</p>
             </div>
         </div>
     </div>
 
-    <div class="stat-grid cols-6" style="margin-bottom:1.25rem">
+    @include('partials.section-head', ['icon' => 'gauge', 'title' => 'مؤشرات الأسواق'])
+
+    <div class="stat-grid cols-6">
         @include('partials.stat-card', ['label' => 'الأسواق', 'value' => $stats['markets'], 'icon' => 'hammer', 'tone' => 'primary'])
         @include('partials.stat-card', ['label' => 'محلات البيع', 'value' => number_format($stats['shops']), 'icon' => 'building', 'tone' => 'primary'])
         @include('partials.stat-card', ['label' => 'دكات المزادات', 'value' => number_format($stats['stalls']), 'icon' => 'hammer', 'tone' => 'info'])
@@ -22,12 +23,17 @@
         @include('partials.stat-card', ['label' => 'متوسط السعر', 'value' => number_format($stats['avg_price'], 2), 'unit' => 'ريال/كجم', 'icon' => 'trending-up', 'tone' => 'primary'])
     </div>
 
-    <div class="card" style="margin-bottom:1.25rem">
+    @include('partials.section-head', ['icon' => 'trending-up', 'title' => 'الأسعار'])
+
+    <div class="card">
         <p class="card-title">متوسط سعر الكيلو حسب النوع</p>
-        <div class="chart-wrap" style="height:300px;margin-top:.75rem"><canvas id="priceChart"></canvas></div>
+        <p class="card-sub" style="margin-bottom:.7rem">ريال لكل كيلوجرام</p>
+        <div class="chart-wrap" style="min-height:280px"><canvas id="priceChart"></canvas></div>
     </div>
 
-    <form method="GET" class="filter-bar" style="margin-bottom:1.25rem">
+    @include('partials.section-head', ['icon' => 'hammer', 'title' => 'الأسواق المسجّلة'])
+
+    <form method="GET" class="filter-bar">
         <label class="field"><span>المنطقة</span>
             <select class="select" name="region" onchange="this.form.submit()">
                 <option value="">كل المناطق</option>
@@ -43,7 +49,7 @@
         <a href="{{ route('stats.markets') }}" class="btn btn-outline">إعادة تعيين</a>
     </form>
 
-    <div class="cards-grid cols-3" style="margin-bottom:1.25rem">
+    <div class="cards-grid cols-3">
         @forelse ($markets as $market)
             <div class="entity-card">
                 <div style="display:flex;align-items:flex-start;justify-content:space-between">
@@ -65,7 +71,7 @@
         @endforelse
     </div>
 
-    <p style="font-size:.82rem;font-weight:700;margin-bottom:.5rem">أحدث المزادات</p>
+    @include('partials.section-head', ['icon' => 'clipboard', 'title' => 'أحدث المزادات'])
     <div class="table-card">
         <table class="data-table">
             <thead><tr><th>التاريخ</th><th>السوق</th><th>النوع</th><th>المعروض (كجم)</th><th>المباع (كجم)</th><th>نسبة البيع</th><th>متوسط السعر</th><th>المشتري</th></tr></thead>
@@ -91,13 +97,12 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+@include('partials.chart-setup')
 <script>
-    Chart.defaults.font.family = 'Tajawal';
     new Chart(document.getElementById('priceChart'), {
         type: 'bar',
-        data: { labels: @json($priceBySpecies->keys()), datasets: [{ label: 'ريال/كجم', data: @json($priceBySpecies->values()), backgroundColor: '#0c4a6e', borderRadius: 4 }] },
-        options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        data: { labels: @json($priceBySpecies->keys()), datasets: [{ label: 'ريال/كجم', data: @json($priceBySpecies->values()), backgroundColor: hawatChart.accent }] },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
     });
 </script>
 @endpush

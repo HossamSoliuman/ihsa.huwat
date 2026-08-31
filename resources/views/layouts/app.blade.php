@@ -13,7 +13,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'الرئيسية') — {{ config('hawat.name') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    {{--
+        خطّان لا خطّ واحد: Chakra Petch للأرقام واللاتيني — وهو ما يعطي اللوحة
+        حِدَّتها الهندسية — و Tajawal للعربية، لأن الأول بلا حروف عربية فتلتقطها
+        الثانية تلقائيًا.
+    --}}
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     @include('partials.styles')
     <script>
         if (localStorage.getItem('hawat-theme') === 'dark') {

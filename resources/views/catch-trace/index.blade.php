@@ -8,22 +8,21 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'search'])</div>
             <div>
                 <h1>تتبع المصيد</h1>
-                <p>سلسلة تتبع كاملة لرحلة واحدة: المنطقة ← المحافظة ← الميناء ← القارب ← الرحلة ← الأنواع</p>
             </div>
         </div>
     </div>
 
-    <form method="GET" class="filter-bar" style="margin-bottom:1.25rem">
+    <form method="GET" class="filter-bar">
         <label class="field" style="min-width:18rem"><span>رقم الرحلة</span><input class="input" name="search" value="{{ $search }}" placeholder="مثال: TRP-1024"></label>
         <button class="btn btn-primary">@include('partials.icon', ['name' => 'search']) تتبع</button>
     </form>
 
     @if ($search && ! $trip)
-        <div class="card" style="padding:2rem;text-align:center;font-size:.875rem;color:hsl(var(--muted-foreground));margin-bottom:1.25rem">لا توجد رحلة مطابقة لرقم «{{ $search }}»</div>
+        <div class="card" style="padding:2rem;text-align:center;font-size:.875rem;color:hsl(var(--muted-foreground))">لا توجد رحلة مطابقة لرقم «{{ $search }}»</div>
     @endif
 
     @if ($trip)
-        <div class="card" style="margin-bottom:1.25rem">
+        <div class="card">
             <p class="card-title" style="margin-bottom:.75rem">سلسلة التتبع</p>
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:.5rem">
                 @foreach ([$trip->boat?->port?->governorate?->region?->name, $trip->boat?->port?->governorate?->name, $trip->departurePort?->name, $trip->boat?->name, $trip->trip_number] as $node)
@@ -33,13 +32,17 @@
             </div>
         </div>
 
-        <div class="stat-grid cols-5" style="margin-bottom:1.25rem">
+        @include('partials.section-head', ['icon' => 'scale', 'title' => 'أوزان الرحلة'])
+
+        <div class="stat-grid cols-5">
             @include('partials.stat-card', ['label' => 'حالة الرحلة', 'value' => $trip->status, 'icon' => 'activity', 'tone' => 'info'])
             @include('partials.stat-card', ['label' => 'إدخال الكابتن', 'value' => number_format($trip->captain_input_kg), 'unit' => 'كجم', 'icon' => 'scale', 'tone' => 'primary'])
             @include('partials.stat-card', ['label' => 'الوزن الفعلي', 'value' => number_format($trip->actual_weight_kg), 'unit' => 'كجم', 'icon' => 'scale', 'tone' => 'primary'])
             @include('partials.stat-card', ['label' => 'الفرق', 'value' => number_format($trip->diff_kg, 1), 'unit' => 'كجم', 'icon' => 'alert-triangle', 'tone' => abs((float) $trip->diff_kg) > 0 ? 'warning' : 'success'])
             @include('partials.stat-card', ['label' => 'المصيد المعتمد', 'value' => number_format($trip->approved_kg), 'unit' => 'كجم', 'icon' => 'badge-check', 'tone' => 'success'])
         </div>
+
+        @include('partials.section-head', ['icon' => 'fish', 'title' => 'الأنواع المسجّلة'])
 
         <div class="table-card">
             <table class="data-table">
@@ -61,7 +64,7 @@
             </table>
         </div>
     @else
-        <p style="font-size:.82rem;font-weight:600;margin-bottom:.5rem">رحلات معتمدة حديثة</p>
+        @include('partials.section-head', ['icon' => 'history', 'title' => 'رحلات معتمدة حديثة'])
         <div class="cards-grid cols-4">
             @foreach ($recent as $item)
                 <a href="{{ route('stats.catch-trace', ['search' => $item->trip_number]) }}" class="entity-card" style="padding:1rem">

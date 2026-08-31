@@ -1,7 +1,11 @@
+{{--
+    بطاقة المؤشر: العنوان ومربّع الأيقونة في السطر الأول، والقيمة تحتهما كبيرةً
+    وحدها. الترتيب مقصود — العين تقرأ ما يقيسه المؤشر ثم تنزل إلى الرقم.
+--}}
 <div class="stat-card">
-    <div style="min-width:0">
+    <div class="top">
         <p class="label">{{ $label }}</p>
-        <p class="value">{{ $value }}@if (!empty($unit))<span class="unit">{{ $unit }}</span>@endif</p>
+        <div class="kpi-icon {{ $tone ?? 'primary' }}">@include('partials.icon', ['name' => $icon])</div>
     </div>
-    <div class="kpi-icon {{ $tone ?? 'primary' }}">@include('partials.icon', ['name' => $icon])</div>
+    <p class="value">{{ $value }}@if (!empty($unit))<span class="unit">{{ $unit }}</span>@endif</p>
 </div>

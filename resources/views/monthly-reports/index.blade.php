@@ -13,7 +13,6 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'file-chart'])</div>
             <div>
                 <h1>تقارير الإنتاج</h1>
-                <p>نماذج يومية وشهرية وسنوية بتجميع تلقائي حسب المنطقة والميناء والنوع</p>
             </div>
         </div>
         <div class="actions">
@@ -22,15 +21,16 @@
         </div>
     </div>
 
-    <div class="card" style="margin-bottom:1.25rem">
-        <div class="seg" style="margin-bottom:.875rem">
+    {{-- الشريط والمرشّحات في سطر واحد: لا يبقى نصف البطاقة فارغًا. --}}
+    <div class="card" style="flex-direction:row;flex-wrap:wrap;align-items:flex-end;gap:.75rem">
+        <div class="seg">
             @foreach ($periods as $key => $label)
                 <a href="{{ route('stats.monthly-reports', array_merge($filters, ['period' => $key])) }}" class="{{ $period === $key ? 'is-active' : '' }}">
                     @include('partials.icon', ['name' => 'calendar']) {{ $label }}
                 </a>
             @endforeach
         </div>
-        <form method="GET" class="filter-bar" style="border:0;padding:0">
+        <form method="GET" class="filter-bar" style="border:0;padding:0;flex:1">
             <input type="hidden" name="period" value="{{ $period }}">
             <label class="field"><span>السنة</span>
                 <select class="select" name="year" onchange="this.form.submit()">
@@ -69,13 +69,19 @@
         </form>
     </div>
 
-    <div class="stat-grid cols-5" style="margin-bottom:1.25rem">
+    @include('partials.section-head', ['icon' => 'gauge', 'title' => 'إجماليات الفترة', 'note' => $report['period_label']])
+
+    <div class="stat-grid cols-5">
         @include('partials.stat-card', ['label' => 'إجمالي المصيد', 'value' => number_format($totals['catch_kg'], 1), 'unit' => 'كجم', 'icon' => 'fish', 'tone' => 'primary'])
         @include('partials.stat-card', ['label' => 'المعتمد', 'value' => $totals['approved_kg'] ? number_format($totals['approved_kg'], 1) : '—', 'unit' => 'كجم', 'icon' => 'badge-check', 'tone' => 'success'])
         @include('partials.stat-card', ['label' => 'الرحلات', 'value' => number_format($totals['trips']), 'unit' => 'رحلة', 'icon' => 'sailboat', 'tone' => 'info'])
         @include('partials.stat-card', ['label' => 'القوارب', 'value' => number_format($totals['boats']), 'unit' => 'قارب', 'icon' => 'ship', 'tone' => 'warning'])
         @include('partials.stat-card', ['label' => 'عدد الأنواع', 'value' => number_format($totals['species']), 'unit' => 'نوع', 'icon' => 'fish', 'tone' => 'primary'])
     </div>
+
+    @if ($totals['records'] !== 0)
+        @include('partials.section-head', ['icon' => 'clipboard', 'title' => 'التفصيل'])
+    @endif
 
     @if ($totals['records'] === 0)
         <div class="pending-card">

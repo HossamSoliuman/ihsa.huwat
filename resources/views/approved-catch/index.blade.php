@@ -8,14 +8,15 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'badge-check'])</div>
             <div>
                 <h1>المصيد المعتمد</h1>
-                <p>اعتماد كميات المصيد بعد الإحصاء الميداني — المصدر الرسمي لمؤشرات الإنتاج</p>
             </div>
         </div>
     </div>
 
     @if (session('status'))<div class="flash">{{ session('status') }}</div>@endif
 
-    <div class="stat-grid cols-5" style="margin-bottom:1.25rem">
+    @include('partials.section-head', ['icon' => 'gauge', 'title' => 'حصيلة الاعتماد'])
+
+    <div class="stat-grid cols-5">
         @include('partials.stat-card', ['label' => 'بانتظار الاعتماد', 'value' => $stats['awaiting'], 'icon' => 'clock', 'tone' => 'warning'])
         @include('partials.stat-card', ['label' => 'رحلات معتمدة', 'value' => $stats['approved'], 'icon' => 'badge-check', 'tone' => 'success'])
         @include('partials.stat-card', ['label' => 'المصيد المعتمد', 'value' => number_format($stats['approved_kg']), 'unit' => 'كجم', 'icon' => 'fish', 'tone' => 'primary'])
@@ -23,7 +24,7 @@
         @include('partials.stat-card', ['label' => 'متوسط الرحلة', 'value' => number_format($stats['avg']), 'unit' => 'كجم', 'icon' => 'trending-up', 'tone' => 'info'])
     </div>
 
-    <form method="GET" class="filter-bar" style="margin-bottom:1.25rem">
+    <form method="GET" class="filter-bar">
         <label class="field"><span>الميناء</span>
             <select class="select" name="port" onchange="this.form.submit()">
                 <option value="">كل الموانئ</option>
@@ -38,6 +39,8 @@
         </label>
         <a href="{{ route('stats.approved-catch') }}" class="btn btn-outline">إعادة تعيين</a>
     </form>
+
+    @include('partials.section-head', ['icon' => 'clipboard', 'title' => 'رحلات الاعتماد'])
 
     <div class="table-card">
         <table class="data-table">

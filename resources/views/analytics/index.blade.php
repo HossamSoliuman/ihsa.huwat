@@ -8,12 +8,11 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'line-chart'])</div>
             <div>
                 <h1>التحليلات والمؤشرات</h1>
-                <p>مقارنة الإنتاج بين منطقتين أو نوعين أو ميناءين، مع ترتيب أعلى عشرة</p>
             </div>
         </div>
     </div>
 
-    <form method="GET" class="filter-bar" style="margin-bottom:1.25rem">
+    <form method="GET" class="filter-bar">
         <label class="field"><span>نوع المقارنة</span>
             <select class="select" name="type" onchange="this.form.first.value=''; this.form.second.value=''; this.form.submit()">
                 @foreach ($types as $key => $label)
@@ -41,8 +40,10 @@
         <a href="{{ route('stats.analytics', ['type' => $type]) }}" class="btn btn-outline">إعادة تعيين</a>
     </form>
 
+    @include('partials.section-head', ['icon' => 'arrow-left-right', 'title' => 'المقارنة'])
+
     @if ($comparable)
-        <div class="stat-grid" style="margin-bottom:1rem">
+        <div class="stat-grid">
             @include('partials.stat-card', ['label' => $first, 'value' => number_format($firstValue, 1), 'unit' => 'طن', 'icon' => 'fish', 'tone' => 'primary'])
             @include('partials.stat-card', ['label' => $second, 'value' => number_format($secondValue, 1), 'unit' => 'طن', 'icon' => 'fish', 'tone' => 'info'])
             <div class="gap-card {{ $difference >= 0 ? 'success' : 'danger' }}">
@@ -55,33 +56,35 @@
             </div>
         </div>
 
-        <div class="card" style="margin-bottom:1rem">
-            <p class="card-title" style="margin-bottom:.75rem">مقارنة بصرية</p>
+        <div class="card">
+            <p class="card-title" style="margin-bottom:.7rem">مقارنة بصرية</p>
             @foreach ([[$first, $firstValue], [$second, $secondValue]] as [$label, $value])
-                <div style="margin-bottom:.875rem">
+                <div>
                     <div class="legend-row">
                         <span style="font-weight:500">{{ $label }}</span>
                         <span style="color:hsl(var(--muted-foreground))">{{ number_format($value, 1) }} طن</span>
                     </div>
                     <div class="progress">
-                        <div style="width:{{ max($firstValue, $secondValue) > 0 ? min(100, $value / max($firstValue, $secondValue) * 100) : 0 }}%;background:linear-gradient(270deg,#0369a1,#06b6d4)"></div>
+                        <div style="width:{{ max($firstValue, $secondValue) > 0 ? min(100, $value / max($firstValue, $secondValue) * 100) : 0 }}%;background:hsl(var(--primary))"></div>
                     </div>
                 </div>
             @endforeach
         </div>
     @else
-        <div class="pending-card" style="margin-bottom:1rem">
+        <div class="pending-card">
             @include('partials.icon', ['name' => 'arrow-left-right'])
             <h3>اختر عنصرين للمقارنة</h3>
             <p>حدّد نوع المقارنة ثم العنصرين، وستظهر الكميات والفرق بينهما ونسبته.</p>
         </div>
     @endif
 
+    @include('partials.section-head', ['icon' => 'trophy', 'title' => 'أعلى عشرة'])
+
     <div class="card">
         <p class="card-title">أعلى عشرة — {{ $types[$type] }}</p>
-        <p class="card-sub" style="margin-bottom:.75rem">المصيد بالطن</p>
+        <p class="card-sub" style="margin-bottom:.7rem">المصيد بالطن</p>
         @if ($top->isNotEmpty())
-            <div class="chart-wrap" style="height:320px"><canvas id="topChart"></canvas></div>
+            <div class="chart-wrap" style="min-height:{{ max(170, $top->count() * 40 + 70) }}px"><canvas id="topChart"></canvas></div>
         @else
             <p style="padding:3rem 0;text-align:center;font-size:.82rem;color:hsl(var(--muted-foreground))">لا توجد بيانات</p>
         @endif
@@ -89,17 +92,14 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+@include('partials.chart-setup')
 <script>
-    Chart.defaults.font.family = 'Tajawal';
-    Chart.defaults.font.size = 11;
-
     const canvas = document.getElementById('topChart');
     if (canvas) {
         new Chart(canvas, {
             type: 'bar',
-            data: { labels: @json($top->keys()), datasets: [{ label: 'المصيد (طن)', data: @json($top->values()), backgroundColor: '#0284c7', borderRadius: 4 }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            data: { labels: @json($top->keys()), datasets: [{ label: 'المصيد (طن)', data: @json($top->values()), backgroundColor: hawatChart.accent }] },
+            options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true }, y: { grid: { display: false } } } }
         });
     }
 </script>

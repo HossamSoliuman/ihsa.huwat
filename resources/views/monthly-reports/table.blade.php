@@ -1,5 +1,5 @@
-<div class="table-card" style="margin-bottom:1rem">
-    <p class="card-title" style="padding:.75rem 1rem;border-bottom:1px solid hsl(var(--border))">{{ $title }}</p>
+<div class="table-card">
+    <p class="card-title" style="padding:.6rem .8rem;border-bottom:1px solid hsl(var(--border))">{{ $title }}</p>
     <table class="data-table">
         <thead>
             <tr>@foreach ($headers as $header)<th>{{ $header }}</th>@endforeach</tr>

@@ -104,12 +104,18 @@ class ExecutiveBriefingController extends Controller
      */
     private function trend(): Collection
     {
-        $byMonth = CatchRecord::where('recorded_at', '>=', now()->subMonths(11)->startOfMonth())
+        /*
+         * الطرح يبدأ من أول الشهر لا من اليوم الجاري: في يوم 31 يفيض
+         * `subMonths` على الشهر التالي، فتتكرّر أشهر وتسقط أخرى من السلسلة.
+         */
+        $firstMonth = now()->startOfMonth()->subMonths(11);
+
+        $byMonth = CatchRecord::where('recorded_at', '>=', $firstMonth)
             ->get(['recorded_at', 'quantity_kg'])
             ->groupBy(fn ($record) => $record->recorded_at->format('Y-n'));
 
         return collect(range(11, 0))->map(function (int $back) use ($byMonth) {
-            $month = now()->subMonths($back);
+            $month = now()->startOfMonth()->subMonths($back);
             $bucket = $byMonth[$month->format('Y-n')] ?? collect();
 
             return [

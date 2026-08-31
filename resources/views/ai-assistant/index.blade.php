@@ -8,7 +8,6 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'bot'])</div>
             <div>
                 <h1>حوات AI</h1>
-                <p>تحليل تنفيذي محسوب من بيانات حوات — مؤشرات وأسباب محتملة وتوصيات</p>
             </div>
         </div>
         @if ($insight)
@@ -18,15 +17,7 @@
         @endif
     </div>
 
-    <div class="note-box" style="margin-top:0;margin-bottom:1.25rem">
-        @include('partials.icon', ['name' => 'shield-check'])
-        <div>
-            <p class="n-title">إجابات محسوبة لا مولّدة</p>
-            <p class="n-body">كل رقم في الرد يأتي من استعلام على بيانات النظام، ولا يُصاغ نص عن بيانات غير موجودة. يُوجَّه السؤال إلى موضوع من الموضوعات المعروفة بمطابقة كلماته، وما لا يطابق أيًا منها يُردّ عليه بالملخص التنفيذي مع الإفصاح عن ذلك.</p>
-        </div>
-    </div>
-
-    <div class="chat" style="margin-bottom:1.25rem">
+    <div class="chat">
         <div class="chat-row">
             <div class="chat-avatar">@include('partials.icon', ['name' => 'sparkles'])</div>
             <div class="chat-bubble bot">
@@ -131,11 +122,8 @@
 
 @push('scripts')
 @if ($insight && $insight['chart']['labels'])
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+@include('partials.chart-setup')
 <script>
-    Chart.defaults.font.family = 'Tajawal';
-    Chart.defaults.font.size = 11;
-
     new Chart(document.getElementById('insightChart'), {
         type: @json($insight['chart']['type']),
         data: {
@@ -143,15 +131,11 @@
             datasets: [{
                 label: @json($insight['chart']['unit']),
                 data: @json($insight['chart']['values']),
-                backgroundColor: '#0284c7',
-                borderColor: '#0284c7',
-                borderWidth: 2.5,
-                borderRadius: 4,
-                pointRadius: 3,
-                tension: .35
+                backgroundColor: hawatChart.accent,
+                borderColor: hawatChart.accent
             }]
         },
-        options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
     });
 </script>
 @endif

@@ -8,12 +8,13 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'users'])</div>
             <div>
                 <h1>موظفو الإحصاء</h1>
-                <p>فرق الإحصاء في الموانئ، ورديّاتهم، وعدد الرحلات المُحصاة</p>
             </div>
         </div>
     </div>
 
-    <div class="stat-grid cols-5" style="margin-bottom:1.25rem">
+    @include('partials.section-head', ['icon' => 'gauge', 'title' => 'تغطية فرق الإحصاء'])
+
+    <div class="stat-grid cols-5">
         @include('partials.stat-card', ['label' => 'إجمالي الموظفين', 'value' => $stats['total'], 'icon' => 'users', 'tone' => 'primary'])
         @include('partials.stat-card', ['label' => 'نشطون', 'value' => $stats['active'], 'icon' => 'check-circle', 'tone' => 'success'])
         @include('partials.stat-card', ['label' => 'الرحلات المُحصاة', 'value' => number_format($stats['trips']), 'icon' => 'clipboard-check', 'tone' => 'primary'])
@@ -21,7 +22,7 @@
         @include('partials.stat-card', ['label' => 'الموانئ المغطاة', 'value' => $stats['ports'], 'icon' => 'anchor', 'tone' => 'primary'])
     </div>
 
-    <form method="GET" class="filter-bar" style="margin-bottom:1.25rem">
+    <form method="GET" class="filter-bar">
         <label class="field"><span>الميناء</span>
             <select class="select" name="port" onchange="this.form.submit()">
                 <option value="">كل الموانئ</option>
@@ -42,6 +43,8 @@
         </label>
         <a href="{{ route('stats.statistics-officers') }}" class="btn btn-outline">إعادة تعيين</a>
     </form>
+
+    @include('partials.section-head', ['icon' => 'users', 'title' => 'سجل الموظفين'])
 
     <div class="table-card">
         <table class="data-table">

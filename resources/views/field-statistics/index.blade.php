@@ -8,14 +8,15 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'clipboard-check'])</div>
             <div>
                 <h1>الإحصاء الميداني</h1>
-                <p>طابور الرحلات العائدة: تسجيل الوزن الفعلي ومقارنته بإدخال الكابتن</p>
             </div>
         </div>
     </div>
 
     @if (session('status'))<div class="flash">{{ session('status') }}</div>@endif
 
-    <div class="stat-grid cols-6" style="margin-bottom:1.25rem">
+    @include('partials.section-head', ['icon' => 'gauge', 'title' => 'طابور الإحصاء'])
+
+    <div class="stat-grid cols-6">
         @include('partials.stat-card', ['label' => 'عادت للميناء', 'value' => $stats['returned'], 'icon' => 'anchor', 'tone' => 'info'])
         @include('partials.stat-card', ['label' => 'بانتظار الإحصاء', 'value' => $stats['pending'], 'icon' => 'clock', 'tone' => 'warning'])
         @include('partials.stat-card', ['label' => 'تحت الإحصاء', 'value' => $stats['under'], 'icon' => 'clipboard-check', 'tone' => 'warning'])
@@ -24,7 +25,7 @@
         @include('partials.stat-card', ['label' => 'الموزون فعليًا', 'value' => number_format($stats['measured']), 'unit' => 'كجم', 'icon' => 'scale', 'tone' => 'success'])
     </div>
 
-    <form method="GET" class="filter-bar" style="margin-bottom:1.25rem">
+    <form method="GET" class="filter-bar">
         <label class="field"><span>حالة الرحلة</span>
             <select class="select" name="status" onchange="this.form.submit()">
                 <option value="">كل الطابور</option>
@@ -33,6 +34,8 @@
         </label>
         <a href="{{ route('stats.field-statistics') }}" class="btn btn-outline">إعادة تعيين</a>
     </form>
+
+    @include('partials.section-head', ['icon' => 'clipboard', 'title' => 'الرحلات العائدة'])
 
     <div class="table-card">
         <table class="data-table">
@@ -48,7 +51,7 @@
                         <td style="white-space:nowrap">{{ $trip->return_time?->format('Y-m-d H:i') ?? '—' }}</td>
                         <td>{{ $trip->captain_input_kg ? number_format($trip->captain_input_kg) : '—' }}</td>
                         <td>{{ $trip->actual_weight_kg ? number_format($trip->actual_weight_kg) : '—' }}</td>
-                        <td style="color:{{ abs((float) $trip->diff_kg) > 0 ? '#e11d48' : 'inherit' }}">{{ $trip->diff_kg !== null ? number_format($trip->diff_kg, 1) : '—' }}</td>
+                        <td style="color:{{ abs((float) $trip->diff_kg) > 0 ? 'var(--st-critical)' : 'inherit' }}">{{ $trip->diff_kg !== null ? number_format($trip->diff_kg, 1) : '—' }}</td>
                         <td>{{ $trip->statistics_officer ?? '—' }}</td>
                         <td><span class="badge {{ $trip->status === 'بانتظار الاعتماد' ? 'badge-info' : 'badge-warn' }}">{{ $trip->status }}</span></td>
                         <td>

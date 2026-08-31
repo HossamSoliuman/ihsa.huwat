@@ -8,7 +8,6 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'file-text'])</div>
             <div>
                 <h1>التقارير</h1>
-                <p>إنشاء وتصدير تقارير قطاع المصايد — تصدير CSV ونسخة طباعة جاهزة لـ PDF</p>
             </div>
         </div>
         <div class="actions">
@@ -17,12 +16,11 @@
     </div>
 
     @foreach ($groups as $group)
-        <section style="margin-bottom:1.5rem">
+        <section>
             <div class="section-head">
-                <div class="with-icon">
-                    @include('partials.icon', ['name' => $group['icon']])
-                    <h2 style="font-size:.95rem;font-weight:700">{{ $group['title'] }}</h2>
-                </div>
+                <span class="ico">@include('partials.icon', ['name' => $group['icon']])</span>
+                <h2>{{ $group['title'] }}</h2>
+                <span class="line"></span>
                 <span class="count-pill">{{ count($group['items']) }} تقارير · {{ number_format($group['records']) }} سجل</span>
             </div>
             <div class="portal-grid">

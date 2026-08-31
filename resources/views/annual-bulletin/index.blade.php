@@ -8,7 +8,6 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'book-open'])</div>
             <div>
                 <h1>النشرة السنوية للمصايد البحرية</h1>
-                <p>تقرير سنوي رسمي من ست عشرة صفحة — يتولّد آليًا من بيانات النظام وقابل للطباعة وحفظ PDF</p>
             </div>
         </div>
         <form method="GET" class="actions">
@@ -23,7 +22,7 @@
     </div>
 
     @if ($report['totals']['trips_records'] === 0)
-        <div class="pending-card" style="margin-bottom:1.25rem">
+        <div class="pending-card">
             @include('partials.icon', ['name' => 'book-open'])
             <h3>لا توجد سجلات مصيد لسنة {{ $year }}</h3>
             <p>تُنشأ النشرة من سجلات المصيد المسجّلة على الرحلات. تظهر الصفحات أدناه بقيم صفرية حتى تُسجَّل بيانات هذه السنة.</p>
