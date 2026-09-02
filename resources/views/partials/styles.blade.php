@@ -3,12 +3,13 @@
  * نظام التصميم — لوحة حادّة مسطّحة على طراز HUD.
  *
  * ثلاث قواعد تحكم الملف كلّه: لا زوايا دائرية (كل شيء على زاوية قائمة عدا
- * بطاقات المؤشرات، انظر `--stat-radius`)، ولا خلفيات ذات نقش أو تدرّج، ولا
- * ظلال. والسطوح كلّها شفّافة: ما يفصل البطاقة عن الصفحة خطٌّ شعري خافت
+ * بطاقات المؤشرات، انظر `--stat-radius`)، ولا تدرّجات ولا ظلال، ولا نقشَ على
+ * أي سطح — عدا الصفحة نفسها: شبكة ورق رسم واحدة تجري خلف كل شيء، انظر `body`.
+ * والسطوح كلّها شفّافة: ما يفصل البطاقة عن الصفحة خطٌّ شعري خافت
  * وأربعة أقواس زوايا — لا لونُ خلفيةٍ مختلف.
  */
 :root {
-    --background: 210 25% 97%;
+    --background: 210 25% 98.5%;
     --foreground: 213 34% 12%;
     --card: 0 0% 100%;
     --primary: 199 89% 28%;
@@ -76,12 +77,23 @@ html.dark {
  * الخطّان مقصودان بهذا الترتيب: Chakra Petch لا يحمل حروفًا عربية، فتلتقط
  * Tajawal العربية ويبقى الرقم واللاتيني على الخطّ الهندسي الحادّ.
  */
+/*
+ * الخلفية: بياضٌ يكاد يكون ناصعًا، فوقه شبكة ورق رسم من سوادٍ بشفافية 3٪ —
+ * خافتة إلى حدّ أنها لا تُقرأ لونًا بل عمقًا، فلا تزاحم البطاقات الشفّافة
+ * التي تمرّ فوقها. مثبّتة (`fixed`) حتى لا تنزلق الشبكة مع التمرير فيبدو
+ * الأمر كما لو أن الصفحة كلّها ورقة واحدة. وفي الوضع الداكن تُرفع: نقشٌ
+ * أسود على سوادٍ لا يُرى.
+ */
 body {
     font-family: 'Chakra Petch', 'Tajawal', ui-sans-serif, system-ui, sans-serif;
-    background: hsl(var(--background));
+    background-color: hsl(var(--background));
+    background-image: url('{{ asset('images/pattern.png') }}');
+    background-size: 4.6875rem;
+    background-attachment: fixed;
     color: hsl(var(--foreground));
     -webkit-font-smoothing: antialiased;
 }
+html.dark body { background-image: none; }
 a { color: inherit; text-decoration: none; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / .3); }
@@ -146,7 +158,8 @@ a { color: inherit; text-decoration: none; }
 .backdrop.is-visible { display: block; }
 .main { min-height: 100vh; }
 @media (min-width: 1024px) {
-    .sidebar { transform: translateX(0); background: var(--surface); }
+    /* بلا خطٍّ فاصل: شبكة الصفحة تمرّ تحت القائمة متّصلة، فتبدو اللوحة سطحًا واحدًا. */
+    .sidebar { transform: translateX(0); background: var(--surface); border-left: 0; }
     .main { margin-right: 15.5rem; }
     .backdrop { display: none !important; }
     .menu-btn, .sidebar-close { display: none !important; }
@@ -167,11 +180,13 @@ a { color: inherit; text-decoration: none; }
     transition: background .15s, color .15s;
 }
 .nav-link:hover { background: hsl(var(--muted) / .8); color: hsl(var(--foreground)); }
-.nav-link.is-active { background: hsl(var(--primary) / .1); color: hsl(var(--primary)); font-weight: 700; }
-.nav-link.is-active::before {
-    content: ''; position: absolute; right: 0; top: 0; bottom: 0;
-    width: 2px; background: hsl(var(--primary));
-}
+/*
+ * الصفحة الحالية لا تُعلَّم بلونِ خلفيةٍ ولا بشريط: الخلفية الملوّنة تقطع شبكة
+ * الصفحة تحتها. يكفي أن يسودّ النصّ ويزرقّ الأيقونة — والفرق عن باقي البنود
+ * الرمادية كافٍ.
+ */
+.nav-link.is-active { color: hsl(var(--foreground)); font-weight: 700; }
+.nav-link.is-active svg { color: hsl(var(--primary)); }
 .nav-link svg { width: 17px; height: 17px; flex-shrink: 0; }
 .nav-link span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -207,7 +222,15 @@ a { color: inherit; text-decoration: none; }
 .user-chip .meta { display: none; }
 @media (min-width: 640px) { .user-chip .meta { display: block; } }
 
-.content { padding: 1.25rem 1.5rem 2rem; }
+/*
+ * عمود المحتوى لا يُتوسَّط: في RTL يلتصق بحافّة البدء — أي بالقائمة الجانبية —
+ * فيقع الفائض كلّه هامشًا أيسر. وعرضه أقلّ الأمرين: 82.5rem سقفًا للسطر على
+ * الشاشة العريضة، أو ما يبقى بعد اقتطاع 10rem من العرض المتاح. الشقّ الثاني
+ * هو ما يضمن بقاء الهامش حين لا يبلغ العرض السقفَ أصلًا — كما في التكبير 125٪.
+ */
+.content { width: min(82.5rem, 100% - 10rem); padding: 1.25rem 1.5rem 2rem; }
+{{-- دون 1024px تصير القائمة لوحًا منزلقًا والصفحة كلّها للمحتوى: لا هامش يُقتطع. --}}
+@media (max-width: 1024px) { .content { width: auto; } }
 @media (max-width: 640px) { .content { padding: 1rem; } }
 
 /*
@@ -683,7 +706,8 @@ html.dark .set-row .s-value.ok { color: hsl(160 60% 64%); }
 /* قياس الجذر يكبر مع الشاشة، وبقية اللوحة مبنية على rem فتكبر معه. */
 html.screen-mode { font-size: clamp(16px, 1vw, 22px); }
 html.screen-mode .main { margin-right: 0; }
-html.screen-mode .content { padding: clamp(1rem, 2vw, 2.5rem); }
+{{-- شاشة القاعة تُملأ عن آخرها: لا قصّ للعمود ولا هامش أيسر. --}}
+html.screen-mode .content { width: auto; padding: clamp(1rem, 2vw, 2.5rem); }
 html.screen-mode .chart-wrap { min-height: clamp(260px, 32vh, 520px); }
 html.screen-mode .screen-launcher { min-height: calc(100dvh - 2 * clamp(1rem, 2vw, 2.5rem)); justify-content: center; }
 {{-- على شاشة القاعة تملأ المربّعات الارتفاع بدل أن تتكوّم في أعلاها. --}}
@@ -711,6 +735,8 @@ html.screen-mode .screen-grid { flex: 1; grid-auto-rows: 1fr; }
 @media print {
     .sidebar, .topbar, .screen-bar, .page-header .actions { display: none !important; }
     .main { margin-right: 0 !important; }
+    .content { width: auto; }
+    body { background-image: none; }
     .card, .stat-card, .kpi-card { break-inside: avoid; }
 }
 </style>
