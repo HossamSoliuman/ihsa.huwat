@@ -3,10 +3,9 @@
 @endphp
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-head">
-        <img src="{{ config('hawat.logo') }}" alt="{{ config('hawat.name') }}">
-        <div style="min-width:0">
-            <p class="app-name">{{ config('hawat.name') }}</p>
-        </div>
+        <img class="mark-light" src="{{ asset('images/logo.png') }}" alt="{{ config('hawat.name') }}">
+        <img class="mark-dark" src="{{ asset('images/logo-white.png') }}" alt="" aria-hidden="true">
+        <p class="app-name">{{ config('hawat.name') }}</p>
         <button class="sidebar-close" onclick="toggleSidebar(false)">
             @include('partials.icon', ['name' => 'x'])
         </button>
@@ -25,4 +24,22 @@
             </div>
         @endforeach
     </nav>
+
+    {{--
+        ذيل القائمة يرث ما كان في الشريط العلوي بعد إزالته: هويّة المستخدم
+        وزرّ الوضع الداكن. ولا ثالث لهما — البحث والتنبيهات كانا واجهةً بلا
+        وظيفة خلفها فسقطا معه.
+    --}}
+    <div class="sidebar-foot">
+        <div class="user-chip">
+            <div class="avatar">م</div>
+            <div class="meta">
+                <p class="role">مدير عام</p>
+                <p class="sub">الإدارة العليا</p>
+            </div>
+        </div>
+        <button class="icon-btn" onclick="toggleTheme()" title="الوضع الداكن">
+            @include('partials.icon', ['name' => 'moon'])
+        </button>
+    </div>
 </aside>

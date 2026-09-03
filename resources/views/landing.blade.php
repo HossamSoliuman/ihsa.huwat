@@ -12,7 +12,8 @@
         .landing-brand img { width: min(60vw, 60vh); height: auto; max-width: 100%; object-fit: contain; }
     </style>
     <script>
-        if (localStorage.getItem('hawat-theme') === 'dark') {
+        // الوضع الداكن هو الأصل: لا يُطفأ إلا إذا اختار المستخدم الفاتح صراحةً.
+        if (localStorage.getItem('hawat-theme') !== 'light') {
             document.documentElement.classList.add('dark');
         }
     </script>

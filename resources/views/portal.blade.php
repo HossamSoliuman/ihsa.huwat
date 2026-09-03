@@ -67,13 +67,17 @@
         @media (min-width: 720px) { .portal-grid { grid-template-columns: 1fr 1fr; max-width: 56rem; } }
         {{-- البوابات الخمس في صفّ واحد على الشاشة العريضة، وتتكدّس دونها. --}}
         @media (min-width: 1100px) { .portal-grid { grid-template-columns: repeat(5, 1fr); max-width: 108rem; } }
+        {{-- بوّابات الواجهة على قاعدة اللوحة نفسها التي في الداخل: سطحٌ شفّاف
+             تمرّ خلفه صورة الصفحة، يحدّه خطٌّ شعري وأربعة أقواس زوايا — لا
+             لونُ بطاقةٍ مصمت يقتطعها من الخلفية. والمرور يزيدها لمسةَ لونٍ
+             خافتة لا رفعًا ولا ظلًّا. --}}
         .portal-card {
             display: flex; flex-direction: column; gap: .75rem; padding: 1.25rem;
-            border: 1px solid hsl(var(--border)); border-radius: calc(var(--radius) * 2);
-            background: hsl(var(--card));
-            transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+            border: 1px solid var(--hair); border-radius: 0;
+            background: var(--surface);
+            transition: border-color .15s ease, background .15s ease;
         }
-        .portal-card:hover { border-color: hsl(var(--primary) / .5); transform: translateY(-2px); box-shadow: 0 12px 32px hsl(var(--primary) / .12); }
+        .portal-card:hover { border-color: hsl(var(--primary) / .6); background: hsl(var(--primary) / .05); }
         .portal-card .icon-wrap {
             display: flex; align-items: center; justify-content: center; height: 2.5rem; width: 2.5rem;
             border-radius: .75rem; background: hsl(var(--primary) / .12); color: hsl(var(--primary));
@@ -88,7 +92,8 @@
         .portal-foot { font-size: .72rem; color: hsl(var(--muted-foreground)); text-align: center; }
     </style>
     <script>
-        if (localStorage.getItem('hawat-theme') === 'dark') {
+        // الوضع الداكن هو الأصل: لا يُطفأ إلا إذا اختار المستخدم الفاتح صراحةً.
+        if (localStorage.getItem('hawat-theme') !== 'light') {
             document.documentElement.classList.add('dark');
         }
     </script>

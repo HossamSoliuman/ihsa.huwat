@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 @php
     /*
-     * وضع العرض: الصفحة تُعرض على شاشة قاعة، فتُطوى القائمة الجانبية والشريط
-     * العلوي ويُكبَّر القياس، ويبقى شريط تحكّم صغير للرجوع وملء الشاشة. لوحة
+     * وضع العرض: الصفحة تُعرض على شاشة قاعة، فتُطوى القائمة الجانبية
+     * ويُكبَّر القياس، ويبقى شريط تحكّم صغير للرجوع وملء الشاشة. لوحة
      * الحكومة عليه افتراضًا — انظر App\Support\Nav::screenMode().
      */
     $screen = App\Support\Nav::screenMode();
@@ -22,7 +22,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     @include('partials.styles')
     <script>
-        if (localStorage.getItem('hawat-theme') === 'dark') {
+        // الوضع الداكن هو الأصل: لا يُطفأ إلا إذا اختار المستخدم الفاتح صراحةً.
+        if (localStorage.getItem('hawat-theme') !== 'light') {
             document.documentElement.classList.add('dark');
         }
     </script>
@@ -31,13 +32,15 @@
     <div class="shell">
         @unless ($screen)
             @include('partials.sidebar')
+            {{-- لا شريط علويّ يحمل زرّ القائمة، فيعوم الزرّ وحده دون 1024px. --}}
+            <button class="menu-btn" onclick="toggleSidebar(true)" aria-label="القائمة">
+                @include('partials.icon', ['name' => 'menu'])
+            </button>
             <div class="backdrop" id="backdrop" onclick="toggleSidebar(false)"></div>
         @endunless
         <div class="main">
             @if ($screen)
                 @include('partials.screen-bar')
-            @else
-                @include('partials.topbar')
             @endif
             <main class="content">
                 @yield('content')

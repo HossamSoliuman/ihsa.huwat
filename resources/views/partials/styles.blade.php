@@ -9,6 +9,7 @@
  * وأربعة أقواس زوايا — لا لونُ خلفيةٍ مختلف.
  */
 :root {
+    color-scheme: light;
     --background: 210 25% 98.5%;
     --foreground: 213 34% 12%;
     --card: 0 0% 100%;
@@ -51,20 +52,33 @@
     --st-neutral: #1d6fb8;
     --st-none: #94a3b8;
 }
+/*
+ * الوضع الداكن ليس قلبًا للرمادي: هو زرقةُ بحرٍ عميق — الأساس #0a1420 وما
+ * فوقه من درجاتٍ كلّها على مسار 213°، والزرقة الفاتحة #72a7e5 لونَ التمييز.
+ * انظر `html.dark body` لصورة الغلاف التي تجري خلف ذلك كلّه.
+ */
 html.dark {
-    --background: 213 42% 8%;
-    --foreground: 210 30% 94%;
-    --card: 213 33% 11%;
-    --primary: 199 88% 62%;
-    --primary-foreground: 213 42% 8%;
-    --muted: 213 26% 16%;
-    --muted-foreground: 212 16% 64%;
-    --accent: 213 26% 20%;
-    --border: 213 18% 24%;
-    --ring: 199 88% 62%;
+    /* حتى يرسم المتصفّح سهمَ القوائم ومنتقيَ التاريخ داكنَين لا فاتحَين. */
+    color-scheme: dark;
+    --background: 213 52% 8%;
+    --foreground: 214 64% 96%;
+    --card: 213 36% 11%;
+    --primary: 212 69% 67%;
+    --primary-foreground: 213 52% 8%;
+    --muted: 213 36% 17%;
+    --muted-foreground: 213 20% 66%;
+    --accent: 213 36% 21%;
+    --border: 213 28% 26%;
+    --ring: 212 69% 67%;
     /* في الوضع الداكن الأقواس بيضاء لا زرقاء: الأزرق يذوب في الخلفية. */
     --brk-color: hsl(210 30% 94% / .42);
-    --hair: hsl(var(--border) / .75);
+    /*
+     * والخطّ الفاصل أبيضُ مثلها لا أزرق: `--border` يقارب خلفية الصفحة في
+     * الإضاءة بعد أن خفّت زرقتها فيختفي حدّ البطاقة ولا يبقى منها إلا الأقواس.
+     * فبياضٌ بشفافية 16٪ — أقلّ من ثلث ما للأقواس — يرسم الحدّ خطًّا رفيعًا
+     * يُرى ولا يُلاحَظ: تبقى الأقواس هي ما يقرؤه البصر أولًا.
+     */
+    --hair: hsl(210 30% 94% / .16);
     --st-good: #3cb98a;
     --st-warn: #e0a53c;
     --st-critical: #ef5f7a;
@@ -81,8 +95,7 @@ html.dark {
  * الخلفية: بياضٌ يكاد يكون ناصعًا، فوقه شبكة ورق رسم من سوادٍ بشفافية 3٪ —
  * خافتة إلى حدّ أنها لا تُقرأ لونًا بل عمقًا، فلا تزاحم البطاقات الشفّافة
  * التي تمرّ فوقها. مثبّتة (`fixed`) حتى لا تنزلق الشبكة مع التمرير فيبدو
- * الأمر كما لو أن الصفحة كلّها ورقة واحدة. وفي الوضع الداكن تُرفع: نقشٌ
- * أسود على سوادٍ لا يُرى.
+ * الأمر كما لو أن الصفحة كلّها ورقة واحدة.
  */
 body {
     font-family: 'Chakra Petch', 'Tajawal', ui-sans-serif, system-ui, sans-serif;
@@ -93,7 +106,30 @@ body {
     color: hsl(var(--foreground));
     -webkit-font-smoothing: antialiased;
 }
-html.dark body { background-image: none; }
+/*
+ * الوضع الداكن ثلاث طبقات، من الأسفل إلى الأعلى — بالقيم نفسها المعتمدة في
+ * حسبة حرفًا بحرف، حتى تتطابق إضاءة الصفحتين:
+ *
+ *   1. صورة غلافٍ بحرية — هي كلّ ما في الخلفية من تفصيل.
+ *   2. حجابٌ رماديّ مائل إلى الأزرق لا أزرقُ مشبع: يبدأ من rgb(50 70 80)
+ *      بشفافية 90٪ في أعلى الشاشة وينتهي مصمتًا تمامًا عند rgb(13 16 27) في
+ *      أسفلها. فالمصمتُ في الأسفل يطفئ وهج الكرة، والرماديّ في الأعلى يمنع
+ *      الصفحة من أن تُقرأ زرقاء.
+ *   3. شبكة ورق الرسم نفسها التي في الوضع الفاتح، لكن بخطوطٍ بيضاء بشفافية
+ *      2٪ بدل السوداء — فوق الحجاب لا تحته، وإلا ابتلعها.
+ *
+ * والثلاث مثبّتة على إطار الشاشة (`background-attachment: fixed` موروث من
+ * `body`) فلا تنزلق مع التمرير.
+ */
+html.dark body {
+    background-color: #1d2835;
+    background-image:
+        url('{{ asset('images/pattern-dark.png') }}'),
+        linear-gradient(180deg, rgba(50, 70, 80, .9) 0%, rgb(13, 16, 27) 100%),
+        url('{{ asset('images/cover-dark.jpg') }}');
+    background-position: 0 0, center, center;
+    background-size: 4.6875rem, cover, cover;
+}
 a { color: inherit; text-decoration: none; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / .3); }
@@ -148,7 +184,7 @@ a { color: inherit; text-decoration: none; }
  * دون ذلك فهي لوح ينزلق فوق الصفحة، فيحتاج سطحًا مصمتًا يحجب ما تحته.
  */
 .sidebar {
-    position: fixed; inset-block: 0; right: 0; z-index: 40; width: 15.5rem;
+    position: fixed; inset-block: 0; right: 0; z-index: 40; width: 16.875rem;
     background: hsl(var(--background)); border-left: 1px solid var(--hair);
     display: flex; flex-direction: column; transform: translateX(100%);
     transition: transform .3s ease;
@@ -160,67 +196,81 @@ a { color: inherit; text-decoration: none; }
 @media (min-width: 1024px) {
     /* بلا خطٍّ فاصل: شبكة الصفحة تمرّ تحت القائمة متّصلة، فتبدو اللوحة سطحًا واحدًا. */
     .sidebar { transform: translateX(0); background: var(--surface); border-left: 0; }
-    .main { margin-right: 15.5rem; }
+    .main { margin-right: 16.875rem; }
     .backdrop { display: none !important; }
     .menu-btn, .sidebar-close { display: none !important; }
 }
 
-.sidebar-head { display: flex; align-items: center; gap: .75rem; border-bottom: 1px solid var(--hair); padding: .85rem 1rem; }
-.sidebar-head img { height: 38px; width: 38px; object-fit: contain; }
-.sidebar-head .app-name { font-size: .95rem; font-weight: 700; line-height: 1.2; }
+/*
+ * رأس القائمة بلا خطٍّ أسفله: الشريط العلوي أُزيل، فلم يبقَ في اللوحة سطرٌ
+ * أفقيّ يوازيه — وخطٌّ وحيدٌ معلّق أسوأ من لا خطّ. ارتفاعه 3.25rem كي يعادل
+ * ما كان يشغله الشريط، فلا ينزل المحتوى عن موضعه.
+ */
+.sidebar-head { display: flex; align-items: center; gap: .75rem; height: 3.25rem; padding: 0 1rem; flex-shrink: 0; }
+/*
+ * الشعار كلمةٌ عريضة لا أيقونة مربّعة (نسبته 2.4:1)، فالارتفاع وحده هو
+ * المحدَّد والعرض يتبعه، بسقفٍ يمنعه من مزاحمة الاسم في القائمة.
+ *
+ * ومصدره الأصل المحلّي لا الصورة البعيدة في `config('hawat.logo')`: تلك
+ * لوحةٌ مربّعة 600×600 لا تشغل الكلمةُ منها إلا 341×142 في وسطها، فثلاثة
+ * أرباع الصندوق فراغٌ شفّاف — أيًّا كان الارتفاع الذي يُعطى للصورة يبقى
+ * المرئيّ منها ربعه. والأصل المحلّي مقصوص على الكلمة نفسها، فيملأ ما يُعطى.
+ */
+.sidebar-head img { height: 30px; width: auto; max-width: 7rem; object-fit: contain; }
+/* النسخة البيضاء للوضع الليلي، والزرقاء للنهاري — كما في صفحة البوابات. */
+.sidebar-head .mark-dark { display: none; }
+html.dark .sidebar-head .mark-light { display: none; }
+html.dark .sidebar-head .mark-dark { display: block; }
+.sidebar-head .app-name { font-size: 1rem; font-weight: 700; line-height: 1.2; }
 .sidebar-close { margin-right: auto; border: 0; background: none; color: hsl(var(--muted-foreground)); padding: .35rem; cursor: pointer; }
 
-.sidebar-nav { flex: 1; overflow-y: auto; padding: .75rem .5rem; }
-.nav-section { margin-bottom: 1rem; }
-.nav-section-title { padding: 0 .6rem; margin-bottom: .4rem; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: hsl(var(--muted-foreground) / .75); }
-.nav-link {
-    position: relative; display: flex; align-items: center; gap: .65rem;
-    padding: .5rem .6rem; margin-bottom: 1px;
-    font-size: .82rem; font-weight: 500; color: hsl(var(--muted-foreground));
-    transition: background .15s, color .15s;
-}
-.nav-link:hover { background: hsl(var(--muted) / .8); color: hsl(var(--foreground)); }
 /*
- * الصفحة الحالية لا تُعلَّم بلونِ خلفيةٍ ولا بشريط: الخلفية الملوّنة تقطع شبكة
- * الصفحة تحتها. يكفي أن يسودّ النصّ ويزرقّ الأيقونة — والفرق عن باقي البنود
- * الرمادية كافٍ.
+ * القائمة أطول من الشاشة فتُمرَّر، لكن شريط التمرير يُخفى: عمودٌ رماديّ ملتصق
+ * بحافّة القائمة يُقرأ حدًّا فاصلًا — وهو ما تخلّصنا منه أصلًا بإسقاط الإطار.
+ * التمرير نفسه باقٍ بالعجلة واللمس ولوحة المفاتيح.
  */
+.sidebar-nav { flex: 1; overflow-y: auto; padding: .25rem 0 .5rem; scrollbar-width: none; -ms-overflow-style: none; }
+.sidebar-nav::-webkit-scrollbar { width: 0; height: 0; }
+
+.nav-section-title { padding: 1rem 1rem .5rem; font-size: .6875rem; font-weight: 600; color: hsl(var(--muted-foreground) / .55); }
+/*
+ * بندٌ فسيحٌ لا مزدحم: الأيقونة عند حافّة البدء والنصّ يملأ ما بقي، وارتفاع
+ * السطر 2.5rem — وهو قياس القائمة المرجعية نفسه. لا خلفية عند المرور ولا عند
+ * النشاط: الخلفية الملوّنة تقطع شبكة الصفحة تحتها، ويكفي أن يسودّ النصّ
+ * وتزرقّ الأيقونة.
+ */
+.nav-link {
+    position: relative; display: flex; align-items: center; gap: .75rem;
+    min-height: 2.5rem; padding: .3rem 1rem;
+    font-size: .875rem; font-weight: 500; color: hsl(var(--muted-foreground));
+    transition: color .15s;
+}
+.nav-link:hover { color: hsl(var(--foreground)); }
 .nav-link.is-active { color: hsl(var(--foreground)); font-weight: 700; }
 .nav-link.is-active svg { color: hsl(var(--primary)); }
-.nav-link svg { width: 17px; height: 17px; flex-shrink: 0; }
-.nav-link span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav-link svg { width: 1.125rem; height: 1.125rem; flex-shrink: 0; }
+.nav-link span { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /*
- * الشريط العلوي ملتصق بأعلى الصفحة والمحتوى يمرّ تحته، فلا يصحّ أن يكون
- * شفّافًا تمامًا: خلفية الصفحة بشفافية عالية مع طمس هي أقرب ما يبقيه مقروءًا.
+ * ذيل القائمة: كلّ ما بقي من الشريط العلوي بعد إزالته — بطاقة المستخدم وزرّ
+ * الوضع الداكن. أمّا مربّع البحث وجرس التنبيهات فسقطا معه: كلاهما كان بلا
+ * وظيفة خلفه.
  */
-.topbar {
-    position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: .75rem;
-    height: 3.25rem; border-bottom: 1px solid var(--hair);
-    background: hsl(var(--background) / .82); backdrop-filter: blur(12px); padding: 0 1.25rem;
-}
-.topbar h2 { font-size: .9rem; font-weight: 700; letter-spacing: .01em; }
-.topbar-actions { display: flex; align-items: center; gap: .35rem; margin-right: auto; }
-.icon-btn { position: relative; border: 0; background: none; color: hsl(var(--muted-foreground)); padding: .45rem; cursor: pointer; }
-.icon-btn:hover { background: hsl(var(--muted)); color: hsl(var(--foreground)); }
-.icon-btn svg { width: 18px; height: 18px; display: block; }
-.icon-btn .dot { position: absolute; top: 5px; right: 5px; height: 6px; width: 6px; background: #f43f5e; }
-.menu-btn { border: 0; background: none; color: hsl(var(--muted-foreground)); padding: .45rem; cursor: pointer; }
-.search-box { position: relative; display: none; }
-@media (min-width: 640px) { .search-box { display: block; } }
-.search-box svg { position: absolute; top: 50%; right: .6rem; transform: translateY(-50%); width: 15px; height: 15px; color: hsl(var(--muted-foreground)); pointer-events: none; }
-.search-box input {
-    width: 11rem; border: 1px solid hsl(var(--border));
-    background: hsl(var(--background)); padding: .4rem 2rem .4rem .6rem;
-    font-size: .8rem; font-family: inherit; color: inherit; outline: none; transition: width .2s, border-color .2s;
-}
-.search-box input:focus { width: 16rem; border-color: hsl(var(--primary)); }
-.user-chip { display: flex; align-items: center; gap: .5rem; border: 1px solid hsl(var(--border)); padding: .3rem .55rem; }
-.user-chip .avatar { display: flex; align-items: center; justify-content: center; height: 1.6rem; width: 1.6rem; background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); font-size: .72rem; font-weight: 700; }
-.user-chip .role { font-size: .72rem; font-weight: 700; line-height: 1.2; }
+.sidebar-foot { display: flex; align-items: center; gap: .5rem; padding: .5rem 1rem 1rem; flex-shrink: 0; }
+.user-chip { display: flex; align-items: center; gap: .5rem; flex: 1; min-width: 0; }
+.user-chip .avatar { display: flex; align-items: center; justify-content: center; height: 1.75rem; width: 1.75rem; flex-shrink: 0; background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); font-size: .72rem; font-weight: 700; }
+.user-chip .role { font-size: .75rem; font-weight: 700; line-height: 1.2; }
 .user-chip .sub { font-size: 10px; color: hsl(var(--muted-foreground)); }
-.user-chip .meta { display: none; }
-@media (min-width: 640px) { .user-chip .meta { display: block; } }
+.icon-btn { position: relative; border: 0; background: none; color: hsl(var(--muted-foreground)); padding: .45rem; cursor: pointer; }
+.icon-btn:hover { color: hsl(var(--foreground)); }
+.icon-btn svg { width: 18px; height: 18px; display: block; }
+
+/*
+ * زرّ فتح القائمة عائمٌ فوق الصفحة دون 1024px، إذ لم يبقَ شريطٌ علويّ يحمله.
+ * وهو السطح المصمت الوحيد في اللوحة: يقع فوق المحتوى فيلزمه ما يحجبه.
+ */
+.menu-btn { position: fixed; top: .6rem; right: .6rem; z-index: 35; border: 1px solid hsl(var(--border)); background: hsl(var(--background)); color: hsl(var(--foreground)); padding: .45rem; cursor: pointer; }
+.menu-btn svg { width: 18px; height: 18px; display: block; }
 
 /*
  * عمود المحتوى لا يُتوسَّط: في RTL يلتصق بحافّة البدء — أي بالقائمة الجانبية —
@@ -229,8 +279,11 @@ a { color: inherit; text-decoration: none; }
  * هو ما يضمن بقاء الهامش حين لا يبلغ العرض السقفَ أصلًا — كما في التكبير 125٪.
  */
 .content { width: min(82.5rem, 100% - 10rem); padding: 1.25rem 1.5rem 2rem; }
-{{-- دون 1024px تصير القائمة لوحًا منزلقًا والصفحة كلّها للمحتوى: لا هامش يُقتطع. --}}
-@media (max-width: 1024px) { .content { width: auto; } }
+{{--
+    دون 1024px تصير القائمة لوحًا منزلقًا والصفحة كلّها للمحتوى: لا هامش يُقتطع.
+    ويُفسح للزرّ العائم أعلاه مكانه، وإلا وقع فوق ترويسة الصفحة.
+--}}
+@media (max-width: 1024px) { .content { width: auto; padding-top: 3.25rem; } }
 @media (max-width: 640px) { .content { padding: 1rem; } }
 
 /*
@@ -364,8 +417,16 @@ html.dark .note-box svg { color: hsl(160 60% 62%); }
 .filter-bar > .btn:last-child { margin-inline-start: auto; }
 .field { display: flex; flex-direction: column; gap: .3rem; }
 .field > span { font-size: .7rem; font-weight: 600; color: hsl(var(--muted-foreground)); }
-.input, .select { border: 1px solid hsl(var(--border)); background: hsl(var(--background)); padding: .45rem .65rem; font-size: .82rem; font-family: inherit; color: inherit; outline: none; width: 100%; }
+/*
+ * الحقول تتبع قاعدة اللوحة نفسها: لا لونَ خلفيةٍ خاص بها. كانت تُملأ بـ
+ * `--background` فبدت في الوضع الداكن مربّعاتٍ سوداء مقتطعة من الصفحة بعد أن
+ * خفّت زرقة الخلفية؛ فصارت شفّافةً يحدّها الخطّ الشعري وحده كما البطاقات،
+ * وتحتها لمسةُ حبرٍ بشفافية 4٪ تكفي لتمييز موضع الكتابة دون أن تُقرأ لونًا.
+ */
+.input, .select { border: 1px solid hsl(var(--border)); background: hsl(var(--foreground) / .04); padding: .45rem .65rem; font-size: .82rem; font-family: inherit; color: inherit; outline: none; width: 100%; }
 .input:focus, .select:focus { border-color: hsl(var(--primary)); }
+/* قائمة الخيارات المنسدلة يرسمها المتصفّح لا نحن، فتحتاج سطحًا مصمتًا. */
+.select option { background: hsl(var(--background)); color: hsl(var(--foreground)); }
 .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .45rem .85rem; font-size: .8rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; font-family: inherit; transition: background .15s, border-color .15s; }
 .btn svg { width: 15px; height: 15px; }
 .btn-primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border-color: hsl(var(--primary)); }
@@ -733,7 +794,7 @@ html.screen-mode .screen-grid { flex: 1; grid-auto-rows: 1fr; }
 .fs-btn.is-full .fs-off { display: inline-flex; }
 
 @media print {
-    .sidebar, .topbar, .screen-bar, .page-header .actions { display: none !important; }
+    .sidebar, .menu-btn, .screen-bar, .page-header .actions { display: none !important; }
     .main { margin-right: 0 !important; }
     .content { width: auto; }
     body { background-image: none; }
