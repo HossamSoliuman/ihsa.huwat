@@ -355,17 +355,16 @@ html.dark .sidebar-head .mark-dark { display: block; }
 .kpi-card .top, .stat-card .top { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; margin-bottom: .75rem; }
 .kpi-card .value, .stat-card .value { margin-top: auto; }
 /*
- * العنوان أكبر من الرقم في هذه البطاقة — بطلبٍ صريح. المعتاد عكسه، فالرقم
- * هو الخبر؛ والقلب هنا مقصود لا سهو.
+ * الرقم هو الخبر، فله الحجم الأكبر؛ والعنوان يسبقه صغيرًا ليقول ما يقيسه.
  */
 .kpi-card .label, .stat-card .label { font-size: .95rem; font-weight: 700; line-height: 1.45; color: hsl(var(--foreground)); }
-.kpi-card .value, .stat-card .value { font-size: .85rem; font-weight: 700; line-height: 1.3; letter-spacing: .01em; color: hsl(var(--muted-foreground)); }
-.kpi-card .unit, .stat-card .unit { font-size: .74rem; font-weight: 600; color: hsl(var(--muted-foreground)); margin-right: .25rem; }
+.kpi-card .value, .stat-card .value { font-size: 1.45rem; font-weight: 700; line-height: 1.15; letter-spacing: .01em; color: hsl(var(--foreground)); }
+.kpi-card .unit, .stat-card .unit { font-size: .8rem; font-weight: 600; color: hsl(var(--muted-foreground)); margin-right: .3rem; }
 .kpi-icon {
-    display: flex; align-items: center; justify-content: center; height: 1.85rem; width: 1.85rem; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; height: 1.4rem; width: 1.4rem; flex-shrink: 0;
     background: hsl(var(--primary) / .08); border: 1px solid hsl(var(--primary) / .28); color: hsl(var(--primary));
 }
-.kpi-icon svg { width: 15px; height: 15px; }
+.kpi-icon svg { width: 12px; height: 12px; }
 .kpi-icon.info { background: hsl(199 89% 40% / .1); border-color: hsl(199 89% 40% / .35); color: hsl(199 89% 32%); }
 .kpi-icon.success { background: hsl(160 62% 35% / .1); border-color: hsl(160 62% 35% / .35); color: hsl(160 68% 28%); }
 .kpi-icon.warning { background: hsl(35 92% 45% / .12); border-color: hsl(35 92% 45% / .38); color: hsl(30 90% 36%); }
