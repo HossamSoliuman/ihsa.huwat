@@ -22,12 +22,7 @@
  */
 .icon { width: 1rem; height: 1rem; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
-/* رابط الشريط العلوي: أبيض على الأزرق كأزراره، والنصّ يسقط على الشاشة الضيقة. */
-.topbar-link { display: inline-flex; align-items: center; gap: .35rem; padding: .5rem .8rem; font-size: .78rem; font-weight: 600; color: hsl(0 0% 100% / .82); }
-.topbar-link:hover { color: var(--topbar-fg); }
-.topbar-link svg { width: 16px; height: 16px; }
 .topbar-actions form { display: flex; }
-@media (max-width: 640px) { .topbar-link span { display: none; } }
 
 /* رسالة الخطأ: نسخة حمراء من .flash الخضراء التي في اللوحة. */
 .flash-error { border-color: hsl(352 80% 50% / .45); background: hsl(352 80% 50% / .1); color: #be123c; }

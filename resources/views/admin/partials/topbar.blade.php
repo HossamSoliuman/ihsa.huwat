@@ -1,8 +1,7 @@
 {{--
     الشريط العلوي هو نفسه شريط لوحة الوزارة: لوحٌ أزرق مصمت يمتدّ بعرض الصفحة
-    فوق القائمة الجانبية، الشعار في أوّله وأدواته في آخره. يزيد عليه هنا رابط
-    العودة إلى اللوحة على النطاق الرئيسي، وزرّ الخروج — فهذه البوابة وحدها
-    خلف تسجيل دخول.
+    فوق القائمة الجانبية، الشعار في أوّله وأدواته في آخره. يزيد عليه هنا زرّ
+    الخروج — فهذه البوابة وحدها خلف تسجيل دخول.
 --}}
 <header class="topbar">
     <button class="menu-btn" onclick="toggleSidebar(true)" aria-label="القائمة">
@@ -15,11 +14,6 @@
     </a>
 
     <div class="topbar-actions">
-        <a class="topbar-link" href="{{ config('app.url') }}/sections">
-            @include('admin.partials.icon', ['name' => 'grid'])
-            <span>لوحة الوزارة</span>
-        </a>
-
         <button class="icon-btn" onclick="toggleTheme()" title="تبديل الوضع" aria-label="تبديل الوضع">
             @include('admin.partials.icon', ['name' => 'moon'])
         </button>
