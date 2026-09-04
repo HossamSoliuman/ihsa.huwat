@@ -9,6 +9,7 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AnnualBulletinController;
 use App\Http\Controllers\ApprovedCatchController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BoatController;
 use App\Http\Controllers\BoatTimelineController;
 use App\Http\Controllers\BycatchController;
@@ -63,17 +64,34 @@ use Illuminate\Support\Facades\Route;
 */
 
 $infoPortal = function (): void {
-    Route::get('/', [AdminController::class, 'index'])->name('admin.index');
+    /*
+     * الدخول على مضيف البوابة نفسه، واسمه "login" مجرّدًا لأن وسيط auth يحوّل
+     * إليه بهذا الاسم. والمحاولات مخنوقة: ستّ في الدقيقة تكفي من يعرف كلمته.
+     */
+    Route::middleware('guest')->group(function (): void {
+        Route::get('login', [LoginController::class, 'create'])->name('login');
+        Route::post('login', [LoginController::class, 'store'])->middleware('throttle:6,1');
+    });
 
-    // تبويب مجهول يُردّ بـ 404 من الموجّه بدل أن يصل إلى السجل فيرمي استثناءً.
-    Route::prefix('admin')->name('admin.')->whereIn('tab', array_keys(config('info.tabs')))->group(function (): void {
-        Route::get('{tab}', [AdminController::class, 'show'])->name('tab');
+    Route::post('logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
 
-        Route::post('{tab}/{resource}', [AdminResourceController::class, 'store'])->name('resource.store');
-        Route::put('{tab}/{resource}/{id}', [AdminResourceController::class, 'update'])->name('resource.update');
-        Route::delete('{tab}/{resource}/{id}', [AdminResourceController::class, 'destroy'])->name('resource.destroy');
+    /*
+     * ما بقي من البوابة خلف الدخول: تحرير البيانات الأساسية يُنسب إلى صاحبه في
+     * سجل العمليات، فلا يُفتح لزائر مجهول.
+     */
+    Route::middleware('auth')->group(function (): void {
+        Route::get('/', [AdminController::class, 'index'])->name('admin.index');
 
-        Route::put('{tab}/integration/{provider}', [IntegrationSettingController::class, 'update'])->name('integration.update');
+        // تبويب مجهول يُردّ بـ 404 من الموجّه بدل أن يصل إلى السجل فيرمي استثناءً.
+        Route::prefix('admin')->name('admin.')->whereIn('tab', array_keys(config('info.tabs')))->group(function (): void {
+            Route::get('{tab}', [AdminController::class, 'show'])->name('tab');
+
+            Route::post('{tab}/{resource}', [AdminResourceController::class, 'store'])->name('resource.store');
+            Route::put('{tab}/{resource}/{id}', [AdminResourceController::class, 'update'])->name('resource.update');
+            Route::delete('{tab}/{resource}/{id}', [AdminResourceController::class, 'destroy'])->name('resource.destroy');
+
+            Route::put('{tab}/integration/{provider}', [IntegrationSettingController::class, 'update'])->name('integration.update');
+        });
     });
 };
 
