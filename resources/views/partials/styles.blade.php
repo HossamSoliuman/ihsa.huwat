@@ -43,6 +43,16 @@
     --gap: .875rem;
 
     /*
+     * قياسا العرض، مأخوذان من hispa حرفيًّا لأن العميل أقرّ قياسها: القائمة
+     * 12.5rem، والهامش الخارجي مثلها فيبقى العمودان متناظرين حول المحتوى.
+     * الهامش يُقاس بـ clamp لا بقيمة ثابتة: على 1920px يبلغ 12.5rem تمامًا كما
+     * في hispa، ثم ينكمش إلى الصفر عند 1024px حتى لا يُخنق المحتوى على الشاشة
+     * الأصغر — وهي العلّة التي في hispa نفسها.
+     */
+    --sidebar-w: 12.5rem;
+    --content-gutter: clamp(0rem, (100vw - 64rem) / 4, 12.5rem);
+
+    /*
      * ألوان الحالة، محجوزة لها وحدها: لا يُلوَّن بها تمييز سلسلة عن أخرى.
      * لكلّ وضعٍ درجاته حتى يبقى التباين على سطحه فوق 3:1.
      */
@@ -184,7 +194,7 @@ a { color: inherit; text-decoration: none; }
  * دون ذلك فهي لوح ينزلق فوق الصفحة، فيحتاج سطحًا مصمتًا يحجب ما تحته.
  */
 .sidebar {
-    position: fixed; inset-block: 0; right: 0; z-index: 40; width: 16.875rem;
+    position: fixed; inset-block: 0; right: 0; z-index: 40; width: var(--sidebar-w);
     background: hsl(var(--background)); border-left: 1px solid var(--hair);
     display: flex; flex-direction: column; transform: translateX(100%);
     transition: transform .3s ease;
@@ -196,7 +206,7 @@ a { color: inherit; text-decoration: none; }
 @media (min-width: 1024px) {
     /* بلا خطٍّ فاصل: شبكة الصفحة تمرّ تحت القائمة متّصلة، فتبدو اللوحة سطحًا واحدًا. */
     .sidebar { transform: translateX(0); background: var(--surface); border-left: 0; }
-    .main { margin-right: 16.875rem; }
+    .main { margin-right: var(--sidebar-w); }
     .backdrop { display: none !important; }
     .menu-btn, .sidebar-close { display: none !important; }
 }
@@ -273,17 +283,17 @@ html.dark .sidebar-head .mark-dark { display: block; }
 .menu-btn svg { width: 18px; height: 18px; display: block; }
 
 /*
- * عمود المحتوى لا يُتوسَّط: في RTL يلتصق بحافّة البدء — أي بالقائمة الجانبية —
- * فيقع الفائض كلّه هامشًا أيسر. وعرضه أقلّ الأمرين: 82.5rem سقفًا للسطر على
- * الشاشة العريضة، أو ما يبقى بعد اقتطاع 10rem من العرض المتاح. الشقّ الثاني
- * هو ما يضمن بقاء الهامش حين لا يبلغ العرض السقفَ أصلًا — كما في التكبير 125٪.
+ * عمود المحتوى بلا سقفٍ لعرضه: كان محكومًا بـ 82.5rem، فكان يتوقّف عن النموّ
+ * بعد 1320px ويتحوّل كلّ ما زاد إلى فراغٍ أيسر — على شاشة 1920px يقارب الثلث.
+ * صار كـ hispa: يملأ ما بين القائمة والهامش الخارجي، والهامش وحده هو المحجوز.
+ * فيكبر المحتوى مع الشاشة بدل أن يقف عندها.
  */
-.content { width: min(82.5rem, 100% - 10rem); padding: 1.25rem 1.5rem 2rem; }
+.content { width: auto; margin-inline-end: var(--content-gutter); padding: 1.25rem 2rem 2rem; }
 {{--
     دون 1024px تصير القائمة لوحًا منزلقًا والصفحة كلّها للمحتوى: لا هامش يُقتطع.
     ويُفسح للزرّ العائم أعلاه مكانه، وإلا وقع فوق ترويسة الصفحة.
 --}}
-@media (max-width: 1024px) { .content { width: auto; padding-top: 3.25rem; } }
+@media (max-width: 1024px) { .content { margin-inline-end: 0; padding-top: 3.25rem; } }
 @media (max-width: 640px) { .content { padding: 1rem; } }
 
 /*
@@ -767,7 +777,7 @@ html.dark .set-row .s-value.ok { color: hsl(160 60% 64%); }
 html.screen-mode { font-size: clamp(16px, 1vw, 22px); }
 html.screen-mode .main { margin-right: 0; }
 {{-- شاشة القاعة تُملأ عن آخرها: لا قصّ للعمود ولا هامش أيسر. --}}
-html.screen-mode .content { width: auto; padding: clamp(1rem, 2vw, 2.5rem); }
+html.screen-mode .content { width: auto; margin-inline-end: 0; padding: clamp(1rem, 2vw, 2.5rem); }
 html.screen-mode .chart-wrap { min-height: clamp(260px, 32vh, 520px); }
 html.screen-mode .screen-launcher { min-height: calc(100dvh - 2 * clamp(1rem, 2vw, 2.5rem)); justify-content: center; }
 {{-- على شاشة القاعة تملأ المربّعات الارتفاع بدل أن تتكوّم في أعلاها. --}}
