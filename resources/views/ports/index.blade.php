@@ -46,7 +46,7 @@
     <div class="cards-grid cols-3">
         @forelse ($ports as $port)
             @php $pct = $port->boats_count ? round($port->active_boats / $port->boats_count * 100) : 0; @endphp
-            <div class="entity-card">
+            <a href="{{ route('ports.show', $port) }}" class="entity-card">
                 <div style="display:flex;align-items:flex-start;justify-content:space-between">
                     <div>
                         <h3 style="display:flex;align-items:center;gap:.5rem;font-weight:700">@include('partials.icon', ['name' => 'anchor']) {{ $port->name }}</h3>
@@ -66,7 +66,7 @@
                     <div style="display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:.25rem"><span style="color:hsl(var(--muted-foreground))">نسبة النشاط</span><span style="font-weight:600">{{ $pct }}%</span></div>
                     <div class="progress"><div style="width:{{ $pct }}%;background:{{ $pct >= 70 ? '#10b981' : ($pct >= 40 ? '#f59e0b' : '#f43f5e') }}"></div></div>
                 </div>
-            </div>
+            </a>
         @empty
             <div class="card" style="grid-column:1/-1;padding:2.5rem;text-align:center;font-size:.875rem;color:hsl(var(--muted-foreground))">لا توجد موانئ مطابقة</div>
         @endforelse

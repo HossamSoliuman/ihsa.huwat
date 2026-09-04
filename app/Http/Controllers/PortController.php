@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CatchRecord;
 use App\Models\Governorate;
 use App\Models\Port;
 use Illuminate\Http\Request;
@@ -35,6 +36,50 @@ class PortController extends Controller
             'ports' => $filtered,
             'stats' => $stats,
             'governorates' => Governorate::orderBy('name')->get(),
+        ]);
+    }
+
+    /**
+     * صفحة الميناء الواحد: كل ما يُسجَّل تحته — أسطوله وصيّادوه ومواقع صيده
+     * ورحلاته ومصيده — في مكان واحد بدل تفتيته على شاشات الأسطول والرحلات.
+     */
+    public function show(Port $port): View
+    {
+        $port->load('governorate.region');
+
+        $boats = $port->boats()->orderBy('name')->get();
+        $fishers = $port->fishers()->orderBy('name')->get();
+        $officers = $port->statisticsOfficers()->orderBy('name')->get();
+        $sites = $port->fishingSites()->orderByDesc('catch_kg')->get();
+        $trips = $port->trips()->with('boat')->orderByDesc('departure_time')->get();
+
+        $catches = CatchRecord::with('species')
+            ->whereHas('trip', fn ($q) => $q->where('departure_port_id', $port->id))
+            ->get();
+
+        /* آخر أربعة عشر يومًا فيها تسجيل — لا آخر أربعة عشر يومًا تقويميًا. */
+        $trend = $catches->groupBy(fn ($c) => $c->recorded_at->toDateString())
+            ->map(fn ($g) => round($g->sum('quantity_kg')))
+            ->sortKeys()
+            ->take(-14);
+
+        $topSpecies = $catches->groupBy(fn ($c) => $c->species?->name_ar ?? 'غير محدّد')
+            ->map(fn ($g) => round($g->sum('quantity_kg')))
+            ->sortDesc()
+            ->take(8);
+
+        return view('ports.show', [
+            'port' => $port,
+            'boats' => $boats,
+            'fishers' => $fishers,
+            'officers' => $officers,
+            'sites' => $sites,
+            'trips' => $trips,
+            'trend' => $trend,
+            'topSpecies' => $topSpecies,
+            'boatStatuses' => $boats->countBy('status'),
+            'tripStatuses' => $trips->countBy('status'),
+            'catchKg' => round($catches->sum('quantity_kg')),
         ]);
     }
 

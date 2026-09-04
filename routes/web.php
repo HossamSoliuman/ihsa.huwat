@@ -276,6 +276,7 @@ $operationsConsole = function (): void {
     Route::get('/trips', [TripController::class, 'index'])->name('trips');
     Route::get('/boat-timeline', [BoatTimelineController::class, 'index'])->name('boat-timeline');
     Route::get('/ports', [PortController::class, 'index'])->name('ports');
+    Route::get('/ports/{port}', [PortController::class, 'show'])->name('ports.show');
     Route::get('/fishing-sites', [FishingSiteController::class, 'index'])->name('fishing-sites');
 
     Route::get('/discrepancy-review', [DiscrepancyReviewController::class, 'index'])->name('discrepancy-review');
