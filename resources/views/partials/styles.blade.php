@@ -476,16 +476,16 @@ html.dark .note-box svg { color: hsl(160 60% 62%); }
 .progress { height: .4rem; width: 100%; overflow: hidden; background: hsl(var(--muted)); }
 .progress > div { height: 100%; transition: width .3s; }
 
-.drawer-overlay { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .5); display: none; }
+.drawer-overlay { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .6); display: none; }
 .drawer-overlay.is-open { display: block; }
-{{-- الدرج والشريط العائم يعلوان المحتوى، فيبقيان مصمتين وحدهما. --}}
-.drawer { position: fixed; inset-block: 0; left: 0; z-index: 51; width: 100%; max-width: 28rem; overflow-y: auto; background: hsl(var(--background)); border-right: 1px solid hsl(var(--border)); transform: translateX(-110%); transition: transform .3s; }
-.drawer.is-open { transform: translateX(0); }
-.drawer.wide { max-width: 48rem; }
-.drawer-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--hair); background: hsl(var(--background)); padding: .85rem 1.1rem; }
-.drawer-head h3 { font-size: 1rem; font-weight: 700; }
-.drawer-body { padding: 1.1rem; display: flex; flex-direction: column; gap: .85rem; }
-.form-grid { display: grid; gap: .65rem; grid-template-columns: 1fr; }
+{{-- النافذة المنبثقة والشريط العائم يعلوان المحتوى، فيبقيان مصمتين وحدهما. --}}
+.drawer { position: fixed; top: 50%; left: 50%; z-index: 51; width: min(48rem, calc(100vw - 2.5rem)); max-height: min(88vh, 52rem); overflow-y: auto; background: hsl(var(--background)); border: 1px solid hsl(var(--border)); box-shadow: 0 28px 70px -20px rgba(0, 0, 0, .55); opacity: 0; visibility: hidden; transform: translate(-50%, -46%) scale(.97); transition: opacity .2s, transform .2s, visibility .2s; }
+.drawer.is-open { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
+.drawer.wide { width: min(64rem, calc(100vw - 2.5rem)); }
+.drawer-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--hair); background: hsl(var(--background)); padding: 1rem 1.4rem; }
+.drawer-head h3 { font-size: 1.05rem; font-weight: 700; }
+.drawer-body { padding: 1.4rem; display: flex; flex-direction: column; gap: 1rem; }
+.form-grid { display: grid; gap: .9rem; grid-template-columns: 1fr; }
 @media (min-width: 640px) { .form-grid { grid-template-columns: repeat(2, 1fr); } .form-grid .wide { grid-column: span 2; } }
 
 .tag { display: inline-flex; align-items: center; gap: .25rem; padding: .1rem .45rem; font-size: 10px; font-weight: 600; border: 1px solid; }

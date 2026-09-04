@@ -209,8 +209,8 @@ return [
         [
             'title' => 'عام',
             'items' => [
-                ['label' => 'المحافظات', 'route' => 'governorates', 'icon' => 'building'],
                 ['label' => 'المناطق', 'route' => 'regions', 'icon' => 'map'],
+                ['label' => 'المحافظات', 'route' => 'governorates', 'icon' => 'building'],
             ],
         ],
         [
