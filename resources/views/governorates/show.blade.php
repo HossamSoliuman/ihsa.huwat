@@ -62,14 +62,14 @@
         <div class="cards-grid cols-3" style="margin-bottom:1.25rem">
             @foreach ($ports as $port)
                 @php $pct = $port->boats_count ? round($port->active_boats / $port->boats_count * 100) : 0; @endphp
-                <div class="card">
+                <a href="{{ route('ports.show', $port) }}" class="entity-card">
                     <div style="display:flex;align-items:flex-start;justify-content:space-between">
                         <h4 style="display:flex;align-items:center;gap:.5rem;font-weight:700">@include('partials.icon', ['name' => 'map-pin']) {{ $port->name }}</h4>
                         <span class="badge badge-ok">{{ $port->status }}</span>
                     </div>
                     <div class="mini-grid">
                         <div class="mini"><div><p class="m-label">القوارب</p><p class="m-value">{{ $port->boats_count }}</p></div></div>
-                        <div class="mini" style="background:#ecfdf5"><div><p class="m-label" style="color:#047857">النشطة</p><p class="m-value" style="color:#047857">{{ $port->active_boats }}</p></div></div>
+                        <div class="mini"><div><p class="m-label">النشطة</p><p class="m-value">{{ $port->active_boats }}</p></div></div>
                         <div class="mini"><div><p class="m-label">الصيادون</p><p class="m-value">{{ number_format($port->fishers_count) }}</p></div></div>
                         <div class="mini"><div><p class="m-label">رحلات/يوم</p><p class="m-value">{{ $port->daily_trips }}</p></div></div>
                     </div>
@@ -81,7 +81,7 @@
                         <span>المصيد: <strong style="color:hsl(var(--foreground))">{{ number_format($port->total_catch_tons) }}</strong> طن</span>
                         <span>موظفو الإحصاء: <strong style="color:hsl(var(--foreground))">{{ $port->statistics_staff }}</strong></span>
                     </div>
-                </div>
+                </a>
             @endforeach
         </div>
     @else
