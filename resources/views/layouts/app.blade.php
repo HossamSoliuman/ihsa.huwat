@@ -31,11 +31,9 @@
 <body>
     <div class="shell">
         @unless ($screen)
+            {{-- الشريط مثبّت بعرض الصفحة فوق القائمة، فموضعه خارج عمود المحتوى. --}}
+            @include('partials.topbar')
             @include('partials.sidebar')
-            {{-- لا شريط علويّ يحمل زرّ القائمة، فيعوم الزرّ وحده دون 1024px. --}}
-            <button class="menu-btn" onclick="toggleSidebar(true)" aria-label="القائمة">
-                @include('partials.icon', ['name' => 'menu'])
-            </button>
             <div class="backdrop" id="backdrop" onclick="toggleSidebar(false)"></div>
         @endunless
         <div class="main">

@@ -52,6 +52,11 @@
     --sidebar-w: 12.5rem;
     --content-gutter: clamp(0rem, (100vw - 64rem) / 4, 12.5rem);
 
+    /* الشريط العلوي: ارتفاعه ولونه من hispa حرفيًّا — أزرقها #3675c2 على بياض. */
+    --topbar-h: 3.25rem;
+    --topbar-bg: #3675c2;
+    --topbar-fg: #ffffff;
+
     /*
      * ألوان الحالة، محجوزة لها وحدها: لا يُلوَّن بها تمييز سلسلة عن أخرى.
      * لكلّ وضعٍ درجاته حتى يبقى التباين على سطحه فوق 3:1.
@@ -89,6 +94,8 @@ html.dark {
      * يُرى ولا يُلاحَظ: تبقى الأقواس هي ما يقرؤه البصر أولًا.
      */
     --hair: hsl(210 30% 94% / .16);
+    /* وفي الوضع الداكن يهبط الشريط إلى أزرق hispa العميق مع خطٍّ رفيع من لون التمييز. */
+    --topbar-bg: #14304f;
     --st-good: #3cb98a;
     --st-warn: #e0a53c;
     --st-critical: #ef5f7a;
@@ -188,13 +195,13 @@ a { color: inherit; text-decoration: none; }
     display: none;
 }
 
-.shell { min-height: 100vh; }
+.shell { min-height: 100vh; padding-top: var(--topbar-h); }
 /*
  * القائمة الجانبية شفّافة على الشاشة العريضة حيث لا يمرّ تحتها محتوى. أمّا
  * دون ذلك فهي لوح ينزلق فوق الصفحة، فيحتاج سطحًا مصمتًا يحجب ما تحته.
  */
 .sidebar {
-    position: fixed; inset-block: 0; right: 0; z-index: 40; width: var(--sidebar-w);
+    position: fixed; inset-block: var(--topbar-h) 0; right: 0; z-index: 40; width: var(--sidebar-w);
     background: hsl(var(--background)); border-left: 1px solid var(--hair);
     display: flex; flex-direction: column; transform: translateX(100%);
     transition: transform .3s ease;
@@ -208,30 +215,14 @@ a { color: inherit; text-decoration: none; }
     .sidebar { transform: translateX(0); background: var(--surface); border-left: 0; }
     .main { margin-right: var(--sidebar-w); }
     .backdrop { display: none !important; }
-    .menu-btn, .sidebar-close { display: none !important; }
+    .menu-btn, .sidebar-head { display: none !important; }
 }
 
 /*
- * رأس القائمة بلا خطٍّ أسفله: الشريط العلوي أُزيل، فلم يبقَ في اللوحة سطرٌ
- * أفقيّ يوازيه — وخطٌّ وحيدٌ معلّق أسوأ من لا خطّ. ارتفاعه 3.25rem كي يعادل
- * ما كان يشغله الشريط، فلا ينزل المحتوى عن موضعه.
+ * رأس القائمة لم يبقَ فيه إلا زرّ الإغلاق بعد أن صعد الشعار إلى الشريط العلوي،
+ * فلا وجود له فوق 1024px حيث لا يُغلَق شيء — القاعدة في كتلة 1024px أعلاه.
  */
-.sidebar-head { display: flex; align-items: center; gap: .75rem; height: 3.25rem; padding: 0 1rem; flex-shrink: 0; }
-/*
- * الشعار كلمةٌ عريضة لا أيقونة مربّعة (نسبته 2.4:1)، فالارتفاع وحده هو
- * المحدَّد والعرض يتبعه، بسقفٍ يمنعه من مزاحمة الاسم في القائمة.
- *
- * ومصدره الأصل المحلّي لا الصورة البعيدة في `config('hawat.logo')`: تلك
- * لوحةٌ مربّعة 600×600 لا تشغل الكلمةُ منها إلا 341×142 في وسطها، فثلاثة
- * أرباع الصندوق فراغٌ شفّاف — أيًّا كان الارتفاع الذي يُعطى للصورة يبقى
- * المرئيّ منها ربعه. والأصل المحلّي مقصوص على الكلمة نفسها، فيملأ ما يُعطى.
- */
-.sidebar-head img { height: 30px; width: auto; max-width: 7rem; object-fit: contain; }
-/* النسخة البيضاء للوضع الليلي، والزرقاء للنهاري — كما في صفحة البوابات. */
-.sidebar-head .mark-dark { display: none; }
-html.dark .sidebar-head .mark-light { display: none; }
-html.dark .sidebar-head .mark-dark { display: block; }
-.sidebar-head .app-name { font-size: 1rem; font-weight: 700; line-height: 1.2; }
+.sidebar-head { display: flex; align-items: center; height: 2.5rem; padding: 0 .65rem; flex-shrink: 0; }
 .sidebar-close { margin-right: auto; border: 0; background: none; color: hsl(var(--muted-foreground)); padding: .35rem; cursor: pointer; }
 
 /*
@@ -242,17 +233,17 @@ html.dark .sidebar-head .mark-dark { display: block; }
 .sidebar-nav { flex: 1; overflow-y: auto; padding: .25rem 0 .5rem; scrollbar-width: none; -ms-overflow-style: none; }
 .sidebar-nav::-webkit-scrollbar { width: 0; height: 0; }
 
-.nav-section-title { padding: 1rem 1rem .5rem; font-size: .6875rem; font-weight: 600; color: hsl(var(--muted-foreground) / .55); }
+.nav-section-title { padding: 1rem 1rem .5rem; font-size: .65625rem; font-weight: 600; color: hsl(var(--muted-foreground) / .55); }
 /*
- * بندٌ فسيحٌ لا مزدحم: الأيقونة عند حافّة البدء والنصّ يملأ ما بقي، وارتفاع
- * السطر 2.5rem — وهو قياس القائمة المرجعية نفسه. لا خلفية عند المرور ولا عند
- * النشاط: الخلفية الملوّنة تقطع شبكة الصفحة تحتها، ويكفي أن يسودّ النصّ
- * وتزرقّ الأيقونة.
+ * البند بقياس hispa حرفيًّا: 14px على سطرٍ ارتفاعه 1.5 داخل صفٍّ من 2rem
+ * وحشوة .3rem/1rem — لا 2.5rem كما كان، فقد بدا البند أفسح من مرجعه. لا خلفية
+ * عند المرور ولا عند النشاط: الخلفية الملوّنة تقطع شبكة الصفحة تحتها، ويكفي أن
+ * يسودّ النصّ وتزرقّ الأيقونة.
  */
 .nav-link {
     position: relative; display: flex; align-items: center; gap: .75rem;
-    min-height: 2.5rem; padding: .3rem 1rem;
-    font-size: .875rem; font-weight: 500; color: hsl(var(--muted-foreground));
+    min-height: 2rem; padding: .3rem 1rem;
+    font-size: .875rem; line-height: 1.5; font-weight: 500; color: hsl(var(--muted-foreground));
     transition: color .15s;
 }
 .nav-link:hover { color: hsl(var(--foreground)); }
@@ -276,11 +267,33 @@ html.dark .sidebar-head .mark-dark { display: block; }
 .icon-btn svg { width: 18px; height: 18px; display: block; }
 
 /*
- * زرّ فتح القائمة عائمٌ فوق الصفحة دون 1024px، إذ لم يبقَ شريطٌ علويّ يحمله.
- * وهو السطح المصمت الوحيد في اللوحة: يقع فوق المحتوى فيلزمه ما يحجبه.
+ * الشريط العلوي بنسخة hispa: لوحٌ أزرق مصمت مثبّت بعرض الصفحة كلّها فوق
+ * القائمة الجانبية (لا داخل عمود المحتوى)، ارتفاعه 3.25rem — وهو ما تُزاح به
+ * `.shell` من أعلى ويبدأ عنده رأس القائمة. المصمت هنا مقصود لا مصادفة: الشريط
+ * ثابت والصفحة تجري تحته، فالشفافية تُظهر المحتوى خلف الشعار.
  */
-.menu-btn { position: fixed; top: .6rem; right: .6rem; z-index: 35; border: 1px solid hsl(var(--border)); background: hsl(var(--background)); color: hsl(var(--foreground)); padding: .45rem; cursor: pointer; }
-.menu-btn svg { width: 18px; height: 18px; display: block; }
+.topbar {
+    position: fixed; inset: 0 0 auto; z-index: 45; display: flex; align-items: center;
+    height: var(--topbar-h); background: var(--topbar-bg); color: var(--topbar-fg);
+}
+/* خطّ التمييز الرفيع لا يظهر إلا في الوضع الداكن، حيث يقارب الشريطُ خلفيةَ الصفحة. */
+html.dark .topbar { border-bottom: 1px solid hsl(var(--primary) / .4); }
+
+/*
+ * كتلة الشعار بعرض القائمة الجانبية نفسه، فيقف الشعار فوق عمودها لا فوق
+ * المحتوى. والشعار كلمةٌ عريضة (نسبته 2.4:1) فالارتفاع وحده هو المحدَّد
+ * والعرض يتبعه — و34px هو قياس hispa داخل شريطٍ بهذا الارتفاع.
+ */
+.topbar-brand { display: flex; align-items: center; width: var(--sidebar-w); height: 100%; padding: 0 1rem; flex-shrink: 0; }
+.topbar-brand img { height: 34px; width: auto; max-width: 100%; object-fit: contain; }
+.topbar-actions { display: flex; align-items: center; margin-right: auto; }
+
+/* أزرار الشريط بيضاء على الأزرق: الخفوت هنا شفافيةٌ لا لونٌ آخر. */
+.topbar .icon-btn, .topbar .menu-btn { color: hsl(0 0% 100% / .82); padding: .5rem .9rem; }
+.topbar .icon-btn:hover, .topbar .menu-btn:hover { color: var(--topbar-fg); }
+.topbar .icon-btn svg, .topbar .menu-btn svg { width: 20px; height: 20px; display: block; }
+.menu-btn { border: 0; background: none; cursor: pointer; }
+@media (max-width: 767px) { .topbar-brand { display: none; } }
 
 /*
  * عمود المحتوى بلا سقفٍ لعرضه: كان محكومًا بـ 82.5rem، فكان يتوقّف عن النموّ
@@ -289,11 +302,8 @@ html.dark .sidebar-head .mark-dark { display: block; }
  * فيكبر المحتوى مع الشاشة بدل أن يقف عندها.
  */
 .content { width: auto; margin-inline-end: var(--content-gutter); padding: 1.25rem 2rem 2rem; }
-{{--
-    دون 1024px تصير القائمة لوحًا منزلقًا والصفحة كلّها للمحتوى: لا هامش يُقتطع.
-    ويُفسح للزرّ العائم أعلاه مكانه، وإلا وقع فوق ترويسة الصفحة.
---}}
-@media (max-width: 1024px) { .content { margin-inline-end: 0; padding-top: 3.25rem; } }
+{{-- دون 1024px تصير القائمة لوحًا منزلقًا والصفحة كلّها للمحتوى: لا هامش يُقتطع. --}}
+@media (max-width: 1024px) { .content { margin-inline-end: 0; } }
 @media (max-width: 640px) { .content { padding: 1rem; } }
 
 /*
@@ -775,6 +785,7 @@ html.dark .set-row .s-value.ok { color: hsl(160 60% 64%); }
 
 /* قياس الجذر يكبر مع الشاشة، وبقية اللوحة مبنية على rem فتكبر معه. */
 html.screen-mode { font-size: clamp(16px, 1vw, 22px); }
+html.screen-mode .shell { padding-top: 0; }
 html.screen-mode .main { margin-right: 0; }
 {{-- شاشة القاعة تُملأ عن آخرها: لا قصّ للعمود ولا هامش أيسر. --}}
 html.screen-mode .content { width: auto; margin-inline-end: 0; padding: clamp(1rem, 2vw, 2.5rem); }
@@ -803,7 +814,8 @@ html.screen-mode .screen-grid { flex: 1; grid-auto-rows: 1fr; }
 .fs-btn.is-full .fs-off { display: inline-flex; }
 
 @media print {
-    .sidebar, .menu-btn, .screen-bar, .page-header .actions { display: none !important; }
+    .sidebar, .topbar, .screen-bar, .page-header .actions { display: none !important; }
+    .shell { padding-top: 0; }
     .main { margin-right: 0 !important; }
     .content { width: auto; }
     body { background-image: none; }

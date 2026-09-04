@@ -2,10 +2,8 @@
     use App\Support\Nav;
 @endphp
 <aside class="sidebar" id="sidebar">
+    {{-- الشعار انتقل إلى الشريط العلوي، فلم يبقَ في رأس القائمة إلا زرّ الإغلاق — ولا يظهر إلا دون 1024px. --}}
     <div class="sidebar-head">
-        <img class="mark-light" src="{{ asset('images/logo.png') }}" alt="{{ config('hawat.name') }}">
-        <img class="mark-dark" src="{{ asset('images/logo-white.png') }}" alt="" aria-hidden="true">
-        <p class="app-name">{{ config('hawat.name') }}</p>
         <button class="sidebar-close" onclick="toggleSidebar(false)">
             @include('partials.icon', ['name' => 'x'])
         </button>
@@ -25,11 +23,7 @@
         @endforeach
     </nav>
 
-    {{--
-        ذيل القائمة يرث ما كان في الشريط العلوي بعد إزالته: هويّة المستخدم
-        وزرّ الوضع الداكن. ولا ثالث لهما — البحث والتنبيهات كانا واجهةً بلا
-        وظيفة خلفها فسقطا معه.
-    --}}
+    {{-- ذيل القائمة: هويّة المستخدم وحدها — وزرّ الوضع الداكن عاد إلى الشريط العلوي. --}}
     <div class="sidebar-foot">
         <div class="user-chip">
             <div class="avatar">م</div>
@@ -38,8 +32,5 @@
                 <p class="sub">الإدارة العليا</p>
             </div>
         </div>
-        <button class="icon-btn" onclick="toggleTheme()" title="الوضع الداكن">
-            @include('partials.icon', ['name' => 'moon'])
-        </button>
     </div>
 </aside>
