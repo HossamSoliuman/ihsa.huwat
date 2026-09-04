@@ -53,7 +53,7 @@ class RegionController extends Controller
 
     private function validated(Request $request): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'code' => ['nullable', 'string', 'max:20'],
             'coast_length_km' => ['nullable', 'numeric', 'min:0'],
@@ -63,5 +63,11 @@ class RegionController extends Controller
             'active_boats' => ['nullable', 'integer', 'min:0'],
             'active_fishers' => ['nullable', 'integer', 'min:0'],
         ]);
+
+        foreach (['coast_length_km', 'governorates_count', 'ports_count', 'total_catch_tons', 'active_boats', 'active_fishers'] as $field) {
+            $data[$field] = $data[$field] ?? 0;
+        }
+
+        return $data;
     }
 }
