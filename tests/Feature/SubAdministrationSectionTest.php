@@ -317,7 +317,7 @@ class SubAdministrationSectionTest extends TestCase
 
     public function test_assigning_a_responsible_moves_the_alert_into_processing(): void
     {
-        UserPermission::create(['user_email' => 'reem@mewa.gov.sa', 'full_name' => 'ريم العتيبي', 'role' => 'supervision', 'active' => true]);
+        UserPermission::create(['user_email' => 'reem@hawat.sa', 'full_name' => 'ريم العتيبي', 'role' => 'supervision', 'active' => true]);
 
         $alert = Alert::create(['title' => 'رخصة منتهية — نجم الخليج', 'type' => 'رخصة منتهية', 'severity' => 'مرتفع', 'status' => 'جديدة', 'date' => now()->toDateString()]);
 
@@ -380,19 +380,19 @@ class SubAdministrationSectionTest extends TestCase
 
     public function test_the_users_page_filters_by_role(): void
     {
-        UserPermission::create(['user_email' => 'admin@mewa.gov.sa', 'full_name' => 'مدير النظام', 'role' => 'admin', 'active' => true]);
-        UserPermission::create(['user_email' => 'east@mewa.gov.sa', 'full_name' => 'مدير الشرقية', 'role' => 'region_manager', 'region' => 'المنطقة الشرقية', 'active' => true]);
+        UserPermission::create(['user_email' => 'admin@hawat.sa', 'full_name' => 'مدير النظام', 'role' => 'admin', 'active' => true]);
+        UserPermission::create(['user_email' => 'east@hawat.sa', 'full_name' => 'مدير الشرقية', 'role' => 'region_manager', 'region' => 'المنطقة الشرقية', 'active' => true]);
 
         $this->get('/subadmin?role=region_manager')
             ->assertOk()
             ->assertSee('مدير الشرقية', false)
-            ->assertDontSee('admin@mewa.gov.sa', false);
+            ->assertDontSee('admin@hawat.sa', false);
     }
 
     public function test_the_audit_log_filters_by_action(): void
     {
-        AuditLog::create(['user_email' => 'admin@mewa.gov.sa', 'action' => 'اعتماد', 'entity' => 'Trip', 'record_label' => 'TR-2026-0001']);
-        AuditLog::create(['user_email' => 'admin@mewa.gov.sa', 'action' => 'حذف', 'entity' => 'Boat', 'record_label' => 'B-777']);
+        AuditLog::create(['user_email' => 'admin@hawat.sa', 'action' => 'اعتماد', 'entity' => 'Trip', 'record_label' => 'TR-2026-0001']);
+        AuditLog::create(['user_email' => 'admin@hawat.sa', 'action' => 'حذف', 'entity' => 'Boat', 'record_label' => 'B-777']);
 
         $this->get('/subadmin/audit-log?action=اعتماد')
             ->assertOk()
@@ -434,7 +434,7 @@ class SubAdministrationSectionTest extends TestCase
             'org_position_id' => $this->directorate->id,
             'name' => 'هند القحطاني',
             'job_number' => 'MF-1042',
-            'email' => 'stats@mewa.gov.sa',
+            'email' => 'stats@hawat.sa',
             'status' => 'نشط',
             'can_create' => true,
             'can_process' => true,
@@ -445,7 +445,7 @@ class SubAdministrationSectionTest extends TestCase
             'org_position_id' => $this->directorate->id,
             'name' => 'نورة المطيري',
             'job_number' => 'MF-3055',
-            'email' => 'qatif@mewa.gov.sa',
+            'email' => 'qatif@hawat.sa',
             'status' => 'نشط',
             'can_create' => true,
             'can_process' => true,

@@ -192,7 +192,10 @@ class PortalSplitTest extends TestCase
             ->assertSee('href="'.route('stats.executive-briefing').'"', false)
             ->assertSee('href="'.route('subadmin.users').'"', false)
             ->assertSee('href="'.route('services.fisher-services').'"', false)
-            ->assertSee('href="'.route('governorates').'"', false);
+            ->assertSee('href="'.route('governorates').'"', false)
+            // والسادسة بوابة المعلومات: ليست من بوابات اللوحة، وصندوقها هنا مع ذلك.
+            ->assertSee(config('info.title'), false)
+            ->assertSee('href="'.route('admin.index').'"', false);
     }
 
     public function test_each_portal_renders_its_own_sidebar(): void

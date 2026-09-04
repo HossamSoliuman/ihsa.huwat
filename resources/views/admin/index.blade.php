@@ -4,10 +4,12 @@
 
 @section('content')
     <div class="page-header">
-        <div class="icon">@include('admin.partials.icon', ['name' => 'shield'])</div>
-        <div>
-            <h1>{{ config('info.title') }}</h1>
-            <p>{{ config('info.subtitle') }}</p>
+        <div class="lead">
+            <div class="icon-wrap">@include('admin.partials.icon', ['name' => 'shield'])</div>
+            <div>
+                <h1>{{ config('info.title') }}</h1>
+                <p>{{ config('info.subtitle') }}</p>
+            </div>
         </div>
     </div>
 
@@ -25,7 +27,8 @@
         @endforeach
     </div>
 
-    <div class="panel">
+    {{-- اللوحة بطاقةُ اللوحة نفسها: خطّ شعري وأقواس زوايا، و.panel يزيدها فاصلها. --}}
+    <div class="card panel">
         @include($panel['view'], $panel)
     </div>
 @endsection

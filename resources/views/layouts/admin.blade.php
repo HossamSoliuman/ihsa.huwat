@@ -9,49 +9,74 @@
     <link rel="apple-touch-icon" href="{{ asset('images/apple-touch-icon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    {{--
+        الخطّان نفسهما اللذان في لوحة الوزارة: Chakra Petch للأرقام واللاتيني،
+        و Tajawal للعربية لأن الأول بلا حروف عربية فتلتقطها الثانية تلقائيًا.
+    --}}
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    {{--
+        نظام التصميم واحد للبوابتين: ملف اللوحة أولًا بمتغيّراته وأصنافه كاملة،
+        ثم ملف البوابة بما تنفرد به وحدها (التبويبات والجداول والنموذج المنبثق).
+    --}}
+    @include('partials.styles')
     @include('admin.partials.styles')
+    <script>
+        // الوضع الداكن هو الأصل: لا يُطفأ إلا إذا اختار المستخدم الفاتح صراحةً.
+        if (localStorage.getItem('hawat-theme') !== 'light') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
 </head>
 <body>
-@include('admin.partials.topbar')
+    <div class="shell">
+        @include('admin.partials.topbar')
+        @include('admin.partials.sidebar')
+        <div class="backdrop" id="backdrop" onclick="toggleSidebar(false)"></div>
 
-{{-- الحاوية الوسطى: هوامش يمين ويسار متساوية، والقائمة الجانبية جزء منها. --}}
-<div class="shell">
-    @include('admin.partials.sidebar')
+        <div class="main">
+            <main class="content">
+                @if (session('status'))
+                    <div class="flash">{{ session('status') }}</div>
+                @endif
 
-    <main class="shell-content">
-        @if (session('status'))
-            <div class="flash">{{ session('status') }}</div>
-        @endif
+                @if ($errors->any())
+                    <div class="flash flash-error">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
-        @if ($errors->any())
-            <div class="flash flash-error">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        @yield('content')
-    </main>
-</div>
-<script>
-    // حاوية التمرير هنا هي .sidebar نفسها — نُوسّط التبويب النشط داخلها حتى لا
-    // يفتح وهو خارج مجال العرض.
-    (function () {
-        const box = document.querySelector('.sidebar');
-        const active = box?.querySelector('.is-active');
-
-        if (!active) {
-            return;
+                @yield('content')
+            </main>
+        </div>
+    </div>
+    <script>
+        function toggleSidebar(open) {
+            document.getElementById('sidebar').classList.toggle('is-open', open);
+            document.getElementById('backdrop').classList.toggle('is-visible', open);
+        }
+        function toggleTheme() {
+            const dark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('hawat-theme', dark ? 'dark' : 'light');
         }
 
-        const offset = active.getBoundingClientRect().top - box.getBoundingClientRect().top;
-        box.scrollTop += offset - (box.clientHeight - active.offsetHeight) / 2;
-    })();
-</script>
-@stack('scripts')
+        // القائمة أطول من الشاشة: نُوسّط التبويب النشط داخلها حتى لا يفتح وهو
+        // خارج مجال العرض.
+        (function () {
+            const box = document.querySelector('.sidebar-nav');
+            const active = box?.querySelector('.is-active');
+
+            if (!active) {
+                return;
+            }
+
+            const offset = active.getBoundingClientRect().top - box.getBoundingClientRect().top;
+            box.scrollTop += offset - (box.clientHeight - active.offsetHeight) / 2;
+        })();
+    </script>
+    @stack('scripts')
 </body>
 </html>

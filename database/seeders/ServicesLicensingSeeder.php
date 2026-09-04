@@ -72,22 +72,22 @@ class ServicesLicensingSeeder extends Seeder
 
         $rows = [
             [
-                'name' => 'ماجد بن سالم الغامدي', 'job_number' => 'SV-1001', 'email' => 'licensing@mewa.gov.sa',
+                'name' => 'ماجد بن سالم الغامدي', 'job_number' => 'SV-1001', 'email' => 'licensing@hawat.sa',
                 'role' => 'مشرف', 'can_approve' => true, 'can_reject' => true, 'can_assign' => true,
                 'notes' => 'مشرف القسم — يوقّع على إصدار الرخص',
             ],
             [
-                'name' => 'عبدالرحمن بن فيصل الزهراني', 'job_number' => 'SV-1014', 'email' => 'renewals@mewa.gov.sa',
+                'name' => 'عبدالرحمن بن فيصل الزهراني', 'job_number' => 'SV-1014', 'email' => 'renewals@hawat.sa',
                 'role' => 'معالج', 'region' => 'المنطقة الشرقية',
                 'services' => ['تجديد رخصة صيد حرفي', 'تجديد رخصة عامل صيد', 'تجديد رخصة قارب صيد'],
             ],
             [
-                'name' => 'لمياء بنت خالد العنزي', 'job_number' => 'SV-1027', 'email' => 'seasonal@mewa.gov.sa',
+                'name' => 'لمياء بنت خالد العنزي', 'job_number' => 'SV-1027', 'email' => 'seasonal@hawat.sa',
                 'role' => 'معالج', 'can_reject' => true,
                 'services' => ['إصدار رخصة تصريح صيد موسمي', 'إصدار رخصة صيد فئة راجل'],
             ],
             [
-                'name' => 'فهد بن عايض القرني', 'job_number' => 'SV-1039', 'email' => 'reception@mewa.gov.sa',
+                'name' => 'فهد بن عايض القرني', 'job_number' => 'SV-1039', 'email' => 'reception@hawat.sa',
                 'role' => 'مستقبل طلبات', 'can_process' => false,
             ],
             [
@@ -236,21 +236,21 @@ class ServicesLicensingSeeder extends Seeder
                 'number' => 'TK-0001', 'subject' => 'تعذّر حفظ سجل مصيد في الإحصاء الميداني',
                 'category' => 'مشكلة تقنية', 'priority' => 'عاجلة', 'module' => 'الإحصاء الميداني',
                 'description' => 'عند حفظ وزن المصيد لرحلة ميناء القطيف تظهر رسالة خطأ ولا يُحفظ السجل.',
-                'by' => 'نورة بنت سعد المطيري', 'email' => 'qatif@mewa.gov.sa', 'status' => 'قيد المعالجة',
+                'by' => 'نورة بنت سعد المطيري', 'email' => 'qatif@hawat.sa', 'status' => 'قيد المعالجة',
                 'submitted' => 3, 'assign' => true,
             ],
             [
                 'number' => 'TK-0002', 'subject' => 'طلب صلاحية اعتماد لموظف جديد',
                 'category' => 'صلاحيات الوصول', 'priority' => 'عادية', 'module' => 'الهيكل التنظيمي والصلاحيات',
                 'description' => 'انضم موظف إلى إدارة التراخيص ويحتاج صلاحية الاعتماد ضمن نطاق البحر الأحمر.',
-                'by' => 'ماجد بن سالم الغامدي', 'email' => 'licensing@mewa.gov.sa', 'status' => 'جديدة',
+                'by' => 'ماجد بن سالم الغامدي', 'email' => 'licensing@hawat.sa', 'status' => 'جديدة',
                 'submitted' => 1,
             ],
             [
                 'number' => 'TK-0003', 'subject' => 'اقتراح: تصدير قائمة الطلبات إلى CSV',
                 'category' => 'اقتراح تطوير', 'priority' => 'عادية', 'module' => 'خدمات الصيادين',
                 'description' => 'يفيد تصدير الطلبات المفلترة لإرفاقها بالتقرير الشهري.',
-                'by' => 'لمياء بنت خالد العنزي', 'email' => 'seasonal@mewa.gov.sa', 'status' => 'تم الحل',
+                'by' => 'لمياء بنت خالد العنزي', 'email' => 'seasonal@hawat.sa', 'status' => 'تم الحل',
                 'submitted' => 14, 'assign' => true,
                 'resolution' => 'أُضيف التصدير إلى خطة الإصدار القادم وأُبلغت مقدّمة الطلب.',
                 'resolved' => 9,

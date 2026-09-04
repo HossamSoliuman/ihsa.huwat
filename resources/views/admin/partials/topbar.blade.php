@@ -1,18 +1,34 @@
+{{--
+    الشريط العلوي هو نفسه شريط لوحة الوزارة: لوحٌ أزرق مصمت يمتدّ بعرض الصفحة
+    فوق القائمة الجانبية، الشعار في أوّله وأدواته في آخره. يزيد عليه هنا رابط
+    العودة إلى اللوحة على النطاق الرئيسي، وزرّ الخروج — فهذه البوابة وحدها
+    خلف تسجيل دخول.
+--}}
 <header class="topbar">
-    <div class="topbar-inner">
-        <a class="topbar-brand" href="{{ route('admin.index') }}">
-            <img class="brand-logo" src="{{ asset('images/logo.png') }}" width="389" height="160"
-                 alt="{{ config('app.name') }}">
-            <span class="brand-text">
-                <span class="brand-title">{{ config('info.brand_title', config('info.title')) }}</span>
-                <span class="brand-sub">{{ config('info.brand_subtitle') }}</span>
-            </span>
+    <button class="menu-btn" onclick="toggleSidebar(true)" aria-label="القائمة">
+        @include('admin.partials.icon', ['name' => 'menu'])
+    </button>
+
+    <a class="topbar-brand" href="{{ route('admin.index') }}">
+        {{-- الشريط أزرق داكن في الوضعين، فالنسخة البيضاء وحدها تصلح عليه. --}}
+        <img src="{{ asset('images/logo-white.png') }}" alt="{{ config('hawat.name') }}">
+    </a>
+
+    <div class="topbar-actions">
+        <a class="topbar-link" href="{{ config('app.url') }}/sections">
+            @include('admin.partials.icon', ['name' => 'grid'])
+            <span>لوحة الوزارة</span>
         </a>
 
-        {{-- يعود إلى لوحة الوزارة على النطاق الرئيسي، خارج بوابة المعلومات. --}}
-        <a class="topbar-ministry" href="{{ route('portal') }}">
-            @include('admin.partials.icon', ['name' => 'grid'])
-            لوحة الوزارة
-        </a>
+        <button class="icon-btn" onclick="toggleTheme()" title="تبديل الوضع" aria-label="تبديل الوضع">
+            @include('admin.partials.icon', ['name' => 'moon'])
+        </button>
+
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="icon-btn" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+                @include('admin.partials.icon', ['name' => 'log-out'])
+            </button>
+        </form>
     </div>
 </header>

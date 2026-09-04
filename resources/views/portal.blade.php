@@ -4,33 +4,42 @@
     /*
      * الصفحة تُقرأ في شاشة واحدة بلا تمرير، فوصف كل بوابة سطر قصير والتبويبات
      * وحدها تفصّل ما بداخلها.
+     *
+     * الخمس الأولى بوابات لوحة الوزارة، تُقرأ من Nav. والسادسة بوابة المعلومات:
+     * ليست منها — لها مضيفها وتخطيطها وقائمتها — فتُبنى هنا من config/info.php،
+     * ووسومها مجموعات قائمتها الجانبية. وهي وحدها خلف تسجيل دخول فتحمل علامته.
      */
-    $portals = [
-        [
-            'portal' => Nav::portal(Nav::GOV),
-            'blurb' => 'الإنتاج والخريطة البحرية والاستدامة.',
-            'sections' => Nav::sections(Nav::GOV),
-        ],
-        [
-            'portal' => Nav::portal(Nav::STATS),
-            'blurb' => 'المؤشرات والرصد والتحليلات والتقارير.',
-            'sections' => Nav::sections(Nav::STATS),
-        ],
-        [
-            'portal' => Nav::portal(Nav::SUBADMIN),
-            'blurb' => 'الصلاحيات والهيكل والمهام والإنذارات.',
-            'sections' => Nav::sections(Nav::SUBADMIN),
-        ],
-        [
-            'portal' => Nav::portal(Nav::SERVICES),
-            'blurb' => 'طلبات الصيادين والرخص والدعم الفني.',
-            'sections' => Nav::sections(Nav::SERVICES),
-        ],
-        [
-            'portal' => Nav::portal(Nav::OPS),
-            'blurb' => 'القوارب والصيادون والرحلات والموانئ.',
-            'sections' => Nav::sections(Nav::OPS),
-        ],
+    $blurbs = [
+        Nav::GOV => 'الإنتاج والخريطة البحرية والاستدامة.',
+        Nav::STATS => 'المؤشرات والرصد والتحليلات والتقارير.',
+        Nav::SUBADMIN => 'الصلاحيات والهيكل والمهام والإنذارات.',
+        Nav::SERVICES => 'طلبات الصيادين والرخص والدعم الفني.',
+        Nav::OPS => 'القوارب والصيادون والرحلات والموانئ.',
+    ];
+
+    $portals = [];
+
+    foreach ($blurbs as $key => $blurb) {
+        $portal = Nav::portal($key);
+
+        $portals[] = [
+            'label' => $portal['label'],
+            'icon' => $portal['icon'],
+            'href' => route($portal['home']),
+            'blurb' => $blurb,
+            'tags' => array_column(Nav::sections($key), 'title'),
+            'guarded' => false,
+        ];
+    }
+
+    $portals[] = [
+        'label' => config('info.title'),
+        // لا 'settings': ترسها ثمانية أشعة حول دائرة، فتُقرأ شمسًا في هذا القياس.
+        'icon' => 'user-cog',
+        'href' => route('admin.index'),
+        'blurb' => 'البيانات الأساسية والتكاملات وسجل العمليات.',
+        'tags' => array_keys(config('info.sidebar')),
+        'guarded' => true,
     ];
 @endphp
 <!DOCTYPE html>
@@ -56,17 +65,17 @@
         .hawat-mark .mark-dark { display: none; }
         .dark .hawat-mark .mark-light { display: none; }
         .dark .hawat-mark .mark-dark { display: block; }
-        .gov-mark { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
+        .gov-mark { display: flex; align-items: center; }
         .gov-mark img { height: clamp(52px, 8vh, 84px); width: auto; }
-        .gov-mark .sector { font-size: .78rem; font-weight: 600; color: hsl(var(--muted-foreground)); }
         {{-- شعار الوزارة أخضر داكن، فيُسنَد إلى أرضية بيضاء في الوضع الليلي. --}}
         .dark .gov-mark img { background: #fff; border-radius: .75rem; padding: .5rem .75rem; }
 
         .portal-main { display: flex; align-items: center; justify-content: center; min-height: 0; }
         .portal-grid { display: grid; gap: 1rem; width: 100%; max-width: 30rem; }
         @media (min-width: 720px) { .portal-grid { grid-template-columns: 1fr 1fr; max-width: 56rem; } }
-        {{-- البوابات الخمس في صفّ واحد على الشاشة العريضة، وتتكدّس دونها. --}}
-        @media (min-width: 1100px) { .portal-grid { grid-template-columns: repeat(5, 1fr); max-width: 108rem; } }
+        {{-- ثلاث في الصفّ على الشاشة المتوسطة، ثم الستّ في صفّ واحد على العريضة. --}}
+        @media (min-width: 980px) { .portal-grid { grid-template-columns: repeat(3, 1fr); max-width: 76rem; } }
+        @media (min-width: 1400px) { .portal-grid { grid-template-columns: repeat(6, 1fr); max-width: 122rem; } }
         {{-- بوّابات الواجهة على قاعدة اللوحة نفسها التي في الداخل: سطحٌ شفّاف
              تمرّ خلفه صورة الصفحة، يحدّه خطٌّ شعري وأربعة أقواس زوايا — لا
              لونُ بطاقةٍ مصمت يقتطعها من الخلفية. والمرور يزيدها لمسةَ لونٍ
@@ -78,11 +87,20 @@
             transition: border-color .15s ease, background .15s ease;
         }
         .portal-card:hover { border-color: hsl(var(--primary) / .6); background: hsl(var(--primary) / .05); }
+        {{-- رأس البطاقة سطر واحد: مربّع الأيقونة، ثم علامة البوابة المحميّة إن كانت. --}}
+        .portal-card .card-top { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
         .portal-card .icon-wrap {
             display: flex; align-items: center; justify-content: center; height: 2.5rem; width: 2.5rem;
             border-radius: .75rem; background: hsl(var(--primary) / .12); color: hsl(var(--primary));
         }
         .portal-card .icon-wrap svg { width: 20px; height: 20px; }
+        {{-- العلامة رقاقةٌ بلون التمييز لا قفلٌ مصمت: البوابة تُفتح بالدخول لا تُمنع. --}}
+        .portal-lock {
+            display: inline-flex; align-items: center; gap: .25rem; padding: .12rem .45rem;
+            font-size: 10px; font-weight: 700; color: hsl(var(--primary));
+            border: 1px solid hsl(var(--primary) / .35); background: hsl(var(--primary) / .08);
+        }
+        .portal-lock svg { width: 12px; height: 12px; }
         .portal-card h2 { font-size: 1.05rem; font-weight: 700; }
         .portal-card .blurb { font-size: .78rem; line-height: 1.6; color: hsl(var(--muted-foreground)); }
         .portal-tags { display: flex; flex-wrap: wrap; gap: .3rem; }
@@ -108,7 +126,6 @@
 
             <div class="gov-mark">
                 <img src="{{ asset('images/moewa-logo.png') }}" alt="{{ config('hawat.ministry') }}">
-                <span class="sector">{{ config('hawat.sector') }}</span>
             </div>
 
             <span></span>
@@ -117,15 +134,23 @@
         <main class="portal-main">
             <div class="portal-grid">
                 @foreach ($portals as $entry)
-                    <a href="{{ route($entry['portal']['home']) }}" class="portal-card">
-                        <div class="icon-wrap">@include('partials.icon', ['name' => $entry['portal']['icon']])</div>
+                    <a href="{{ $entry['href'] }}" class="portal-card">
+                        <div class="card-top">
+                            <div class="icon-wrap">@include('partials.icon', ['name' => $entry['icon']])</div>
+                            @if ($entry['guarded'])
+                                <span class="portal-lock" title="بوابة محميّة — تتطلب تسجيل الدخول">
+                                    @include('partials.icon', ['name' => 'shield-alert'])
+                                    دخول
+                                </span>
+                            @endif
+                        </div>
                         <div>
-                            <h2>{{ $entry['portal']['label'] }}</h2>
+                            <h2>{{ $entry['label'] }}</h2>
                             <p class="blurb">{{ $entry['blurb'] }}</p>
                         </div>
                         <div class="portal-tags">
-                            @foreach ($entry['sections'] as $section)
-                                <span class="portal-tag">{{ $section['title'] }}</span>
+                            @foreach ($entry['tags'] as $tag)
+                                <span class="portal-tag">{{ $tag }}</span>
                             @endforeach
                         </div>
                         <span class="portal-enter">

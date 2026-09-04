@@ -16,8 +16,8 @@
     @endforeach
 </div>
 
-<div class="table-wrap">
-    <table>
+<div class="table-card">
+    <table class="data-table">
         <thead>
             <tr>
                 <th>المنطقة</th>
@@ -43,8 +43,8 @@
     </table>
 </div>
 
-<div class="table-wrap">
-    <table>
+<div class="table-card">
+    <table class="data-table">
         <thead>
             <tr>
                 <th>الميناء</th>

@@ -60,13 +60,13 @@ class SubAdministrationSeeder extends Seeder
     private function seedStaff(array $positions): array
     {
         $rows = [
-            ['name' => 'سعود بن ناصر الدوسري', 'position' => 'الإدارة العامة للمصايد البحرية', 'job_number' => 'MF-1001', 'email' => 'dg@mewa.gov.sa', 'rank' => 'الرتبة الأولى', 'can_create' => true, 'can_process' => true, 'can_approve' => true, 'can_reject' => true, 'can_assign' => true],
-            ['name' => 'هند بنت عبدالله القحطاني', 'position' => 'إدارة الإحصاء والمعلومات', 'job_number' => 'MF-1042', 'email' => 'stats@mewa.gov.sa', 'rank' => 'الرتبة الثانية', 'can_create' => true, 'can_process' => true, 'can_approve' => true, 'can_assign' => true],
-            ['name' => 'ماجد بن سالم الغامدي', 'position' => 'إدارة التراخيص والخدمات', 'job_number' => 'MF-1077', 'email' => 'licensing@mewa.gov.sa', 'rank' => 'الرتبة الثانية', 'can_create' => true, 'can_process' => true, 'can_approve' => true, 'can_reject' => true],
-            ['name' => 'ريم بنت فهد العتيبي', 'position' => 'إدارة الرقابة والامتثال', 'job_number' => 'MF-1093', 'email' => 'compliance@mewa.gov.sa', 'rank' => 'الرتبة الثالثة', 'can_create' => true, 'can_process' => true, 'can_assign' => true],
-            ['name' => 'علي بن حسن الشمري', 'position' => 'قسم إحصاء المنطقة الشرقية', 'job_number' => 'MF-2011', 'email' => 'east@mewa.gov.sa', 'rank' => 'الرتبة الثالثة', 'can_create' => true, 'can_process' => true, 'can_approve' => true],
-            ['name' => 'خالد بن مرزوق الحربي', 'position' => 'قسم إحصاء البحر الأحمر', 'job_number' => 'MF-2019', 'email' => 'redsea@mewa.gov.sa', 'rank' => 'الرتبة الثالثة', 'status' => 'إجازة', 'can_create' => true, 'can_process' => true],
-            ['name' => 'نورة بنت سعد المطيري', 'position' => 'وحدة ميناء القطيف', 'job_number' => 'MF-3055', 'email' => 'qatif@mewa.gov.sa', 'rank' => 'الرتبة الرابعة', 'can_create' => true, 'can_process' => true],
+            ['name' => 'سعود بن ناصر الدوسري', 'position' => 'الإدارة العامة للمصايد البحرية', 'job_number' => 'MF-1001', 'email' => 'dg@hawat.sa', 'rank' => 'الرتبة الأولى', 'can_create' => true, 'can_process' => true, 'can_approve' => true, 'can_reject' => true, 'can_assign' => true],
+            ['name' => 'هند بنت عبدالله القحطاني', 'position' => 'إدارة الإحصاء والمعلومات', 'job_number' => 'MF-1042', 'email' => 'stats@hawat.sa', 'rank' => 'الرتبة الثانية', 'can_create' => true, 'can_process' => true, 'can_approve' => true, 'can_assign' => true],
+            ['name' => 'ماجد بن سالم الغامدي', 'position' => 'إدارة التراخيص والخدمات', 'job_number' => 'MF-1077', 'email' => 'licensing@hawat.sa', 'rank' => 'الرتبة الثانية', 'can_create' => true, 'can_process' => true, 'can_approve' => true, 'can_reject' => true],
+            ['name' => 'ريم بنت فهد العتيبي', 'position' => 'إدارة الرقابة والامتثال', 'job_number' => 'MF-1093', 'email' => 'compliance@hawat.sa', 'rank' => 'الرتبة الثالثة', 'can_create' => true, 'can_process' => true, 'can_assign' => true],
+            ['name' => 'علي بن حسن الشمري', 'position' => 'قسم إحصاء المنطقة الشرقية', 'job_number' => 'MF-2011', 'email' => 'east@hawat.sa', 'rank' => 'الرتبة الثالثة', 'can_create' => true, 'can_process' => true, 'can_approve' => true],
+            ['name' => 'خالد بن مرزوق الحربي', 'position' => 'قسم إحصاء البحر الأحمر', 'job_number' => 'MF-2019', 'email' => 'redsea@hawat.sa', 'rank' => 'الرتبة الثالثة', 'status' => 'إجازة', 'can_create' => true, 'can_process' => true],
+            ['name' => 'نورة بنت سعد المطيري', 'position' => 'وحدة ميناء القطيف', 'job_number' => 'MF-3055', 'email' => 'qatif@hawat.sa', 'rank' => 'الرتبة الرابعة', 'can_create' => true, 'can_process' => true],
         ];
 
         $staff = [];

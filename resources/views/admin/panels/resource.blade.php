@@ -33,11 +33,11 @@
     @endunless
 </div>
 
-<div class="table-wrap">
+<div class="table-card">
     @if ($records->isEmpty())
         <div class="empty-state">لا توجد سجلات بعد — استخدم زر "إضافة" أو شغّل البذور عبر php artisan migrate --seed</div>
     @else
-        <table>
+        <table class="data-table">
             <thead>
                 <tr>
                     @foreach ($columns as $label)
@@ -62,7 +62,7 @@
                         @endforeach
                         @unless ($readonly)
                             <td class="cell-actions">
-                                <button type="button" class="btn-icon" title="تعديل"
+                                <button type="button" class="icon-action" title="تعديل"
                                         data-record-edit="{{ $record->id }}"
                                         data-record='@json($editPayload($record))'>
                                     @include('admin.partials.icon', ['name' => 'pencil'])
@@ -72,7 +72,7 @@
                                       onsubmit="return confirm('هل تريد حذف هذا السجل؟');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn-icon is-danger" title="حذف">
+                                    <button type="submit" class="icon-action danger" title="حذف">
                                         @include('admin.partials.icon', ['name' => 'trash'])
                                     </button>
                                 </form>
@@ -103,7 +103,7 @@
 
             <div class="modal-head">
                 <h3 id="record-modal-title">إضافة سجل — {{ $resource['title'] }}</h3>
-                <button type="button" class="btn-icon" data-record-close>
+                <button type="button" class="icon-action" data-record-close>
                     @include('admin.partials.icon', ['name' => 'close'])
                 </button>
             </div>

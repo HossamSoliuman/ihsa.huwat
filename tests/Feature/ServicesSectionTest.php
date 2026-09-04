@@ -529,7 +529,7 @@ class ServicesSectionTest extends TestCase
             'module' => 'الإحصاء الميداني',
             'description' => 'تظهر رسالة خطأ عند حفظ وزن المصيد.',
             'submitted_by_name' => 'نورة المطيري',
-            'submitted_by_email' => 'qatif@mewa.gov.sa',
+            'submitted_by_email' => 'qatif@hawat.sa',
         ], $overrides));
     }
 }

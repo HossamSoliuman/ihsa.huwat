@@ -10,8 +10,8 @@
     <p>يُقبل الاستيراد للبيانات الأساسية فقط. الصف الأول يجب أن يحتوي أسماء الأعمدة كما هي موضحة في الجدول أدناه.</p>
 </div>
 
-<div class="table-wrap">
-    <table>
+<div class="table-card">
+    <table class="data-table">
         <thead>
             <tr>
                 <th>الجدول</th>

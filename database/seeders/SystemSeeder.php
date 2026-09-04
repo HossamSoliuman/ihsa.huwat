@@ -13,11 +13,11 @@ class SystemSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
-            ['user_email' => 'admin@mewa.gov.sa', 'role' => 'admin'],
-            ['user_email' => 'dg@mewa.gov.sa', 'role' => 'top_management'],
-            ['user_email' => 'fisheries@mewa.gov.sa', 'role' => 'fisheries_admin'],
-            ['user_email' => 'east@mewa.gov.sa', 'role' => 'region_manager', 'region' => 'المنطقة الشرقية'],
-            ['user_email' => 'qatif@mewa.gov.sa', 'role' => 'port_manager', 'region' => 'المنطقة الشرقية', 'governorate' => 'القطيف', 'port' => 'ميناء القطيف'],
+            ['user_email' => 'admin@hawat.sa', 'role' => 'admin'],
+            ['user_email' => 'dg@hawat.sa', 'role' => 'top_management'],
+            ['user_email' => 'fisheries@hawat.sa', 'role' => 'fisheries_admin'],
+            ['user_email' => 'east@hawat.sa', 'role' => 'region_manager', 'region' => 'المنطقة الشرقية'],
+            ['user_email' => 'qatif@hawat.sa', 'role' => 'port_manager', 'region' => 'المنطقة الشرقية', 'governorate' => 'القطيف', 'port' => 'ميناء القطيف'],
         ];
 
         foreach ($permissions as $item) {
@@ -48,9 +48,9 @@ class SystemSeeder extends Seeder
         }
 
         $logs = [
-            ['user_email' => 'admin@mewa.gov.sa', 'role' => 'admin', 'action' => 'تهيئة النظام', 'entity' => 'System', 'record_label' => 'الإصدار الأول', 'details' => 'تشغيل الترحيلات والبيانات الأولية'],
-            ['user_email' => 'fisheries@mewa.gov.sa', 'role' => 'fisheries_admin', 'action' => 'إنشاء', 'entity' => 'FishingSeason', 'record_label' => 'موسم الروبيان 2026', 'details' => 'فتح موسم الروبيان بحصة 4500 طن'],
-            ['user_email' => 'qatif@mewa.gov.sa', 'role' => 'port_manager', 'action' => 'اعتماد', 'entity' => 'Trip', 'record_label' => 'TR-2026-0001', 'details' => 'اعتماد كمية 765 كجم بعد الإحصاء'],
+            ['user_email' => 'admin@hawat.sa', 'role' => 'admin', 'action' => 'تهيئة النظام', 'entity' => 'System', 'record_label' => 'الإصدار الأول', 'details' => 'تشغيل الترحيلات والبيانات الأولية'],
+            ['user_email' => 'fisheries@hawat.sa', 'role' => 'fisheries_admin', 'action' => 'إنشاء', 'entity' => 'FishingSeason', 'record_label' => 'موسم الروبيان 2026', 'details' => 'فتح موسم الروبيان بحصة 4500 طن'],
+            ['user_email' => 'qatif@hawat.sa', 'role' => 'port_manager', 'action' => 'اعتماد', 'entity' => 'Trip', 'record_label' => 'TR-2026-0001', 'details' => 'اعتماد كمية 765 كجم بعد الإحصاء'],
         ];
 
         foreach ($logs as $item) {

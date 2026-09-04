@@ -19,20 +19,20 @@
         </label>
 
         @if ($type === 'select')
-            <select id="field-{{ $key }}" name="{{ $key }}" data-field="{{ $key }}">
+            <select class="select" id="field-{{ $key }}" name="{{ $key }}" data-field="{{ $key }}">
                 <option value="">— اختر —</option>
                 @foreach ($field['options'] as $value => $label)
                     <option value="{{ $value }}" @selected($old !== null && (string) $old === (string) $value)>{{ $label }}</option>
                 @endforeach
             </select>
         @elseif ($type === 'textarea')
-            <textarea id="field-{{ $key }}" name="{{ $key }}" data-field="{{ $key }}">{{ $old }}</textarea>
+            <textarea class="input" id="field-{{ $key }}" name="{{ $key }}" data-field="{{ $key }}">{{ $old }}</textarea>
         @elseif ($type === 'number')
-            <input type="number" step="any" id="field-{{ $key }}" name="{{ $key }}" data-field="{{ $key }}" value="{{ $old }}">
+            <input class="input" type="number" step="any" id="field-{{ $key }}" name="{{ $key }}" data-field="{{ $key }}" value="{{ $old }}">
         @elseif ($type === 'date')
-            <input type="date" id="field-{{ $key }}" name="{{ $key }}" data-field="{{ $key }}" value="{{ $old }}">
+            <input class="input" type="date" id="field-{{ $key }}" name="{{ $key }}" data-field="{{ $key }}" value="{{ $old }}">
         @else
-            <input type="text" id="field-{{ $key }}" name="{{ $key }}" data-field="{{ $key }}" value="{{ $old }}">
+            <input class="input" type="text" id="field-{{ $key }}" name="{{ $key }}" data-field="{{ $key }}" value="{{ $old }}">
         @endif
     </div>
 @endif
