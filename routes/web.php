@@ -311,8 +311,8 @@ $operationsConsole = function (): void {
  */
 $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdministration, $servicesSection, $operationsConsole): void {
     /*
-     * الجذر يعرض الشعار وحده حتى تكتمل البوابات؛ صفحة اختيار البوابات تبقى
-     * متاحة على /sections لمن يعرف مسارها.
+     * الجذر صفحة الهبوط العامة (التعريف بحوات ومسار الصيد والتواصل)؛ صفحة اختيار
+     * البوابات تبقى متاحة على /sections لمن يعرف مسارها.
      */
     Route::view('/', 'landing')->name('landing');
 
