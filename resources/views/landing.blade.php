@@ -179,26 +179,26 @@
         }
 
         /* ---------- الهيكل العام للأقسام ---------- */
-        .ld-section { position: relative; padding: clamp(56px, 7vw, 96px) clamp(18px, 4vw, 40px); scroll-margin-top: 3.75rem; }
+        .ld-section { position: relative; padding: clamp(36px, 4.5vw, 60px) clamp(18px, 4vw, 40px); scroll-margin-top: 3.75rem; }
         .ld-wrap { max-width: 1280px; margin: 0 auto; }
         {{-- شريطٌ متناوب لبعض الأقسام: حبرٌ بشفافية 3٪ وحدّان شعريان، لا لونٌ آخر. --}}
         .ld-band { background: hsl(var(--foreground) / .03); border-block: 1px solid var(--hair); }
-        .ld-eyebrow { display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem; font-size: 12px; font-weight: 700; color: hsl(var(--primary)); letter-spacing: .02em; }
+        .ld-eyebrow { display: flex; align-items: center; gap: .6rem; margin-bottom: .7rem; font-size: 11px; font-weight: 700; color: hsl(var(--primary)); letter-spacing: .02em; }
         .ld-eyebrow .n { font-family: 'Chakra Petch', monospace; font-size: 12px; letter-spacing: .08em; }
         .ld-eyebrow::before { content: ''; width: 28px; height: 1px; background: hsl(var(--primary)); }
-        .ld-h2 { font-size: clamp(24px, 2.6vw, 38px); font-weight: 800; line-height: 1.3; text-wrap: balance; }
-        .ld-sub { margin-top: .5rem; font-size: clamp(15px, 1.2vw, 18px); font-weight: 500; color: hsl(var(--primary)); }
-        .ld-lead { margin-top: 1rem; font-size: clamp(15px, 1.1vw, 17px); line-height: 1.95; color: hsl(var(--muted-foreground)); max-width: 64ch; text-wrap: pretty; }
-        .ld-head { margin-bottom: clamp(28px, 3vw, 44px); max-width: 64ch; }
-        .ld-head-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: clamp(24px, 3vw, 64px); align-items: start; margin-bottom: clamp(28px, 3vw, 44px); }
+        .ld-h2 { font-size: clamp(21px, 2.2vw, 30px); font-weight: 800; line-height: 1.3; text-wrap: balance; }
+        .ld-sub { margin-top: .4rem; font-size: clamp(14px, 1.05vw, 16px); font-weight: 500; color: hsl(var(--primary)); }
+        .ld-lead { margin-top: .8rem; font-size: clamp(14px, 1vw, 15.5px); line-height: 1.85; color: hsl(var(--muted-foreground)); max-width: 64ch; text-wrap: pretty; }
+        .ld-head { margin-bottom: clamp(18px, 2.2vw, 28px); max-width: 64ch; }
+        .ld-head-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: clamp(20px, 2.5vw, 48px); align-items: start; margin-bottom: clamp(18px, 2.2vw, 28px); }
         .ld-head-split .ld-lead { margin-top: 0; padding-top: .35rem; }
         .ld-note { font-size: 12px; line-height: 1.8; color: hsl(var(--muted-foreground)); }
 
         {{-- البطاقات على قاعدة اللوحة: .card تحمل الأقواس والخطّ الشعري، وهنا الحشوة والمرور فقط. --}}
         .ld-card { padding: clamp(18px, 2vw, 26px); gap: .9rem; transition: border-color .15s ease, background .15s ease; }
         .ld-card:hover { border-color: hsl(var(--primary) / .6); background: hsl(var(--primary) / .05); }
-        .ld-card h3 { font-size: 1.02rem; font-weight: 700; line-height: 1.4; }
-        .ld-card p { font-size: .88rem; line-height: 1.85; color: hsl(var(--muted-foreground)); }
+        .ld-card h3 { font-size: .95rem; font-weight: 700; line-height: 1.4; }
+        .ld-card p { font-size: .84rem; line-height: 1.75; color: hsl(var(--muted-foreground)); }
         .ico-box { display: flex; align-items: center; justify-content: center; height: 2.5rem; width: 2.5rem; flex-shrink: 0; background: hsl(var(--primary) / .1); border: 1px solid hsl(var(--primary) / .5); color: hsl(var(--primary)); }
         .ico-box svg { width: 20px; height: 20px; }
         .ico-box.sm { height: 2rem; width: 2rem; }
@@ -209,7 +209,7 @@
         .grid-auto > .card { height: 100%; }
 
         {{-- الأزرار الكبيرة لصفحة الهبوط: قاعدة .btn نفسها بقياس أوسع. --}}
-        .btn-lg { padding: .8rem 1.4rem; font-size: 15px; font-weight: 700; }
+        .btn-lg { padding: .7rem 1.2rem; font-size: 14px; font-weight: 700; }
         .btn-lg svg { width: 17px; height: 17px; }
         {{-- إطار اللقطة: شريطٌ علويّ بعنوان الشاشة ثم الصورة، على قاعدة البطاقة نفسها. --}}
         .ld-shot { min-width: 0; border: 1px solid var(--hair); background: hsl(var(--foreground) / .03); }
@@ -227,21 +227,21 @@
         }
 
         /* ---------- 01 الغلاف ---------- */
-        .ld-hero { position: relative; overflow: hidden; min-height: clamp(560px, 82vh, 860px); display: grid; align-items: center; scroll-margin-top: 3.75rem; }
+        .ld-hero { position: relative; overflow: hidden; min-height: clamp(440px, 66vh, 680px); display: grid; align-items: center; scroll-margin-top: 3.75rem; }
         {{-- الصورة تستقرّ يسارًا (القارب) والنصّ يمينًا فوق حجابٍ بلون الصفحة يذوب نحو الصورة. --}}
         .ld-hero-img { position: absolute; inset: 0; background: url('{{ asset('images/landing-hero.jpg') }}') left 58% / cover no-repeat; will-change: transform; }
         .ld-hero-veil { position: absolute; inset: 0; background: linear-gradient(to left, hsl(var(--background)) 0%, hsl(var(--background) / .94) 40%, hsl(var(--background) / .5) 70%, hsl(var(--background) / .18) 100%); }
         .ld-hero-fade { position: absolute; inset: 0; background: linear-gradient(to bottom, hsl(var(--background) / .55) 0%, hsl(var(--background) / .1) 30%, hsl(var(--background) / .75) 70%, hsl(var(--background)) 100%); }
         {{-- النصّ يأخذ العمود الأوسع والبطاقة عرضها الثابت، فتبقى سطور العنوان كما كُتبت. --}}
-        .ld-hero-in { position: relative; max-width: 1280px; width: 100%; margin: 0 auto; padding: clamp(40px, 6vw, 84px) clamp(18px, 4vw, 40px) clamp(24px, 3vw, 36px); display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(28px, 4vw, 56px); align-items: center; }
+        .ld-hero-in { position: relative; max-width: 1280px; width: 100%; margin: 0 auto; padding: clamp(28px, 4vw, 56px) clamp(18px, 4vw, 40px) clamp(18px, 2.5vw, 28px); display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(24px, 3vw, 44px); align-items: center; }
         .ld-hero-copy { position: relative; min-width: 0; }
         .ld-hero-copy::before { content: ''; position: absolute; inset: -28px -32px; background: radial-gradient(120% 100% at 100% 50%, hsl(var(--background) / .96) 0%, hsl(var(--background) / .9) 55%, hsl(var(--background) / 0) 100%); pointer-events: none; }
         .ld-hero-copy > * { position: relative; }
-        .ld-chip { display: inline-flex; align-items: center; gap: .55rem; padding: .35rem .8rem; margin-bottom: 1.4rem; font-size: 12.5px; font-weight: 700; color: hsl(var(--primary)); border: 1px solid hsl(var(--primary) / .45); background: hsl(var(--primary) / .08); }
+        .ld-chip { display: inline-flex; align-items: center; gap: .55rem; padding: .3rem .7rem; margin-bottom: 1rem; font-size: 11.5px; font-weight: 700; color: hsl(var(--primary)); border: 1px solid hsl(var(--primary) / .45); background: hsl(var(--primary) / .08); }
         .ld-chip::before { content: ''; width: 6px; height: 6px; background: hsl(var(--primary)); }
         {{-- العنوان والفقرة سطورٌ مقصودة: كلّ <span> سطرٌ على الشاشة الواسعة، وتنساب على الضيّقة. --}}
-        .ld-h1 { font-size: clamp(30px, 3.6vw, 50px); font-weight: 800; line-height: 1.28; margin-bottom: 1.3rem; text-wrap: balance; }
-        .ld-hero-sub { font-size: clamp(15px, 1.25vw, 18px); line-height: 1.95; color: hsl(var(--muted-foreground)); max-width: 58ch; margin-bottom: 1.8rem; text-wrap: pretty; }
+        .ld-h1 { font-size: clamp(26px, 3vw, 40px); font-weight: 800; line-height: 1.28; margin-bottom: 1rem; text-wrap: balance; }
+        .ld-hero-sub { font-size: clamp(14px, 1.1vw, 16px); line-height: 1.85; color: hsl(var(--muted-foreground)); max-width: 58ch; margin-bottom: 1.3rem; text-wrap: pretty; }
         .ld-hero-cta { display: flex; flex-wrap: wrap; gap: .8rem; }
         {{-- لوحة حالة الرحلة: بطاقة واحدة على يسار الغلاف بقيم توضيحية. --}}
         .ld-trip { display: none; justify-self: center; width: 22rem; gap: .9rem; background: hsl(var(--background) / .72); backdrop-filter: blur(10px); }
@@ -266,22 +266,22 @@
         /* ---------- 02 شريط القيمة ---------- */
         .ld-value { padding: 0 clamp(18px, 4vw, 40px); margin-top: -1px; }
         .ld-value .card { flex-direction: row; flex-wrap: wrap; padding: 0; }
-        .ld-value .item { flex: 1 1 250px; display: flex; align-items: center; gap: .9rem; padding: 1.1rem 1.3rem; font-size: 1rem; font-weight: 700; border-inline-end: 1px solid var(--hair); }
+        .ld-value .item { flex: 1 1 250px; display: flex; align-items: center; gap: .9rem; padding: .9rem 1.1rem; font-size: .92rem; font-weight: 700; border-inline-end: 1px solid var(--hair); }
         .ld-value .item:last-child { border-inline-end: 0; }
 
         /* ---------- 03 عن حوات: ستّ مراحل مرقّمة ---------- */
         .ld-steps { list-style: none; --col: 190px; }
         .ld-steps .card { align-items: start; }
         .ld-steps .num { font-family: 'Chakra Petch', monospace; font-size: 12px; letter-spacing: .1em; color: hsl(var(--muted-foreground)); }
-        .ld-steps .lbl { font-size: 1rem; font-weight: 700; }
+        .ld-steps .lbl { font-size: .92rem; font-weight: 700; }
 
         /* ---------- 04 رحلة الصيد: سبع عُقد على خطّ واحد ---------- */
         .ld-journey { padding: clamp(20px, 2.5vw, 34px) clamp(14px, 2vw, 24px); flex-direction: row; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: 10px 4px; }
         .ld-node { display: grid; gap: .6rem; justify-items: center; text-align: center; flex: 1 1 150px; min-width: 132px; padding: 4px 6px; cursor: default; }
         .ld-node .ico-box { transition: background .2s, border-color .2s; }
         .ld-node.is-on .ico-box { background: hsl(var(--primary) / .22); border-color: hsl(var(--primary)); }
-        .ld-node .lbl { font-size: 1rem; font-weight: 700; }
-        .ld-node .sub { font-size: .78rem; line-height: 1.6; color: hsl(var(--muted-foreground)); }
+        .ld-node .lbl { font-size: .92rem; font-weight: 700; }
+        .ld-node .sub { font-size: .75rem; line-height: 1.6; color: hsl(var(--muted-foreground)); }
         .ld-seg { flex: 0 0 24px; height: 1px; margin-top: calc(1.25rem + 4px); background: hsl(var(--primary)); opacity: .3; transition: opacity .25s; }
         .ld-seg.is-on { opacity: 1; }
         @media (max-width: 719px) { .ld-seg { display: none; } }
@@ -291,7 +291,7 @@
         /* ---------- 05 التغطية: قائمة وخريطة ---------- */
         .ld-cov { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: clamp(16px, 2vw, 28px); align-items: start; }
         .ld-cov-list { display: grid; gap: 10px; align-content: start; }
-        .ld-cov-list .row { display: flex; align-items: center; gap: .8rem; min-height: 48px; padding: .6rem .9rem; border: 1px solid var(--hair); font-size: .92rem; font-weight: 600; }
+        .ld-cov-list .row { display: flex; align-items: center; gap: .8rem; min-height: 42px; padding: .5rem .8rem; border: 1px solid var(--hair); font-size: .88rem; font-weight: 600; }
         @media (min-width: 900px) { .ld-cov { grid-template-columns: minmax(260px, 1fr) minmax(0, 1.6fr); } }
         .ld-map { padding: .5rem; }
         .ksa-map { width: 100%; height: auto; display: block; }
@@ -306,51 +306,51 @@
 
         /* ---------- 06 الإمكانات ---------- */
         {{-- العرضان الكبيران: النصّ في العمود الأضيق واللقطة في الأوسع. --}}
-        .ld-show { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(20px, 2.5vw, 48px); align-items: center; padding: clamp(20px, 2.5vw, 34px); margin-bottom: var(--gap); }
+        .ld-show { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(16px, 2vw, 36px); align-items: center; padding: clamp(16px, 2vw, 26px); margin-bottom: var(--gap); }
         .ld-show .copy { display: grid; gap: .8rem; align-content: start; }
-        .ld-show h3 { font-size: clamp(20px, 1.8vw, 26px); font-weight: 800; line-height: 1.35; }
-        .ld-show p { font-size: .95rem; line-height: 1.9; color: hsl(var(--muted-foreground)); }
+        .ld-show h3 { font-size: clamp(18px, 1.5vw, 22px); font-weight: 800; line-height: 1.35; }
+        .ld-show p { font-size: .88rem; line-height: 1.8; color: hsl(var(--muted-foreground)); }
         @media (min-width: 900px) { .ld-show { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); } }
-        .ld-caps { --col: 190px; margin-bottom: clamp(28px, 3vw, 44px); }
+        .ld-caps { --col: 190px; margin-bottom: clamp(18px, 2.2vw, 28px); }
         .ld-caps .card { align-items: start; }
         .ld-caps .ico-box { margin-top: .2rem; }
         {{-- شبكة اللقطات: ثلاثٌ في الصفّ على الشاشة الواسعة، والتسمية تحت كلّ صورة. --}}
         .ld-shots-head { margin-bottom: 18px; }
-        .ld-shots-head h3 { font-size: 1.05rem; font-weight: 700; }
+        .ld-shots-head h3 { font-size: .98rem; font-weight: 700; }
         .ld-shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--gap); }
         @media (min-width: 900px) { .ld-shots { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
         .ld-shots figure { margin: 0; padding: 0; gap: 0; transition: border-color .15s ease; }
         .ld-shots figure:hover { border-color: hsl(var(--primary) / .6); }
         .ld-shots img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; object-position: top; border-bottom: 1px solid var(--hair); }
-        .ld-shots figcaption { display: flex; align-items: center; gap: .7rem; padding: .75rem .9rem; font-size: .92rem; font-weight: 700; }
+        .ld-shots figcaption { display: flex; align-items: center; gap: .7rem; padding: .65rem .8rem; font-size: .88rem; font-weight: 700; }
 
         /* ---------- 07 إدارة العمليات ---------- */
         .ld-ops { --col: 280px; }
-        .ld-ops .card { padding: clamp(24px, 3vw, 36px); gap: 1rem; align-items: start; }
+        .ld-ops .card { padding: clamp(18px, 2.4vw, 28px); gap: .8rem; align-items: start; }
 
         /* ---------- 08 المشاركون: ستّة على خطّ واحد ---------- */
         .ld-roles { position: relative; flex-direction: row; flex-wrap: wrap; padding: clamp(6px, 1vw, 10px); gap: 0; }
         .ld-roles::before { content: ''; position: absolute; inset-inline: clamp(24px, 3vw, 40px); top: calc(clamp(18px, 2vw, 26px) + clamp(6px, 1vw, 10px) + 1.25rem); height: 1px; background: linear-gradient(to left, transparent, hsl(var(--primary) / .55) 12%, hsl(var(--primary) / .55) 88%, transparent); pointer-events: none; }
         .ld-role { position: relative; z-index: 1; flex: 1 1 190px; display: grid; gap: .5rem; align-content: start; padding: clamp(18px, 2vw, 26px) clamp(14px, 1.6vw, 20px); }
         .ld-role .ico-box { background: hsl(var(--background)); }
-        .ld-role .lbl { font-size: .98rem; font-weight: 700; }
-        .ld-role .sub { font-size: .8rem; line-height: 1.7; color: hsl(var(--muted-foreground)); }
+        .ld-role .lbl { font-size: .92rem; font-weight: 700; }
+        .ld-role .sub { font-size: .76rem; line-height: 1.7; color: hsl(var(--muted-foreground)); }
         /* ---------- 09 لماذا حوات: ثلاثة صفوف مرقّمة ---------- */
-        .ld-why { display: grid; grid-template-columns: auto 1fr; gap: clamp(16px, 3vw, 44px); align-items: baseline; padding-block: clamp(22px, 3vw, 34px); border-top: 1px solid hsl(var(--border)); }
+        .ld-why { display: grid; grid-template-columns: auto 1fr; gap: clamp(16px, 3vw, 44px); align-items: baseline; padding-block: clamp(16px, 2.2vw, 24px); border-top: 1px solid hsl(var(--border)); }
         .ld-why:last-child { border-bottom: 1px solid hsl(var(--border)); }
-        .ld-why .num { font-family: 'Chakra Petch', monospace; font-size: clamp(26px, 3vw, 40px); font-weight: 600; line-height: 1; color: hsl(var(--primary)); }
+        .ld-why .num { font-family: 'Chakra Petch', monospace; font-size: clamp(22px, 2.4vw, 32px); font-weight: 600; line-height: 1; color: hsl(var(--primary)); }
         .ld-why .txt { min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px clamp(20px, 3vw, 48px); align-items: baseline; }
-        .ld-why h3 { font-size: clamp(18px, 1.6vw, 22px); font-weight: 800; }
-        .ld-why p { font-size: .95rem; line-height: 1.9; color: hsl(var(--muted-foreground)); }
+        .ld-why h3 { font-size: clamp(16.5px, 1.4vw, 19px); font-weight: 800; }
+        .ld-why p { font-size: .88rem; line-height: 1.8; color: hsl(var(--muted-foreground)); }
 
         /* ---------- 10 الرؤية ---------- */
         .ld-vision { --col: 210px; }
         .ld-vision .card { align-items: start; }
-        .ld-vision .lbl { font-size: 1rem; font-weight: 700; }
+        .ld-vision .lbl { font-size: .92rem; font-weight: 700; }
 
         /* ---------- 11 التطبيق ---------- */
-        .ld-app { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: clamp(36px, 4.5vw, 72px); align-items: center; }
-        .ld-stores { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
+        .ld-app { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: clamp(24px, 3vw, 48px); align-items: center; }
+        .ld-stores { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.1rem; }
         {{-- صورتا التطبيق من متجر Google Play بنسبة 9:16، الثانية أكبر قليلًا وأمام الأولى. --}}
         .ld-phones { min-width: 0; display: flex; gap: clamp(12px, 2vw, 24px); justify-content: center; align-items: flex-end; }
         .ld-phone { padding: 8px; }
@@ -361,16 +361,16 @@
         /* ---------- 12 الأرقام (مخفيّ) ---------- */
         .ld-nums-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1rem; }
         .ld-nums { --col: 220px; }
-        .ld-nums .value { font-family: 'Chakra Petch', monospace; font-size: clamp(34px, 4vw, 52px); font-weight: 600; line-height: 1; color: hsl(var(--primary)); }
-        .ld-nums .lbl { font-size: .95rem; font-weight: 600; }
+        .ld-nums .value { font-family: 'Chakra Petch', monospace; font-size: clamp(28px, 3.2vw, 42px); font-weight: 600; line-height: 1; color: hsl(var(--primary)); }
+        .ld-nums .lbl { font-size: .88rem; font-weight: 600; }
         .ld-flag { align-self: start; font-size: 10px; letter-spacing: .08em; padding: .25rem .6rem; color: var(--st-warn); border: 1px solid color-mix(in srgb, var(--st-warn) 45%, transparent); background: color-mix(in srgb, var(--st-warn) 10%, transparent); }
 
         /* ---------- 13 تواصل معنا ---------- */
-        .ld-contact { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: clamp(28px, 4vw, 64px); align-items: start; }
-        .ld-contact-info { display: grid; gap: .9rem; margin-top: 1.8rem; max-width: 42ch; }
+        .ld-contact { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: clamp(20px, 3vw, 44px); align-items: start; }
+        .ld-contact-info { display: grid; gap: .7rem; margin-top: 1.2rem; max-width: 42ch; }
         .ld-contact-info .card { flex-direction: row; align-items: center; gap: .9rem; padding: 1rem 1.2rem; }
         .ld-contact-info .k { font-size: .75rem; color: hsl(var(--muted-foreground)); margin-bottom: .2rem; }
-        .ld-contact-info a { font-size: 1.05rem; font-weight: 600; color: hsl(var(--primary)); }
+        .ld-contact-info a { font-size: .98rem; font-weight: 600; color: hsl(var(--primary)); }
         .ld-form { padding: clamp(20px, 3vw, 40px); gap: 1.2rem; }
         .ld-form .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 1.2rem; }
         .ld-form .input { padding: .7rem .85rem; font-size: .92rem; }
@@ -381,7 +381,7 @@
         .ld-form.is-sent .ok { display: block; }
 
         /* ---------- التذييل ---------- */
-        .ld-foot { border-top: 1px solid var(--hair); padding: clamp(40px, 5vw, 64px) clamp(18px, 4vw, 40px) 28px; }
+        .ld-foot { border-top: 1px solid var(--hair); padding: clamp(28px, 3.5vw, 44px) clamp(18px, 4vw, 40px) 20px; }
         .ld-foot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: clamp(24px, 3vw, 48px); }
         .ld-foot-grid > :first-child { grid-column: span 1; }
         @media (min-width: 900px) { .ld-foot-grid { grid-template-columns: 1.6fr 1fr 1fr 1fr; } }
@@ -389,13 +389,13 @@
         .ld-foot-brand .mark-dark { display: none; }
         html.dark .ld-foot-brand .mark-light { display: none; }
         html.dark .ld-foot-brand .mark-dark { display: block; }
-        .ld-foot p { font-size: .88rem; line-height: 1.85; color: hsl(var(--muted-foreground)); max-width: 36ch; }
+        .ld-foot p { font-size: .84rem; line-height: 1.75; color: hsl(var(--muted-foreground)); max-width: 36ch; }
         .ld-foot-col { display: grid; gap: .55rem; align-content: start; }
         .ld-foot-col .t { font-size: .74rem; font-weight: 700; letter-spacing: .04em; color: hsl(var(--primary)); margin-bottom: .3rem; }
-        .ld-foot-col a { display: inline-flex; align-items: center; gap: .4rem; font-size: .9rem; color: hsl(var(--foreground) / .82); }
+        .ld-foot-col a { display: inline-flex; align-items: center; gap: .4rem; font-size: .86rem; color: hsl(var(--foreground) / .82); }
         .ld-foot-col a:hover { color: hsl(var(--primary)); }
         .ld-foot-col a svg { width: 14px; height: 14px; }
-        .ld-foot-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-top: clamp(28px, 3vw, 44px); padding-top: 1.2rem; border-top: 1px solid var(--hair); font-size: .78rem; color: hsl(var(--muted-foreground)); }
+        .ld-foot-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-top: clamp(18px, 2.2vw, 28px); padding-top: 1rem; border-top: 1px solid var(--hair); font-size: .75rem; color: hsl(var(--muted-foreground)); }
     </style>
     <script>
         // الوضع الداكن هو الأصل: لا يُطفأ إلا إذا اختار المستخدم الفاتح صراحةً.
