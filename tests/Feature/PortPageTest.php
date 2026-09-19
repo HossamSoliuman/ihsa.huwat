@@ -12,6 +12,7 @@ use App\Models\Region;
 use App\Models\Species;
 use App\Models\StatisticsOfficer;
 use App\Models\Trip;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -31,6 +32,9 @@ class PortPageTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // صفحات مركز المعلومات قسم المدير العام في لوحة الإدارة، فتُطلب بدخوله.
+        $this->actingAs(User::factory()->superAdmin()->create());
 
         $region = Region::create(['name' => 'المنطقة الشرقية (اختبار)', 'code' => 'EST']);
         $governorate = Governorate::create(['region_id' => $region->id, 'name' => 'القطيف (اختبار)']);

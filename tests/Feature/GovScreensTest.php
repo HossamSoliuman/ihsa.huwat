@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use App\Support\Nav;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -70,6 +71,9 @@ class GovScreensTest extends TestCase
     public function test_only_the_government_portal_opens_in_display_mode(): void
     {
         // بقية البوابات تُدار من مكتب لا من قاعة، فتبقى على تخطيطها الكامل.
+        // لوحة الإدارة خلف الدخول، فتُطلب صفحتها بمدير عام داخل.
+        $this->actingAs(User::factory()->superAdmin()->create());
+
         foreach (['/stats', '/subadmin', '/services', '/admin/boats'] as $url) {
             $this->get($url)
                 ->assertOk()

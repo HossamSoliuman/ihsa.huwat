@@ -16,7 +16,9 @@ class DatabaseSeeder extends Seeder
             MarketsSeeder::class,
             GovernanceSeeder::class,
             SystemSeeder::class,
-            // بعد SystemSeeder: حسابات الدخول تُنسب إلى الصلاحيات التي يبذرها.
+            RoleSeeder::class,
+            // بعد SystemSeeder وRoleSeeder: حسابات الدخول تُنسب إلى الصلاحيات
+            // التي يبذرها الأول وإلى أدوار التطبيق التي يبذرها الثاني.
             UserSeeder::class,
             SubAdministrationSeeder::class,
             ServicesLicensingSeeder::class,

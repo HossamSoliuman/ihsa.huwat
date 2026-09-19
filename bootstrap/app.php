@@ -1,17 +1,41 @@
 <?php
 
+use App\Http\Middleware\EnsureApiAccountActive;
+use App\Http\Middleware\EnsurePanelAccess;
+use App\Http\Middleware\ForceJsonResponse;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'panel' => EnsurePanelAccess::class,
+            'api.active' => EnsureApiAccountActive::class,
+        ]);
+
+        // واجهة التطبيق تردّ JSON دائمًا، طلب العميل ذلك أم لم يطلبه.
+        $middleware->api(prepend: [ForceJsonResponse::class]);
+
+        /*
+         * صفحتا دخول: بوابة المعلومات على مضيفها (مساراتها admin.*)، ولوحة الإدارة
+         * على /admin في النطاق الرئيسي. الزائر يُرسَل إلى صفحة الموضع الذي طرقه،
+         * والداخل الذي يطرق صفحة دخول يُعاد إلى رئيسة موضعها.
+         */
+        $middleware->redirectGuestsTo(fn (Request $request) => str_starts_with((string) $request->route()?->getName(), 'admin.')
+            ? route('login')
+            : route('panel.login'));
+
+        $middleware->redirectUsersTo(fn (Request $request) => str_starts_with((string) $request->route()?->getName(), 'panel.')
+            ? route('panel.home')
+            : route('admin.index'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

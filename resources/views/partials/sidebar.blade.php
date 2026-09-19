@@ -1,5 +1,7 @@
 @php
     use App\Support\Nav;
+
+    $user = auth()->user();
 @endphp
 <aside class="sidebar" id="sidebar">
     {{-- الشعار انتقل إلى الشريط العلوي، فلم يبقَ في رأس القائمة إلا زرّ الإغلاق — ولا يظهر إلا دون 1024px. --}}
@@ -23,14 +25,25 @@
         @endforeach
     </nav>
 
-    {{-- ذيل القائمة: هويّة المستخدم وحدها — وزرّ الوضع الداكن عاد إلى الشريط العلوي. --}}
+    {{--
+        ذيل القائمة: هويّة المستخدم — الداخل باسمه ودوره وزرّ خروجه، والزائر
+        (بوابات الوزارة المفتوحة) بهويّة المشاهدة الافتراضية.
+    --}}
     <div class="sidebar-foot">
         <div class="user-chip">
-            <div class="avatar">م</div>
+            <div class="avatar">{{ $user?->initial ?? 'م' }}</div>
             <div class="meta">
-                <p class="role">مدير عام</p>
-                <p class="sub">الإدارة العليا</p>
+                <p class="role">{{ $user?->name ?? 'مدير عام' }}</p>
+                <p class="sub">{{ $user?->display_role ?? 'الإدارة العليا' }}</p>
             </div>
         </div>
+        @if ($user && Nav::portalKey() === Nav::OPS)
+            <form method="POST" action="{{ route('panel.logout') }}">
+                @csrf
+                <button type="submit" class="icon-action" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+                    @include('partials.icon', ['name' => 'log-out'])
+                </button>
+            </form>
+        @endif
     </div>
 </aside>

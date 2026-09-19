@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\Role;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -9,9 +11,13 @@ use Illuminate\Support\Facades\Route;
  *
  * اللوحة مقسومة إلى خمس بوابات تتشارك نفس التخطيط: لوحة الحكومة تحت /gov،
  * وقسم الإحصاء تحت /stats، وقسم الإدارة الفرعية تحت /subadmin، وقسم الخدمات
- * والتراخيص تحت /services، والمنصة التشغيلية تحت /admin. التمييز من اسم المسار
+ * والتراخيص تحت /services، ولوحة الإدارة تحت /admin. التمييز من اسم المسار
  * لا من المسار نفسه: مسارات البوابات الأربع الأولى تحمل بادئاتها، ومسارات
- * المنصة التشغيلية بلا بادئة.
+ * لوحة الإدارة إمّا بالبادئة panel. أو بلا بادئة (مركز المعلومات القديم).
+ *
+ * لوحة الإدارة وحدها خلف تسجيل الدخول وقائمتها تتبدّل مع دور المستخدم
+ * (config/hawat.php → nav_panel): المدير العام يرى حسابات التطبيق ومعها
+ * مركز المعلومات كاملًا، والمالك يرى قوائمه هو، وهكذا.
  *
  * بوابة المعلومات (مركز الإدارة) خارج هذا التقسيم — لها تخطيطها وقائمتها.
  */
@@ -28,8 +34,9 @@ class Nav
     public const OPS = 'ops';
 
     /**
-     * مفتاح كل بوابة ومصدر قائمتها. المنصة التشغيلية آخرها لأنها الافتراضية:
-     * أسماء مساراتها بلا بادئة، فتلتقط كل ما لم يطابق بادئة قبلها.
+     * مفتاح كل بوابة ومصدر قائمتها. لوحة الإدارة آخرها لأنها الافتراضية:
+     * أسماء مساراتها بلا بادئة أو بالبادئة panel.، فتلتقط كل ما لم يطابق
+     * بادئة قبلها. قائمتها تُبنى في panelSections() لا تُقرأ من مفتاح واحد.
      */
     private const SECTIONS = [
         self::GOV => 'hawat.nav_gov',
@@ -106,11 +113,44 @@ class Nav
      */
     public static function sections(?string $key = null): array
     {
-        return config(self::SECTIONS[$key ?? self::portalKey()]);
+        $key ??= self::portalKey();
+
+        if ($key === self::OPS) {
+            return self::panelSections();
+        }
+
+        return config(self::SECTIONS[$key]);
     }
 
     /**
-     * عنوان الصفحة المقابل لاسم مسار، بالبحث في قوائم البوابات كلها.
+     * دور التطبيق الذي تُبنى عليه قائمة لوحة الإدارة. الزائر (كصفحة اختيار
+     * البوابات) يرى قائمة المدير العام لأنها الأشمل.
+     */
+    public static function panelRole(): string
+    {
+        return Auth::user()?->app_role_key ?? Role::SUPER_ADMIN;
+    }
+
+    /**
+     * قائمة لوحة الإدارة لدور بعينه: أقسام الدور من nav_panel، ويُلحق بالمدير
+     * العام مركز المعلومات التشغيلي كاملًا (nav) لأنه صار قسمه.
+     */
+    public static function panelSections(?string $role = null): array
+    {
+        $role ??= self::panelRole();
+
+        $sections = config('hawat.nav_panel.'.$role, []);
+
+        if ($role === Role::SUPER_ADMIN) {
+            $sections = array_merge($sections, config(self::SECTIONS[self::OPS]));
+        }
+
+        return $sections;
+    }
+
+    /**
+     * عنوان الصفحة المقابل لاسم مسار، بالبحث في قوائم البوابات كلها — وفي
+     * لوحة الإدارة قوائم الأدوار كلها لا قائمة الدور الحالي وحدها.
      */
     public static function label(?string $routeName): ?string
     {
@@ -118,8 +158,22 @@ class Nav
             return null;
         }
 
+        $groups = [];
+
         foreach (self::keys() as $key) {
-            foreach (self::sections($key) as $section) {
+            if ($key === self::OPS) {
+                foreach (array_keys(config('hawat.nav_panel', [])) as $role) {
+                    $groups[] = self::panelSections($role);
+                }
+
+                continue;
+            }
+
+            $groups[] = self::sections($key);
+        }
+
+        foreach ($groups as $sections) {
+            foreach ($sections as $section) {
                 foreach ($section['items'] as $item) {
                     if ($item['route'] === $routeName) {
                         return $item['label'];

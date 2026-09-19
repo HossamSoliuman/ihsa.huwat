@@ -31,6 +31,9 @@ use App\Http\Controllers\MonthlyReportsController;
 use App\Http\Controllers\MyWorkspaceController;
 use App\Http\Controllers\NationalIndicatorsController;
 use App\Http\Controllers\OrgStructureController;
+use App\Http\Controllers\Panel\HomeController as PanelHomeController;
+use App\Http\Controllers\Panel\LoginController as PanelLoginController;
+use App\Http\Controllers\Panel\UserController as PanelUserController;
 use App\Http\Controllers\PerformanceCompareController;
 use App\Http\Controllers\PortController;
 use App\Http\Controllers\ProductionController;
@@ -266,7 +269,8 @@ $statisticsSection = function (): void {
 };
 
 /*
- * المنصة التشغيلية — السجلات والعمليات، تحت البادئة /admin.
+ * مركز المعلومات التشغيلي — السجلات والعمليات. كان بوابة مفتوحة على /admin
+ * وصار قسم المدير العام في لوحة الإدارة أدناه، فلا يُقدَّم إلا لمن دخل بدوره.
  *
  * أسماء المسارات تبقى بلا بادئة (governorates، boats…) لأن البادئة `admin.`
  * محجوزة لبوابة المعلومات أعلاه (admin.index، admin.tab)، ولأن القائمة الجانبية
@@ -305,11 +309,45 @@ $operationsConsole = function (): void {
 };
 
 /*
+ * لوحة الإدارة — لوحة تطبيق حوات على /admin، وهي وحدها خلف تسجيل الدخول.
+ *
+ * الدخول بالجوال أو البريد (PanelLoginController)، ثم رئيسة تتفرّع على الدور،
+ * ثم صفحات كل دور تحت وسيط panel:<role>. المدير العام يدير حسابات التطبيق
+ * ومعه مركز المعلومات التشغيلي كاملًا؛ بوابات الملاك والدلالين والتجار تُضاف
+ * تحت الوسيط نفسه كلٌّ بدوره.
+ *
+ * أسماء المسارات بالبادئة panel. — لا admin. لأنها لبوابة المعلومات — وهي ما
+ * يميّز صفحتي الدخول عن بعضهما في bootstrap/app.php.
+ */
+$adminPanel = function () use ($operationsConsole): void {
+    Route::middleware('guest')->group(function (): void {
+        Route::get('/login', [PanelLoginController::class, 'create'])->name('panel.login');
+        Route::post('/login', [PanelLoginController::class, 'store'])->middleware('throttle:6,1')->name('panel.login.store');
+    });
+
+    Route::post('/logout', [PanelLoginController::class, 'destroy'])->middleware('auth')->name('panel.logout');
+
+    Route::middleware(['auth', 'panel'])->group(function () use ($operationsConsole): void {
+        Route::get('/', [PanelHomeController::class, 'index'])->name('panel.home');
+
+        Route::middleware('panel:super_admin')->group(function () use ($operationsConsole): void {
+            Route::get('/users', [PanelUserController::class, 'index'])->name('panel.users');
+            Route::post('/users', [PanelUserController::class, 'store'])->name('panel.users.store');
+            Route::put('/users/{user}', [PanelUserController::class, 'update'])->name('panel.users.update');
+            Route::post('/users/{user}/toggle', [PanelUserController::class, 'toggle'])->name('panel.users.toggle');
+            Route::delete('/users/{user}', [PanelUserController::class, 'destroy'])->name('panel.users.destroy');
+
+            $operationsConsole();
+        });
+    });
+};
+
+/*
  * البوابات الخمس تتشارك النطاق الرئيسي: صفحة اختيار على "/sections"، ثم لوحة الحكومة
  * تحت /gov، وقسم الإحصاء تحت /stats، وقسم الإدارة الفرعية تحت /subadmin، وقسم
- * الخدمات والتراخيص تحت /services، والمنصة التشغيلية تحت /admin.
+ * الخدمات والتراخيص تحت /services، ولوحة الإدارة تحت /admin.
  */
-$governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdministration, $servicesSection, $operationsConsole): void {
+$governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdministration, $servicesSection, $adminPanel): void {
     /*
      * الجذر صفحة الهبوط العامة (التعريف بحوات ومسار الصيد والتواصل)؛ صفحة اختيار
      * البوابات تبقى متاحة على /sections لمن يعرف مسارها.
@@ -326,12 +364,22 @@ $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdmi
 
     Route::prefix('services')->name('services.')->group($servicesSection);
 
-    Route::prefix('admin')->group($operationsConsole);
+    Route::prefix('admin')->group($adminPanel);
+
+    /*
+     * توثيق واجهة التطبيق: مواصفة OpenAPI من docs/api وعارض Swagger UI عليها.
+     * صفحتا ويب لا مساري API — فالعارض HTML والمواصفة ملف ثابت.
+     */
+    Route::view('/api/docs', 'api.docs')->name('api.docs');
+    Route::get('/api/openapi.yaml', fn () => response(file_get_contents(base_path('docs/api/openapi.yaml')), 200, ['Content-Type' => 'application/yaml; charset=utf-8']))->name('api.openapi');
 
     /*
      * مواضع اللوحات قبل استقلال أقسام الإحصاء والإدارة الفرعية والخدمات
      * والتراخيص ببواباتها. التحويل دائم حفاظًا على الروابط المحفوظة والمُرسلة،
      * وليست مسارات مكرّرة: لا شيء يُقدَّم منها.
+     *
+     * تحويلات /admin/* القديمة أُسقطت: صار /admin لوحة الإدارة ومساراتها
+     * (users، settings، markets…) لها، والتحويل الدائم يعلق في المتصفح.
      */
     foreach ([
         '/gov/statistics' => '/stats',
@@ -346,19 +394,10 @@ $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdmi
         '/gov/monthly-reports' => '/stats/monthly-reports',
         '/gov/annual-bulletin' => '/stats/annual-bulletin',
         '/gov/food-security' => '/stats/food-security',
-        '/admin/statistics-officers' => '/stats/statistics-officers',
-        '/admin/catch-trace' => '/stats/catch-trace',
-        '/admin/analytics' => '/stats/analytics',
-        '/admin/markets' => '/stats/markets',
-        '/admin/supply-chain' => '/stats/supply-chain',
         '/gov/alerts' => '/subadmin/alerts',
-        '/admin/audit-log' => '/subadmin/audit-log',
-        '/admin/users' => '/subadmin',
         '/subadmin/users' => '/subadmin',
-        '/admin/settings' => '/subadmin/settings',
         '/services/fisher-services' => '/services',
         '/gov/compliance' => '/services/compliance',
-        '/admin/season-licenses' => '/services/season-licenses',
     ] as $vacated => $destination) {
         Route::permanentRedirect($vacated, $destination);
     }

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -13,6 +14,10 @@ use Illuminate\Database\Seeder;
  *
  * كلمة المرور واحدة لحسابات البذر وتُقرأ من SEED_PASSWORD — بيانات تهيئة لا
  * بيانات إنتاج: غيّرها في الخادم قبل التسليم.
+ *
+ * مدير النظام يحمل إلى جانب صلاحية الوزارة دور "المدير العام" في التطبيق، فهو
+ * من يفتح /admin وينشئ حسابات الملاك والعدّادين والدلالين. ومعه حساب مالك
+ * تجريبي يدخل بجواله ليُختبر مسار التطبيق كاملًا.
  */
 class UserSeeder extends Seeder
 {
@@ -35,5 +40,18 @@ class UserSeeder extends Seeder
                 ['name' => $user['name'], 'password' => $password],
             );
         }
+
+        User::where('email', 'admin@hawat.sa')->whereNull('role_id')
+            ->update(['role_id' => Role::key(Role::SUPER_ADMIN)->id]);
+
+        User::firstOrCreate(
+            ['phone' => '0500000001'],
+            [
+                'name' => 'مالك تجريبي',
+                'email' => 'owner@hawat.sa',
+                'password' => $password,
+                'role_id' => Role::key(Role::OWNER)->id,
+            ],
+        );
     }
 }

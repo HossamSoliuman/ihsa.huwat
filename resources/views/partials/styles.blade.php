@@ -435,6 +435,8 @@ html.dark .note-box svg { color: hsl(160 60% 62%); }
 /* زرّ الشريط الأخير يلتصق بالطرف المقابل، فلا يبقى فراغ في آخر السطر. */
 .filter-bar > .btn:last-child { margin-inline-start: auto; }
 .field { display: flex; flex-direction: column; gap: .3rem; }
+/* السمة hidden تغلب display المصنّف: حقل يُخفى بها يختفي فعلًا. */
+.field[hidden] { display: none; }
 .field > span { font-size: .7rem; font-weight: 600; color: hsl(var(--muted-foreground)); }
 /*
  * الحقول تتبع قاعدة اللوحة نفسها: لا لونَ خلفيةٍ خاص بها. كانت تُملأ بـ
@@ -523,6 +525,12 @@ html.dark .pill-rose { color: hsl(352 85% 70%); border-color: hsl(352 85% 70% / 
 .gov-grid { display: grid; gap: .6rem; grid-template-columns: repeat(2, 1fr); }
 @media (min-width: 640px) { .gov-grid { grid-template-columns: repeat(4, 1fr); } }
 .flash { border: 1px solid hsl(160 55% 40% / .45); background: hsl(160 55% 40% / .1); color: #0f7a5a; padding: .6rem .9rem; font-size: .8rem; margin-bottom: .85rem; }
+.flash-error { border: 1px solid hsl(352 80% 50% / .45); background: hsl(352 80% 50% / .1); color: #be123c; padding: .6rem .9rem; font-size: .8rem; margin-bottom: .85rem; }
+html.dark .flash-error { color: hsl(352 85% 72%); }
+/* ترقيم الصفحات: زرّان على طرفي موضع الصفحة، والمعطّل منهما باهت بلا نقر. */
+.pager { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .75rem .95rem; border: 1px solid var(--hair); border-top: 0; background: var(--surface); font-size: .76rem; }
+.pager-pos { color: hsl(var(--muted-foreground)); }
+.pager .is-disabled { opacity: .45; pointer-events: none; }
 html.dark .flash { color: hsl(160 60% 68%); }
 
 /* قسم الإحصاء — بوابته الموحّدة ولوحاته */

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use App\Support\Nav;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
@@ -11,13 +12,21 @@ use Tests\TestCase;
 /**
  * لوحة الوزارة مقسومة إلى خمس بوابات على النطاق الرئيسي: لوحة الحكومة التنفيذية
  * تحت /gov، وقسم الإحصاء تحت /stats، وقسم الإدارة الفرعية تحت /subadmin، وقسم
- * الخدمات والتراخيص تحت /services، والمنصة التشغيلية تحت /admin. هذه الاختبارات
+ * الخدمات والتراخيص تحت /services، ولوحة الإدارة تحت /admin. هذه الاختبارات
  * تحرس الحدّ بينها — أن كل صفحة تُقدَّم من موضعها الجديد فقط، وأن القائمة الجانبية
  * تتبدّل مع البوابة، وهما ما ينكسر بصمت عند إضافة مسار في المكان الخطأ.
+ *
+ * لوحة الإدارة وحدها خلف الدخول، ومركز المعلومات قسم المدير العام فيها؛ فصفحاته
+ * تُطلب هنا بمدير عام داخل.
  */
 class PortalSplitTest extends TestCase
 {
     use RefreshDatabase;
+
+    private function asSuperAdmin(): static
+    {
+        return $this->actingAs(User::factory()->superAdmin()->create());
+    }
 
     /** المسارات التي تُقدَّم من لوحة الحكومة. */
     public static function govPages(): array
@@ -67,7 +76,7 @@ class PortalSplitTest extends TestCase
         $this->get($url)->assertOk();
     }
 
-    /** المسارات التي تُقدَّم من المنصة التشغيلية تحت /admin. */
+    /** صفحات مركز المعلومات — قسم المدير العام في لوحة الإدارة تحت /admin. */
     public static function opsPages(): array
     {
         return [
@@ -89,7 +98,13 @@ class PortalSplitTest extends TestCase
     #[DataProvider('opsPages')]
     public function test_an_operations_page_answers_under_the_admin_prefix(string $url): void
     {
-        $this->get($url)->assertOk();
+        $this->asSuperAdmin()->get($url)->assertOk();
+    }
+
+    #[DataProvider('opsPages')]
+    public function test_an_operations_page_is_behind_the_panel_login(string $url): void
+    {
+        $this->get($url)->assertRedirect(route('panel.login'));
     }
 
     /** المسارات التي تُقدَّم من قسم الإدارة الفرعية تحت /subadmin. */
@@ -158,16 +173,10 @@ class PortalSplitTest extends TestCase
             ['/stats/executive-briefing', '/stats'],
             ['/gov/national-indicators', '/stats/national-indicators'],
             ['/gov/annual-bulletin', '/stats/annual-bulletin'],
-            ['/admin/markets', '/stats/markets'],
-            ['/admin/analytics', '/stats/analytics'],
             ['/gov/alerts', '/subadmin/alerts'],
-            ['/admin/audit-log', '/subadmin/audit-log'],
-            ['/admin/users', '/subadmin'],
             ['/subadmin/users', '/subadmin'],
             ['/services/fisher-services', '/services'],
-            ['/admin/settings', '/subadmin/settings'],
             ['/gov/compliance', '/services/compliance'],
-            ['/admin/season-licenses', '/services/season-licenses'],
         ];
     }
 
@@ -187,12 +196,12 @@ class PortalSplitTest extends TestCase
             ->assertSee('الإحصاء', false)
             ->assertSee('الإدارات', false)
             ->assertSee('الخدمات والتراخيص', false)
-            ->assertSee('مركز المعلومات', false)
+            ->assertSee('لوحة الإدارة', false)
             ->assertSee('href="'.route('gov.home').'"', false)
             ->assertSee('href="'.route('stats.executive-briefing').'"', false)
             ->assertSee('href="'.route('subadmin.users').'"', false)
             ->assertSee('href="'.route('services.fisher-services').'"', false)
-            ->assertSee('href="'.route('governorates').'"', false)
+            ->assertSee('href="'.route('panel.home').'"', false)
             // والسادسة بوابة المعلومات: ليست من بوابات اللوحة، وصندوقها هنا مع ذلك.
             ->assertSee(config('info.title'), false)
             ->assertSee('href="'.route('admin.index').'"', false);
@@ -208,8 +217,9 @@ class PortalSplitTest extends TestCase
             ->assertDontSee(route('boats'), false)
             ->assertDontSee(route('stats.field-statistics'), false);
 
-        $this->get('/admin/boats')
+        $this->asSuperAdmin()->get('/admin/boats')
             ->assertSee(route('bycatch'), false)
+            ->assertSee(route('panel.users'), false)
             ->assertDontSee(route('gov.production'), false)
             ->assertDontSee(route('stats.field-statistics'), false);
 

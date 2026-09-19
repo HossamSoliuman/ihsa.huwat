@@ -41,6 +41,9 @@ class SystemSeeder extends Seeder
             ['provider' => 'arcgis', 'enabled' => false, 'settings' => ['portal_url' => 'https://www.arcgis.com', 'webmap_id' => '', 'default_basemap' => 'oceans']],
             ['provider' => 'fabric', 'enabled' => false, 'settings' => ['lakehouse' => '', 'warehouse' => '', 'sql_endpoint' => '']],
             ['provider' => 'hawat_ai', 'enabled' => true, 'settings' => ['model' => 'gpt_5_mini', 'context_limit' => 12000, 'enforce_jurisdiction' => true]],
+            // معطّلان حتى تُعرف مفاتيحهما: الرموز تُكتب في السجل والإشعارات لا تُبثّ.
+            ['provider' => 'sms', 'enabled' => false, 'settings' => ['provider' => 'unifonic', 'sender_name' => 'HAWAT', 'api_url' => '', 'api_key' => '', 'api_secret' => '']],
+            ['provider' => 'firebase', 'enabled' => false, 'settings' => ['project_id' => '', 'service_account_path' => '', 'android_channel_id' => 'hawat']],
         ];
 
         foreach ($integrations as $item) {

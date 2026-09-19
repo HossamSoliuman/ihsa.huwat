@@ -5,14 +5,17 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -22,7 +25,15 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
+        'role_id',
+        'owner_id',
+        'active',
+        'locale',
+        'avatar_path',
+        'fcm_token',
+        'last_login_at',
     ];
 
     /**
@@ -33,6 +44,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'fcm_token',
     ];
 
     /**
@@ -44,7 +56,9 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'password' => 'hashed',
+            'active' => 'boolean',
         ];
     }
 
@@ -55,6 +69,65 @@ class User extends Authenticatable
     public function permission(): HasOne
     {
         return $this->hasOne(UserPermission::class, 'user_email', 'email');
+    }
+
+    /**
+     * دور التطبيق (مالك، كابتن، عدّاد، دلال…) — غير دور الوزارة أعلاه: هذا لمن
+     * يعمل في البحر والسوق ويدخل من /admin أو من التطبيق، وذاك لموظفي الوزارة.
+     */
+    public function appRole(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    /**
+     * المالك الذي يتبعه هذا الحساب (للكابتن والطاقم والموظف).
+     */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * الحسابات التابعة لهذا المالك.
+     */
+    public function staff(): HasMany
+    {
+        return $this->hasMany(User::class, 'owner_id');
+    }
+
+    /**
+     * مفتاح دور التطبيق أو null لمن لا دور له (موظفو الوزارة).
+     */
+    public function getAppRoleKeyAttribute(): ?string
+    {
+        return $this->appRole?->key;
+    }
+
+    public function hasAppRole(string ...$keys): bool
+    {
+        return $this->app_role_key !== null && in_array($this->app_role_key, $keys, true);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasAppRole(Role::SUPER_ADMIN);
+    }
+
+    /**
+     * الاسم المعروض في ذيل القائمة الجانبية: دور التطبيق إن وُجد وإلا دور الوزارة.
+     */
+    public function getDisplayRoleAttribute(): string
+    {
+        return $this->appRole?->name ?? $this->role_label;
+    }
+
+    /**
+     * أول حرف من الاسم — رمز الصورة الشخصية حين لا صورة.
+     */
+    public function getInitialAttribute(): string
+    {
+        return mb_substr(trim((string) $this->name), 0, 1) ?: 'م';
     }
 
     /**
@@ -81,5 +154,40 @@ class User extends Authenticatable
             'governorate_manager' => 'مدير محافظة',
             'port_manager' => 'مدير ميناء',
         ][$this->role] ?? 'مستخدم';
+    }
+
+    /**
+     * يطبّع رقم الجوال إلى صيغة واحدة (05XXXXXXXX): يقبل +966 و966 والمسافات
+     * والأرقام العربية، فلا يُسجَّل الجوال نفسه مرتين بصيغتين.
+     */
+    public static function normalizePhone(?string $phone): ?string
+    {
+        if ($phone === null) {
+            return null;
+        }
+
+        $western = str_replace(
+            ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'],
+            ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+            $phone,
+        );
+
+        $digits = preg_replace('/\D+/u', '', $western);
+
+        if ($digits === '' || $digits === null) {
+            return null;
+        }
+
+        if (str_starts_with($digits, '00966')) {
+            $digits = substr($digits, 5);
+        } elseif (str_starts_with($digits, '966')) {
+            $digits = substr($digits, 3);
+        }
+
+        if (strlen($digits) === 9 && str_starts_with($digits, '5')) {
+            $digits = '0'.$digits;
+        }
+
+        return $digits;
     }
 }

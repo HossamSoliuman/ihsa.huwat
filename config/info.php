@@ -22,7 +22,7 @@ return [
         'المرجع الأساسي' => ['geo', 'fleet'],
         'التشغيل' => ['seasons', 'licenses', 'markets'],
         'الحوكمة' => ['data-quality', 'data-catalog', 'business-glossary', 'fao', 'audit'],
-        'التكاملات' => ['powerbi', 'powerbi-blueprint', 'powerbi-feed', 'arcgis', 'fabric', 'hawat-ai'],
+        'التكاملات' => ['powerbi', 'powerbi-blueprint', 'powerbi-feed', 'arcgis', 'fabric', 'hawat-ai', 'sms', 'firebase'],
         'الأدوات والإعدادات' => ['import', 'stats', 'translation', 'permissions'],
     ],
 
@@ -148,6 +148,22 @@ return [
             'provider' => 'hawat_ai',
         ],
 
+        'sms' => [
+            'label' => 'الرسائل النصية',
+            'label_en' => 'SMS Gateway',
+            'icon' => 'plug',
+            'type' => 'integration',
+            'provider' => 'sms',
+        ],
+
+        'firebase' => [
+            'label' => 'إشعارات Firebase',
+            'label_en' => 'Firebase Cloud Messaging',
+            'icon' => 'plug',
+            'type' => 'integration',
+            'provider' => 'firebase',
+        ],
+
         'fao' => [
             'label' => 'معايير وتقارير FAO',
             'label_en' => 'FAO Standards & Reporting',
@@ -244,6 +260,34 @@ return [
                 ['key' => 'daily_query_limit', 'label' => 'حد الاستعلامات اليومي', 'type' => 'number'],
                 ['key' => 'enforce_jurisdiction', 'label' => 'فرض النطاق الجغرافي', 'type' => 'boolean'],
                 ['key' => 'log_queries', 'label' => 'تسجيل الاستعلامات', 'type' => 'boolean'],
+            ],
+        ],
+
+        /*
+         * رموز التحقق لتطبيق الجوال. ما دام التكامل معطّلًا تُكتب الرموز في سجل
+         * التطبيق (storage/logs) بدل إرسالها — انظر App\Services\Sms.
+         */
+        'sms' => [
+            'title' => 'بوابة الرسائل النصية',
+            'description' => 'إرسال رموز التحقق لاستعادة كلمة المرور من التطبيق، وما يليها من تنبيهات نصية.',
+            'safety_title' => 'قبل التفعيل تُكتب الرموز في سجل التطبيق',
+            'safety_text' => 'التكامل المعطّل لا يوقف استعادة كلمة المرور: الرمز يُسجَّل في storage/logs ليُقرأ منه أثناء التطوير.',
+            'fields' => [
+                ['key' => 'provider', 'label' => 'المزوّد', 'type' => 'select', 'options' => ['unifonic', 'msegat', 'twilio', 'custom']],
+                ['key' => 'sender_name', 'label' => 'اسم المرسل'],
+                ['key' => 'api_url', 'label' => 'API URL'],
+                ['key' => 'api_key', 'label' => 'API Key'],
+                ['key' => 'api_secret', 'label' => 'API Secret'],
+            ],
+        ],
+
+        'firebase' => [
+            'title' => 'إشعارات Firebase',
+            'description' => 'بثّ إشعارات التطبيق (رحلة جديدة، استلام المصيد، بيع…) عبر Firebase Cloud Messaging.',
+            'fields' => [
+                ['key' => 'project_id', 'label' => 'Project ID'],
+                ['key' => 'service_account_path', 'label' => 'مسار ملف حساب الخدمة (JSON)'],
+                ['key' => 'android_channel_id', 'label' => 'Android Channel ID'],
             ],
         ],
 

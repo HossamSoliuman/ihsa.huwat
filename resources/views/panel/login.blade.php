@@ -1,24 +1,27 @@
 @extends('layouts.auth')
 
-@section('title', config('info.title'))
+@section('title', 'لوحة الإدارة')
 
 @section('card')
     <div class="auth-brand">
-        <div class="ico">@include('partials.icon', ['name' => 'shield-check'])</div>
-        <h1>{{ config('info.title') }}</h1>
+        <div class="ico">@include('partials.icon', ['name' => 'layers'])</div>
+        <div>
+            <h1>لوحة الإدارة</h1>
+            <p style="font-size:.74rem;color:hsl(var(--muted-foreground))">الملاك والدلالون والتجار ومركز المعلومات</p>
+        </div>
     </div>
 
     @if ($errors->any())
         <div class="auth-error">{{ $errors->first() }}</div>
     @endif
 
-    <form class="auth-form" method="POST" action="{{ route('login') }}">
+    <form class="auth-form" method="POST" action="{{ route('panel.login.store') }}">
         @csrf
 
         <label class="field">
-            <span>البريد الإلكتروني</span>
-            <input class="input" type="email" name="email" value="{{ old('email') }}"
-                   dir="ltr" autocomplete="username" required autofocus>
+            <span>رقم الجوال أو البريد الإلكتروني</span>
+            <input class="input" type="text" name="identifier" value="{{ old('identifier') }}"
+                   dir="ltr" autocomplete="username" inputmode="email" placeholder="05XXXXXXXX" required autofocus>
         </label>
 
         <label class="field">
