@@ -1,0 +1,3358 @@
+openapi: 3.0.3
+info:
+  title: Hawat Mobile API
+  version: 1.1.0
+  description: |
+    Hawat mobile app API (com.os.hawat). All responses are JSON.
+
+    - Authentication: `Authorization: Bearer <token>` (Laravel Sanctum). A token is issued per device on login.
+    - Phone numbers use the `05XXXXXXXX` format; `+9665…`, `9665…` and Arabic digits are also accepted and normalized.
+    - Validation errors: `422` shaped as `{ "message": "...", "errors": { "field": ["..."] } }`.
+    - Unauthenticated: `401 { "message": "Unauthenticated." }`. Disabled account: `403`.
+    - Throttling: login 6/min, OTP request 3/min per phone number.
+    - Lookup lists: `GET /lookups` once after login.
+    - The owner portal lives under `/owner/*` and requires the `owner` role; every record is scoped to its owner (`404` otherwise).
+    - Paginated lists return `{ data: [...], links: {...}, meta: {...} }` with `?page=` and `?per_page=` (max 100).
+    - Changelog: docs/api/CHANGELOG.md.
+servers:
+- url: /api/v1
+tags:
+- name: auth
+  description: الدخول والحساب واستعادة كلمة المرور
+- name: lookups
+  description: القوائم المرجعية
+- name: owner
+  description: بوابة المالك — الرئيسة والمخزون
+- name: owner-fleet
+  description: المالك — القوارب والصيانة والكباتن والطاقم
+- name: owner-contacts
+  description: المالك — العملاء والموردون والموظفون
+- name: owner-trips
+  description: المالك — الرحلات
+- name: owner-sales
+  description: المالك — البيع والإرسال للدلال
+paths:
+  /auth/login:
+    post:
+      tags:
+      - auth
+      summary: تسجيل الدخول بالجوال
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - phone
+              - password
+              properties:
+                phone:
+                  type: string
+                  example: '0500000001'
+                password:
+                  type: string
+                  format: password
+                device_name:
+                  type: string
+                  example: Samsung A54
+                  description: يُحفظ مع الرمز لتمييز الأجهزة
+                fcm_token:
+                  type: string
+                  description: رمز Firebase للإشعارات — يُحفظ مع الدخول
+      responses:
+        '200':
+          description: دخول ناجح
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        example: 12|Yk3…
+                      token_type:
+                        type: string
+                        example: Bearer
+                      user:
+                        $ref: '#/components/schemas/User'
+                  message:
+                    type: string
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /auth/logout:
+    post:
+      tags:
+      - auth
+      summary: تسجيل الخروج من الجهاز الحالي
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+  /auth/me:
+    get:
+      tags:
+      - auth
+      summary: الحساب الحالي
+      responses:
+        '200':
+          description: الحساب
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+    put:
+      tags:
+      - auth
+      summary: تعديل بيانات الحساب
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                  nullable: true
+                locale:
+                  type: string
+                  enum:
+                  - ar
+                  - en
+      responses:
+        '200':
+          description: الحساب بعد التعديل
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /auth/change-password:
+    post:
+      tags:
+      - auth
+      summary: تغيير كلمة المرور (يُخرج بقية الأجهزة)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - current_password
+              - password
+              - password_confirmation
+              properties:
+                current_password:
+                  type: string
+                  format: password
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                password_confirmation:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /auth/fcm-token:
+    post:
+      tags:
+      - auth
+      summary: تحديث رمز إشعارات Firebase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - fcm_token
+              properties:
+                fcm_token:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+  /auth/forgot-password:
+    post:
+      tags:
+      - auth
+      summary: طلب رمز التحقق لاستعادة كلمة المرور
+      description: الردّ واحد وُجد الجوال أم لا. الرمز 6 أرقام صالح 10 دقائق و5 محاولات.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - phone
+              properties:
+                phone:
+                  type: string
+                  example: '0500000001'
+      responses:
+        '200':
+          description: أُرسل الرمز إن كان الجوال مسجّلًا
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      expires_in:
+                        type: integer
+                        example: 600
+                        description: بالثواني
+        '429':
+          description: تجاوز الحدّ — انتظر دقيقة
+  /auth/verify-otp:
+    post:
+      tags:
+      - auth
+      summary: التحقق من الرمز قبل شاشة كلمة المرور الجديدة
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - phone
+              - code
+              properties:
+                phone:
+                  type: string
+                code:
+                  type: string
+                  example: '123456'
+      responses:
+        '200':
+          description: الرمز صحيح
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      verified:
+                        type: boolean
+                        example: true
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /auth/reset-password:
+    post:
+      tags:
+      - auth
+      summary: كلمة المرور الجديدة بالرمز (يُخرج كل الأجهزة)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - phone
+              - code
+              - password
+              - password_confirmation
+              properties:
+                phone:
+                  type: string
+                code:
+                  type: string
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                password_confirmation:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /lookups:
+    get:
+      tags:
+      - lookups
+      summary: كل القوائم المرجعية في ردّ واحد
+      responses:
+        '200':
+          description: القوائم
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Lookups'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /owner/dashboard:
+    get:
+      tags:
+      - owner
+      summary: رئيسة المالك — المؤشرات والمخزون والرحلات النشطة وآخر المبيعات
+      responses:
+        '200':
+          description: الرئيسة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Dashboard'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /owner/stock:
+    get:
+      tags:
+      - owner
+      summary: الأسماك المتوفرة عند المالك مجموعةً بالصنف
+      responses:
+        '200':
+          description: المخزون
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StockLine'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /owner/stock/movements:
+    get:
+      tags:
+      - owner
+      summary: حركات الصنف (دفتر المخزون)
+      parameters:
+      - name: page
+        in: query
+        description: رقم الصفحة
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        description: حجم الصفحة (حتى 100)
+        schema:
+          type: integer
+          default: 25
+      - name: species_id
+        in: query
+        description: صنف بعينه
+        schema:
+          type: integer
+      - name: trip_id
+        in: query
+        description: رحلة بعينها
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: الحركات
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/StockMovement'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /owner/dalals:
+    get:
+      tags:
+      - owner
+      summary: الدلالون المفعّلون — لقائمة الإرسال
+      parameters:
+      - name: search
+        in: query
+        description: بالاسم
+        schema:
+          type: string
+      responses:
+        '200':
+          description: الدلالون
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        phone:
+                          type: string
+                          nullable: true
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /owner/boats:
+    get:
+      tags:
+      - owner-fleet
+      summary: قائمة القوارب
+      parameters:
+      - name: page
+        in: query
+        description: رقم الصفحة
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        description: حجم الصفحة (حتى 100)
+        schema:
+          type: integer
+          default: 25
+      - name: status
+        in: query
+        description: الحالة
+        schema:
+          type: string
+      - name: search
+        in: query
+        description: الاسم أو الرقم
+        schema:
+          type: string
+      responses:
+        '200':
+          description: القوارب
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Boat'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+      - owner-fleet
+      summary: إضافة قارب
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoatInput'
+      responses:
+        '201':
+          description: أُنشئ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Boat'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /owner/boats/{boat}:
+    parameters:
+    - name: boat
+      in: path
+      required: true
+      description: معرّف قارب
+      schema:
+        type: integer
+    get:
+      tags:
+      - owner-fleet
+      summary: تفاصيل قارب
+      responses:
+        '200':
+          description: قارب
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Boat'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+      - owner-fleet
+      summary: تعديل قارب
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoatInput'
+      responses:
+        '200':
+          description: حُدّث
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Boat'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags:
+      - owner-fleet
+      summary: حذف قارب — يُرفض إن كانت له رحلات
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /owner/maintenance:
+    get:
+      tags:
+      - owner-fleet
+      summary: قائمة سجلات الصيانة
+      parameters:
+      - name: page
+        in: query
+        description: رقم الصفحة
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        description: حجم الصفحة (حتى 100)
+        schema:
+          type: integer
+          default: 25
+      - name: boat_id
+        in: query
+        description: قارب بعينه
+        schema:
+          type: integer
+      - name: status
+        in: query
+        description: الحالة
+        schema:
+          type: string
+      responses:
+        '200':
+          description: سجلات الصيانة
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Maintenance'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+      - owner-fleet
+      summary: إضافة سجل صيانة
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceInput'
+      responses:
+        '201':
+          description: أُنشئ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Maintenance'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /owner/maintenance/{maintenance}:
+    parameters:
+    - name: maintenance
+      in: path
+      required: true
+      description: معرّف سجل صيانة
+      schema:
+        type: integer
+    put:
+      tags:
+      - owner-fleet
+      summary: تعديل سجل صيانة
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceInput'
+      responses:
+        '200':
+          description: حُدّث
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Maintenance'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags:
+      - owner-fleet
+      summary: حذف سجل صيانة
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /owner/captains:
+    get:
+      tags:
+      - owner-fleet
+      summary: قائمة الكباتن
+      parameters:
+      - name: page
+        in: query
+        description: رقم الصفحة
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        description: حجم الصفحة (حتى 100)
+        schema:
+          type: integer
+          default: 25
+      - name: search
+        in: query
+        description: الاسم أو الجوال
+        schema:
+          type: string
+      responses:
+        '200':
+          description: الكباتن
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Captain'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+      - owner-fleet
+      summary: إضافة كابتن
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaptainInput'
+      responses:
+        '201':
+          description: أُنشئ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Captain'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+      description: ينشئ حساب دخول بدور كابتن يتبع المالك + سجلّ صياد في الوزارة. للتعطيل أرسل active=false في التعديل.
+  /owner/captains/{captain}:
+    parameters:
+    - name: captain
+      in: path
+      required: true
+      description: معرّف كابتن
+      schema:
+        type: integer
+    get:
+      tags:
+      - owner-fleet
+      summary: تفاصيل كابتن
+      responses:
+        '200':
+          description: كابتن
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Captain'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+      - owner-fleet
+      summary: تعديل كابتن
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaptainInput'
+      responses:
+        '200':
+          description: حُدّث
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Captain'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /owner/crew:
+    get:
+      tags:
+      - owner-fleet
+      summary: قائمة الطاقم
+      parameters:
+      - name: page
+        in: query
+        description: رقم الصفحة
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        description: حجم الصفحة (حتى 100)
+        schema:
+          type: integer
+          default: 25
+      - name: boat_id
+        in: query
+        description: قارب بعينه
+        schema:
+          type: integer
+      - name: search
+        in: query
+        description: الاسم
+        schema:
+          type: string
+      responses:
+        '200':
+          description: الطاقم
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Fisher'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+      - owner-fleet
+      summary: إضافة عضو طاقم
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrewInput'
+      responses:
+        '201':
+          description: أُنشئ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Fisher'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /owner/crew/{crew}:
+    parameters:
+    - name: crew
+      in: path
+      required: true
+      description: معرّف عضو طاقم
+      schema:
+        type: integer
+    put:
+      tags:
+      - owner-fleet
+      summary: تعديل عضو طاقم
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrewInput'
+      responses:
+        '200':
+          description: حُدّث
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Fisher'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags:
+      - owner-fleet
+      summary: حذف عضو طاقم
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /owner/employees:
+    get:
+      tags:
+      - owner-contacts
+      summary: قائمة الموظفون
+      parameters:
+      - name: page
+        in: query
+        description: رقم الصفحة
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        description: حجم الصفحة (حتى 100)
+        schema:
+          type: integer
+          default: 25
+      - name: status
+        in: query
+        description: الحالة
+        schema:
+          type: string
+      - name: search
+        in: query
+        description: الاسم أو الجوال
+        schema:
+          type: string
+      responses:
+        '200':
+          description: الموظفون
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Employee'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+      - owner-contacts
+      summary: إضافة موظف
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeInput'
+      responses:
+        '201':
+          description: أُنشئ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Employee'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /owner/employees/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      description: معرّف موظف
+      schema:
+        type: integer
+    get:
+      tags:
+      - owner-contacts
+      summary: تفاصيل موظف
+      responses:
+        '200':
+          description: موظف
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Employee'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+      - owner-contacts
+      summary: تعديل موظف
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeInput'
+      responses:
+        '200':
+          description: حُدّث
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Employee'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags:
+      - owner-contacts
+      summary: حذف موظف
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /owner/customers:
+    get:
+      tags:
+      - owner-contacts
+      summary: قائمة العملاء
+      parameters:
+      - name: page
+        in: query
+        description: رقم الصفحة
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        description: حجم الصفحة (حتى 100)
+        schema:
+          type: integer
+          default: 25
+      - name: status
+        in: query
+        description: الحالة
+        schema:
+          type: string
+      - name: search
+        in: query
+        description: الاسم أو الجوال
+        schema:
+          type: string
+      responses:
+        '200':
+          description: العملاء
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Customer'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+      - owner-contacts
+      summary: إضافة عميل
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerInput'
+      responses:
+        '201':
+          description: أُنشئ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Customer'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /owner/customers/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      description: معرّف عميل
+      schema:
+        type: integer
+    get:
+      tags:
+      - owner-contacts
+      summary: تفاصيل عميل
+      responses:
+        '200':
+          description: عميل
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Customer'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+      - owner-contacts
+      summary: تعديل عميل
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerInput'
+      responses:
+        '200':
+          description: حُدّث
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Customer'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags:
+      - owner-contacts
+      summary: حذف عميل
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /owner/vendors:
+    get:
+      tags:
+      - owner-contacts
+      summary: قائمة الموردون
+      parameters:
+      - name: page
+        in: query
+        description: رقم الصفحة
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        description: حجم الصفحة (حتى 100)
+        schema:
+          type: integer
+          default: 25
+      - name: status
+        in: query
+        description: الحالة
+        schema:
+          type: string
+      - name: search
+        in: query
+        description: الاسم أو الجوال
+        schema:
+          type: string
+      responses:
+        '200':
+          description: الموردون
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Vendor'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+      - owner-contacts
+      summary: إضافة مورد
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorInput'
+      responses:
+        '201':
+          description: أُنشئ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Vendor'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /owner/vendors/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      description: معرّف مورد
+      schema:
+        type: integer
+    get:
+      tags:
+      - owner-contacts
+      summary: تفاصيل مورد
+      responses:
+        '200':
+          description: مورد
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Vendor'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+      - owner-contacts
+      summary: تعديل مورد
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorInput'
+      responses:
+        '200':
+          description: حُدّث
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Vendor'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags:
+      - owner-contacts
+      summary: حذف مورد
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /owner/trips:
+    get:
+      tags:
+      - owner-trips
+      summary: قائمة الرحلات
+      parameters:
+      - name: page
+        in: query
+        description: رقم الصفحة
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        description: حجم الصفحة (حتى 100)
+        schema:
+          type: integer
+          default: 25
+      - name: active
+        in: query
+        description: 1 = الرحلات النشطة (من الانطلاق حتى البيع)
+        schema:
+          type: boolean
+      - name: status
+        in: query
+        description: حالة الوزارة
+        schema:
+          type: string
+      - name: sale_status
+        in: query
+        description: قيد البيع / مباعة / لم يبدأ
+        schema:
+          type: string
+      - name: boat_id
+        in: query
+        description: قارب بعينه
+        schema:
+          type: integer
+      - name: search
+        in: query
+        description: رقم الرحلة
+        schema:
+          type: string
+      responses:
+        '200':
+          description: الرحلات
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Trip'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+      - owner-trips
+      summary: إنشاء رحلة وإسنادها لكابتن → مجدولة
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripInput'
+      responses:
+        '201':
+          description: أُنشئ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /owner/trips/{trip}:
+    parameters:
+    - name: trip
+      in: path
+      required: true
+      description: معرّف رحلة
+      schema:
+        type: integer
+    get:
+      tags:
+      - owner-trips
+      summary: تفاصيل رحلة
+      responses:
+        '200':
+          description: رحلة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+      - owner-trips
+      summary: تعديل رحلة (ما دامت مجدولة)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripInput'
+      responses:
+        '200':
+          description: حُدّث
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /owner/trips/{trip}/start:
+    parameters:
+    - name: trip
+      in: path
+      required: true
+      description: معرّف الرحلة
+      schema:
+        type: integer
+    post:
+      tags:
+      - owner-trips
+      summary: بدء الرحلة نيابةً عن الكابتن → في البحر
+      responses:
+        '200':
+          description: الرحلة بعد الفعل
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /owner/trips/{trip}/cancel:
+    parameters:
+    - name: trip
+      in: path
+      required: true
+      description: معرّف الرحلة
+      schema:
+        type: integer
+    post:
+      tags:
+      - owner-trips
+      summary: إلغاء الرحلة بسبب (مجدولة أو في البحر)
+      responses:
+        '200':
+          description: الرحلة بعد الفعل
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+              required:
+              - reason
+  /owner/trips/{trip}/catch:
+    parameters:
+    - name: trip
+      in: path
+      required: true
+      description: معرّف الرحلة
+      schema:
+        type: integer
+    post:
+      tags:
+      - owner-trips
+      summary: إرسال مخرجات المصيد نيابةً عن الكابتن → بانتظار الإحصاء
+      responses:
+        '200':
+          description: الرحلة بعد الفعل
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatchInput'
+  /owner/sales:
+    get:
+      tags:
+      - owner-sales
+      summary: فواتير البيع
+      parameters:
+      - name: page
+        in: query
+        description: رقم الصفحة
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        description: حجم الصفحة (حتى 100)
+        schema:
+          type: integer
+          default: 25
+      - name: trip_id
+        in: query
+        description: رحلة
+        schema:
+          type: integer
+      - name: customer_id
+        in: query
+        description: زبون
+        schema:
+          type: integer
+      - name: from
+        in: query
+        description: من تاريخ
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        description: إلى تاريخ
+        schema:
+          type: string
+          format: date
+      - name: search
+        in: query
+        description: رقم الفاتورة أو اسم الزبون
+        schema:
+          type: string
+      responses:
+        '200':
+          description: الفواتير
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Sale'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+      - owner-sales
+      summary: بيع مصيد رحلة لزبون
+      description: الرحلة يجب أن تكون قيد البيع، وكل وزن لا يتجاوز المتاح من صنفه (`GET /owner/trips/{trip}` → available_stock). يخصم من دفتر المخزون ويُغلق الرحلة "مباعة" حين ينفد مصيدها.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaleInput'
+      responses:
+        '201':
+          description: الفاتورة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Sale'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /owner/sales/{sale}:
+    parameters:
+    - name: sale
+      in: path
+      required: true
+      description: معرّف الفاتورة
+      schema:
+        type: integer
+    get:
+      tags:
+      - owner-sales
+      summary: تفاصيل الفاتورة بسطورها
+      responses:
+        '200':
+          description: الفاتورة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Sale'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /owner/consignments:
+    get:
+      tags:
+      - owner-sales
+      summary: الشحنات المرسلة للدلالين
+      parameters:
+      - name: page
+        in: query
+        description: رقم الصفحة
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        description: حجم الصفحة (حتى 100)
+        schema:
+          type: integer
+          default: 25
+      - name: trip_id
+        in: query
+        description: رحلة
+        schema:
+          type: integer
+      - name: dalal_id
+        in: query
+        description: دلال
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: الشحنات
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Consignment'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+      - owner-sales
+      summary: إرسال مصيد رحلة إلى مخزون دلال
+      description: يخرج الوزن من دفتر المالك ويدخل دفتر الدلال بالرحلة نفسها.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsignmentInput'
+      responses:
+        '201':
+          description: الشحنة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Consignment'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /owner/consignments/{consignment}:
+    parameters:
+    - name: consignment
+      in: path
+      required: true
+      description: معرّف الشحنة
+      schema:
+        type: integer
+    get:
+      tags:
+      - owner-sales
+      summary: تفاصيل الشحنة
+      responses:
+        '200':
+          description: الشحنة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Consignment'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    Role:
+      type: object
+      properties:
+        key:
+          type: string
+          enum:
+          - super_admin
+          - owner
+          - captain
+          - crew
+          - employee
+          - counter
+          - dalal
+          - merchant
+        name:
+          type: string
+          example: مالك القارب
+        name_en:
+          type: string
+          example: Owner
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+          example: '0500000001'
+        email:
+          type: string
+          nullable: true
+        role:
+          $ref: '#/components/schemas/Role'
+        owner:
+          type: object
+          nullable: true
+          description: المالك الذي يتبعه الحساب (للكابتن والطاقم والموظف)
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            phone:
+              type: string
+        active:
+          type: boolean
+        locale:
+          type: string
+          example: ar
+        avatar_url:
+          type: string
+          nullable: true
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    Lookup:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        name_en:
+          type: string
+          nullable: true
+    Species:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        name_en:
+          type: string
+          nullable: true
+        name_sci:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+    Port:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        governorate:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            region:
+              type: string
+              nullable: true
+          nullable: true
+    Lookups:
+      type: object
+      properties:
+        species:
+          type: array
+          items:
+            $ref: '#/components/schemas/Species'
+        ports:
+          type: array
+          items:
+            $ref: '#/components/schemas/Port'
+        gear_types:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+        boat_categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lookup'
+        boat_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lookup'
+        maintenance_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lookup'
+        trip_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lookup'
+        fisher_roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lookup'
+        id_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lookup'
+        job_titles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lookup'
+        payment_methods:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lookup'
+        payment_statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lookup'
+        customer_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lookup'
+    Boat:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        name_en:
+          type: string
+          nullable: true
+        boat_number:
+          type: string
+        status:
+          type: string
+          enum:
+          - نشط
+          - غير نشط
+          - صيانة
+          - في البحر
+        port:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        category:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        type:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        captain:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            phone:
+              type: string
+              nullable: true
+          nullable: true
+        length_m:
+          type: number
+          nullable: true
+        width_m:
+          type: number
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        hull_number:
+          type: string
+          nullable: true
+        body_type:
+          type: string
+          nullable: true
+        engine_type:
+          type: string
+          nullable: true
+        engine_power:
+          type: string
+          nullable: true
+        engine_status:
+          type: string
+          nullable: true
+        call_sign:
+          type: string
+          nullable: true
+        serial_number:
+          type: string
+          nullable: true
+        capacity:
+          type: integer
+          nullable: true
+        crew_count:
+          type: integer
+        crew_capacity:
+          type: integer
+        license:
+          type: object
+          properties:
+            type:
+              type: string
+              nullable: true
+            number:
+              type: string
+              nullable: true
+            status:
+              type: string
+              nullable: true
+            process:
+              type: string
+              nullable: true
+            area:
+              type: string
+              nullable: true
+            date:
+              type: string
+              nullable: true
+              format: date
+            expiry:
+              type: string
+              nullable: true
+              format: date
+        next_inspection_date:
+          type: string
+          nullable: true
+          format: date
+        trips_count:
+          type: integer
+        total_catch_kg:
+          type: number
+        created_at:
+          type: string
+          nullable: true
+          format: date-time
+    BoatInput:
+      type: object
+      properties:
+        name:
+          type: string
+        name_en:
+          type: string
+          nullable: true
+        boat_number:
+          type: string
+        port_id:
+          type: integer
+        boat_category_id:
+          type: integer
+          nullable: true
+        boat_type_id:
+          type: integer
+          nullable: true
+        captain_id:
+          type: integer
+          nullable: true
+          description: من كباتن المالك
+        status:
+          type: string
+          enum:
+          - نشط
+          - غير نشط
+          - صيانة
+        length_m:
+          type: number
+          nullable: true
+        width_m:
+          type: number
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        hull_number:
+          type: string
+          nullable: true
+        body_type:
+          type: string
+          nullable: true
+        engine_type:
+          type: string
+          nullable: true
+        engine_power:
+          type: string
+          nullable: true
+        engine_status:
+          type: string
+          nullable: true
+        call_sign:
+          type: string
+          nullable: true
+        serial_number:
+          type: string
+          nullable: true
+        capacity:
+          type: integer
+          nullable: true
+        crew_count:
+          type: integer
+          nullable: true
+        crew_capacity:
+          type: integer
+          nullable: true
+        license_type:
+          type: string
+          nullable: true
+        license_number:
+          type: string
+          nullable: true
+        license_status:
+          type: string
+          nullable: true
+        license_process:
+          type: string
+          nullable: true
+        license_area:
+          type: string
+          nullable: true
+        license_date:
+          type: string
+          nullable: true
+          format: date
+        license_expiry:
+          type: string
+          nullable: true
+          format: date
+        next_inspection_date:
+          type: string
+          nullable: true
+          format: date
+      required:
+      - name
+      - boat_number
+      - port_id
+    Maintenance:
+      type: object
+      properties:
+        id:
+          type: integer
+        boat:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        type:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        date:
+          type: string
+          format: date
+        technician:
+          type: string
+          nullable: true
+        estimated_cost:
+          type: number
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+          - معلقة
+          - مكتملة
+          - ملغاة
+    MaintenanceInput:
+      type: object
+      properties:
+        boat_id:
+          type: integer
+        maintenance_type_id:
+          type: integer
+          nullable: true
+        date:
+          type: string
+          format: date
+        technician:
+          type: string
+          nullable: true
+        estimated_cost:
+          type: number
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+          - معلقة
+          - مكتملة
+          - ملغاة
+      required:
+      - boat_id
+      - date
+    Fisher:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+          nullable: true
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        national_id:
+          type: string
+        nationality:
+          type: string
+          nullable: true
+        id_type:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        role:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        boat:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        port:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        license_number:
+          type: string
+          nullable: true
+        license_status:
+          type: string
+          nullable: true
+        license_expiry:
+          type: string
+          nullable: true
+          format: date
+        experience_years:
+          type: integer
+        trips_count:
+          type: integer
+        status:
+          type: string
+    Captain:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+        last_login_at:
+          type: string
+          nullable: true
+          format: date-time
+        fisher:
+          $ref: '#/components/schemas/Fisher'
+    CaptainInput:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+          example: '0555555555'
+        email:
+          type: string
+          nullable: true
+        password:
+          type: string
+          format: password
+          description: مطلوبة عند الإنشاء؛ اختيارية عند التعديل
+        national_id:
+          type: string
+        id_type_id:
+          type: integer
+          nullable: true
+        nationality:
+          type: string
+          nullable: true
+        boat_id:
+          type: integer
+          nullable: true
+          description: يُسنَد الكابتن إليه
+        port_id:
+          type: integer
+          nullable: true
+          description: مطلوب إن لم يُحدَّد قارب
+        license_number:
+          type: string
+          nullable: true
+        license_expiry:
+          type: string
+          nullable: true
+          format: date
+        experience_years:
+          type: integer
+          nullable: true
+        active:
+          type: boolean
+      required:
+      - name
+      - phone
+      - national_id
+    CrewInput:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        national_id:
+          type: string
+        id_type_id:
+          type: integer
+          nullable: true
+        nationality:
+          type: string
+          nullable: true
+        fisher_role_id:
+          type: integer
+          nullable: true
+        boat_id:
+          type: integer
+          nullable: true
+        port_id:
+          type: integer
+          nullable: true
+          description: مطلوب إن لم يُحدَّد قارب
+        license_number:
+          type: string
+          nullable: true
+        license_expiry:
+          type: string
+          nullable: true
+          format: date
+        experience_years:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum:
+          - نشط
+          - غير نشط
+      required:
+      - name
+      - national_id
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        nationality:
+          type: string
+          nullable: true
+        id_number:
+          type: string
+          nullable: true
+        job_title:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        status:
+          type: string
+        notes:
+          type: string
+          nullable: true
+    EmployeeInput:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        nationality:
+          type: string
+          nullable: true
+        id_number:
+          type: string
+          nullable: true
+        job_title_id:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum:
+          - نشط
+          - غير نشط
+        notes:
+          type: string
+          nullable: true
+      required:
+      - name
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        type:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        region:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        governorate:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        status:
+          type: string
+        sales_count:
+          type: integer
+        sales_total:
+          type: number
+          nullable: true
+    CustomerInput:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        customer_type_id:
+          type: integer
+          nullable: true
+        region_id:
+          type: integer
+          nullable: true
+        governorate_id:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+          - نشط
+          - غير نشط
+      required:
+      - name
+    Vendor:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        status:
+          type: string
+    VendorInput:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+          - نشط
+          - غير نشط
+      required:
+      - name
+    CatchRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        species:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            name_sci:
+              type: string
+              nullable: true
+        captain_kg:
+          type: number
+          nullable: true
+        counted_kg:
+          type: number
+          nullable: true
+        quantity_kg:
+          type: number
+        captain_notes:
+          type: string
+          nullable: true
+        counter_notes:
+          type: string
+          nullable: true
+        verified:
+          type: boolean
+        added_by:
+          type: string
+          nullable: true
+        recorded_at:
+          type: string
+          nullable: true
+          format: date
+    AvailableLine:
+      type: object
+      properties:
+        species_id:
+          type: integer
+        species:
+          type: string
+          nullable: true
+        available_kg:
+          type: number
+    Trip:
+      type: object
+      properties:
+        id:
+          type: integer
+        trip_number:
+          type: string
+          example: TR-2026-0007
+        status:
+          type: string
+          enum:
+          - مجدولة
+          - في البحر
+          - عادت للميناء
+          - بانتظار الإحصاء
+          - تحت الإحصاء
+          - بانتظار الاعتماد
+          - معتمدة
+          - ملغاة
+          description: حالة الوزارة
+        app_status:
+          type: string
+          description: التسمية كما تُعرض في التطبيق
+        progress_step:
+          type: integer
+          minimum: 0
+          maximum: 4
+          description: 0 لم تبدأ … 4 اكتمل العد
+        sale_status:
+          type: string
+          enum:
+          - لم يبدأ
+          - قيد البيع
+          - مباعة
+        can_sell:
+          type: boolean
+        boat:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            boat_number:
+              type: string
+          nullable: true
+        captain:
+          type: object
+          properties:
+            id:
+              type: integer
+              nullable: true
+            name:
+              type: string
+              nullable: true
+            phone:
+              type: string
+              nullable: true
+          nullable: true
+        counter:
+          type: object
+          properties:
+            id:
+              type: integer
+              nullable: true
+            name:
+              type: string
+              nullable: true
+          nullable: true
+        departure_port:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        return_port:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        trip_type:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        crew_count:
+          type: integer
+        planned_days:
+          type: integer
+          nullable: true
+        gear_type:
+          type: string
+          nullable: true
+        license_number:
+          type: string
+          nullable: true
+        departure_time:
+          type: string
+          nullable: true
+          format: date-time
+        started_at:
+          type: string
+          nullable: true
+          format: date-time
+        return_time:
+          type: string
+          nullable: true
+          format: date-time
+        catch_submitted_at:
+          type: string
+          nullable: true
+          format: date-time
+        received_at:
+          type: string
+          nullable: true
+          format: date-time
+        counted_at:
+          type: string
+          nullable: true
+          format: date-time
+        cancelled_at:
+          type: string
+          nullable: true
+          format: date-time
+        cancel_reason:
+          type: string
+          nullable: true
+        duration_hours:
+          type: number
+          nullable: true
+        captain_input_kg:
+          type: number
+          nullable: true
+        actual_weight_kg:
+          type: number
+          nullable: true
+        diff_kg:
+          type: number
+          nullable: true
+        approved_kg:
+          type: number
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        catch_records:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatchRecord'
+          description: في التفاصيل فقط
+        available_stock:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailableLine'
+          description: في التفاصيل فقط — المتاح للبيع من كل صنف
+        created_at:
+          type: string
+          nullable: true
+          format: date-time
+    TripInput:
+      type: object
+      properties:
+        boat_id:
+          type: integer
+        captain_id:
+          type: integer
+          nullable: true
+          description: من كباتن المالك؛ الافتراضي كابتن القارب
+        departure_port_id:
+          type: integer
+          nullable: true
+        return_port_id:
+          type: integer
+          nullable: true
+        trip_type_id:
+          type: integer
+          nullable: true
+        crew_count:
+          type: integer
+          nullable: true
+        departure_time:
+          type: string
+          nullable: true
+          format: date-time
+        planned_days:
+          type: integer
+          nullable: true
+        gear_type:
+          type: string
+          nullable: true
+        license_number:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+      - boat_id
+    CatchInput:
+      type: object
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            properties:
+              species_id:
+                type: integer
+              weight_kg:
+                type: number
+                minimum: 0.01
+              notes:
+                type: string
+                nullable: true
+            required:
+            - species_id
+            - weight_kg
+      required:
+      - items
+    SaleItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        species:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        weight_kg:
+          type: number
+        price_per_kg:
+          type: number
+        total:
+          type: number
+    Sale:
+      type: object
+      properties:
+        id:
+          type: integer
+        invoice_number:
+          type: string
+          example: 26-09-000001
+        status:
+          type: string
+        trip:
+          type: object
+          properties:
+            id:
+              type: integer
+            trip_number:
+              type: string
+          nullable: true
+        customer:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            phone:
+              type: string
+              nullable: true
+          nullable: true
+        payment_method:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        payment_status:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        subtotal:
+          type: number
+        discount:
+          type: number
+        total:
+          type: number
+        paid_amount:
+          type: number
+        remaining:
+          type: number
+        owner_net:
+          type: number
+        items_count:
+          type: integer
+        total_kg:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleItem'
+        sold_at:
+          type: string
+          nullable: true
+          format: date-time
+        notes:
+          type: string
+          nullable: true
+    SaleInput:
+      type: object
+      properties:
+        trip_id:
+          type: integer
+        customer_id:
+          type: integer
+          nullable: true
+        payment_method_id:
+          type: integer
+          nullable: true
+        payment_status_id:
+          type: integer
+          nullable: true
+          description: يُحسب من المدفوع إن غاب
+        discount:
+          type: number
+          nullable: true
+        paid_amount:
+          type: number
+          nullable: true
+          description: الافتراضي = الإجمالي (مدفوع بالكامل)
+        notes:
+          type: string
+          nullable: true
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            properties:
+              species_id:
+                type: integer
+              weight_kg:
+                type: number
+                minimum: 0.01
+                description: لا يتجاوز المتاح في الرحلة
+              price_per_kg:
+                type: number
+                minimum: 0.01
+            required:
+            - species_id
+            - weight_kg
+            - price_per_kg
+      required:
+      - trip_id
+      - items
+    Consignment:
+      type: object
+      properties:
+        id:
+          type: integer
+        consignment_number:
+          type: string
+          example: CN-2026-0001
+        status:
+          type: string
+          enum:
+          - مرسلة
+          - مستلمة
+          - ملغاة
+        dalal:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            phone:
+              type: string
+              nullable: true
+        trip:
+          type: object
+          properties:
+            id:
+              type: integer
+            trip_number:
+              type: string
+          nullable: true
+        total_kg:
+          type: number
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              species:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+              weight_kg:
+                type: number
+        sent_at:
+          type: string
+          nullable: true
+          format: date-time
+        notes:
+          type: string
+          nullable: true
+    ConsignmentInput:
+      type: object
+      properties:
+        trip_id:
+          type: integer
+        dalal_id:
+          type: integer
+        notes:
+          type: string
+          nullable: true
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            properties:
+              species_id:
+                type: integer
+              weight_kg:
+                type: number
+                minimum: 0.01
+            required:
+            - species_id
+            - weight_kg
+      required:
+      - trip_id
+      - dalal_id
+      - items
+    StockLine:
+      type: object
+      properties:
+        species_id:
+          type: integer
+        species:
+          type: string
+          nullable: true
+        name_sci:
+          type: string
+          nullable: true
+        weight_kg:
+          type: number
+    StockMovement:
+      type: object
+      properties:
+        id:
+          type: integer
+        species:
+          type: string
+          nullable: true
+        trip_number:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        weight_kg:
+          type: number
+          description: موجب دخول، سالب خروج
+        balance_after:
+          type: number
+        user:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          nullable: true
+          format: date-time
+    Dashboard:
+      type: object
+      properties:
+        kpis:
+          type: object
+          properties:
+            revenue:
+              type: number
+            catch_kg:
+              type: number
+            active_boats:
+              type: number
+            boats:
+              type: number
+            trips_at_sea:
+              type: number
+            trips_awaiting_count:
+              type: number
+            trips_for_sale:
+              type: number
+            sales_count:
+              type: number
+            unpaid:
+              type: number
+            customers:
+              type: number
+        revenue_by_month:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: string
+                example: 2026-09
+              label:
+                type: string
+              total:
+                type: number
+        stock:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockLine'
+        active_trips:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trip'
+        recent_sales:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sale'
+    Pagination:
+      type: object
+      properties:
+        links:
+          type: object
+          properties:
+            first:
+              type: string
+              nullable: true
+            last:
+              type: string
+              nullable: true
+            prev:
+              type: string
+              nullable: true
+            next:
+              type: string
+              nullable: true
+        meta:
+          type: object
+          properties:
+            current_page:
+              type: integer
+            from:
+              type: integer
+              nullable: true
+            last_page:
+              type: integer
+            per_page:
+              type: integer
+            to:
+              type: integer
+              nullable: true
+            total:
+              type: integer
+            path:
+              type: string
+            links:
+              type: array
+              items:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    nullable: true
+                  label:
+                    type: string
+                  active:
+                    type: boolean
+  responses:
+    Message:
+      description: نجاح
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    Unauthenticated:
+      description: بلا رمز أو رمز ملغى
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Unauthenticated.
+    ValidationError:
+      description: خطأ تحقق
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              errors:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+    NotFound:
+      description: غير موجود أو ليس لهذا المالك
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    Forbidden:
+      description: الدور لا يخوّل هذه الواجهة أو الحساب معطّل
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+security:
+- bearerAuth: []

@@ -17,7 +17,8 @@
 /storage/pail
 /storage/employment_uploads/*
 !/storage/employment_uploads/.htaccess
-/docs
+/docs/*
+!/docs/api/
 /vendor
 Homestead.json
 Homestead.yaml
