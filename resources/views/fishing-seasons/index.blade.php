@@ -78,7 +78,7 @@
                 <thead>
                     <tr>
                         <th>الموسم</th>
-                        @foreach ($months as $m)<th style="text-align:center">{{ mb_substr($m, 0, 3) }}</th>@endforeach
+                        @foreach ($months as $m)<th style="text-align:center;white-space:nowrap">{{ $m }}</th>@endforeach
                     </tr>
                 </thead>
                 <tbody>
