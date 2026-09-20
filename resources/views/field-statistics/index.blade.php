@@ -91,7 +91,7 @@
 
 @push('scripts')
 <script>
-    const recordBase = @json(url('field-statistics'));
+    const recordBase = @json(url('stats/field-statistics'));
 
     function openStatsForm(trip) {
         document.getElementById('statsForm').action = recordBase + '/' + trip.id + '/record';

@@ -2,8 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 class Port extends BaseModel
 {
+    use HasFactory;
+
     public function governorate()
     {
         return $this->belongsTo(Governorate::class);

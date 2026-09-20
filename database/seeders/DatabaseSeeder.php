@@ -22,6 +22,9 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             SubAdministrationSeeder::class,
             ServicesLicensingSeeder::class,
+            // قوائم بوابة المالك، ثم ربط المالك التجريبي بقاربين ورحلاتهما.
+            LookupSeeder::class,
+            DemoOwnerSeeder::class,
         ]);
     }
 }

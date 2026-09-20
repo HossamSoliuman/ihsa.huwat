@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AuditLog;
 use App\Models\Trip;
+use App\Services\Trips\TripService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -33,7 +33,11 @@ class FieldStatisticsController extends Controller
         return view('field-statistics.index', ['trips' => $filtered, 'stats' => $stats]);
     }
 
-    public function record(Request $request, Trip $trip): RedirectResponse
+    /**
+     * تسجيل الوزن الفعلي يمرّ بخدمة الرحلات نفسها التي يستعملها التطبيق: تُحدَّث
+     * الحالة والفرق، ويُفتح مصيد الرحلة للبيع في دفتر مالكها.
+     */
+    public function record(Request $request, Trip $trip, TripService $trips): RedirectResponse
     {
         $data = $request->validate([
             'actual_weight_kg' => ['required', 'numeric', 'min:0'],
@@ -41,16 +45,11 @@ class FieldStatisticsController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $data['diff_kg'] = round($data['actual_weight_kg'] - (float) $trip->captain_input_kg, 2);
-        $data['status'] = 'بانتظار الاعتماد';
-        $trip->update($data);
+        $trips->count($trip, null, $request->user(), (float) $data['actual_weight_kg'], $data['notes'] ?? null);
 
-        AuditLog::create([
-            'action' => 'إحصاء',
-            'entity' => 'Trip',
-            'record_label' => $trip->trip_number,
-            'details' => "تسجيل الوزن الفعلي {$data['actual_weight_kg']} كجم بفرق {$data['diff_kg']} كجم",
-        ]);
+        if (! empty($data['statistics_officer'])) {
+            $trip->update(['statistics_officer' => $data['statistics_officer']]);
+        }
 
         return redirect()->route('stats.field-statistics')->with('status', "تم تسجيل إحصاء الرحلة {$trip->trip_number}");
     }

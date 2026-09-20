@@ -19,6 +19,7 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <env name="SPEC_PATH" value="docs/api"/>
         <env name="APP_URL" value="http://hawat.test"/>
         <env name="APP_DOMAIN" value="hawat.test"/>
         <env name="INFO_PORTAL_DOMAIN" value="info.hawat.test"/>

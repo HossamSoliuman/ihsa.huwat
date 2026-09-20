@@ -34,7 +34,6 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $user) {
-            // البذر لا يدهس كلمة مرور غُيّرت بعد التسليم: تُكتب عند الإنشاء وحده.
             User::firstOrCreate(
                 ['email' => $user['email']],
                 ['name' => $user['name'], 'password' => $password],

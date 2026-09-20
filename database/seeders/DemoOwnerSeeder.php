@@ -1,0 +1,79 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Boat;
+use App\Models\Customer;
+use App\Models\CustomerType;
+use App\Models\Fisher;
+use App\Models\FisherRole;
+use App\Models\Role;
+use App\Models\Trip;
+use App\Models\User;
+use App\Services\Trips\TripService;
+use Illuminate\Database\Seeder;
+
+/**
+ * يجهّز المالك التجريبي (0500000001) ليُختبر مسار البيع كاملًا من أول دخول:
+ * قاربان من الأسطول المبذور يُنسبان إليه مع رحلاتهما، وكابتن يدخل التطبيق
+ * بجواله 0500000002، وزبونان. لا يُنشئ شيئًا جديدًا في الأسطول.
+ */
+class DemoOwnerSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $owner = User::where('phone', '0500000001')->first();
+
+        if ($owner === null) {
+            return;
+        }
+
+        $password = env('SEED_PASSWORD', 'hawat@2026');
+
+        $captain = User::firstOrCreate(
+            ['phone' => '0500000002'],
+            [
+                'name' => 'كابتن تجريبي',
+                'password' => $password,
+                'role_id' => Role::key(Role::CAPTAIN)->id,
+                'owner_id' => $owner->id,
+            ],
+        );
+
+        $boats = Boat::whereNull('owner_id')->orderBy('id')->limit(2)->get();
+
+        foreach ($boats as $i => $boat) {
+            $boat->update(['owner_id' => $owner->id] + ($i === 0 ? ['captain_id' => $captain->id] : []));
+            Trip::where('boat_id', $boat->id)->whereNull('owner_id')->update(['owner_id' => $owner->id]);
+        }
+
+        // الرحلات المبذورة التي عُدّت قبل أن يكون لها مالك: يُفتح مصيدها للبيع
+        // الآن حتى تظهر في "الرحلات التي تحتاج تسجيل البيع" من أول دخول.
+        Trip::forOwner($owner)
+            ->whereIn('status', [Trip::AWAITING_APPROVAL, Trip::APPROVED])
+            ->where('sale_status', Trip::SALE_NOT_STARTED)
+            ->whereHas('catchRecords')
+            ->get()
+            ->each(fn (Trip $trip) => app(TripService::class)->openForSale($trip));
+
+        if ($boats->isNotEmpty()) {
+            Fisher::updateOrCreate(['user_id' => $captain->id], [
+                'owner_id' => $owner->id,
+                'port_id' => $boats->first()->port_id,
+                'boat_id' => $boats->first()->id,
+                'name' => $captain->name,
+                'phone' => $captain->phone,
+                'national_id' => '1000000002',
+                'fisher_role_id' => FisherRole::named(Fisher::CAPTAIN_ROLE)->id,
+                'role' => Fisher::CAPTAIN_ROLE,
+            ]);
+        }
+
+        foreach (['سوق السمك المركزي' => '0555000001', 'مطاعم الخليج' => '0555000002'] as $name => $phone) {
+            Customer::firstOrCreate(
+                ['account_user_id' => $owner->id, 'name' => $name],
+                ['phone' => $phone, 'customer_type_id' => CustomerType::named('منتظم')->id],
+            );
+        }
+    }
+}

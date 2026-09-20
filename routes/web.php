@@ -33,6 +33,16 @@ use App\Http\Controllers\NationalIndicatorsController;
 use App\Http\Controllers\OrgStructureController;
 use App\Http\Controllers\Panel\HomeController as PanelHomeController;
 use App\Http\Controllers\Panel\LoginController as PanelLoginController;
+use App\Http\Controllers\Panel\Owner\BoatController as OwnerBoatController;
+use App\Http\Controllers\Panel\Owner\CaptainController as OwnerCaptainController;
+use App\Http\Controllers\Panel\Owner\ConsignmentController as OwnerConsignmentController;
+use App\Http\Controllers\Panel\Owner\CrewController as OwnerCrewController;
+use App\Http\Controllers\Panel\Owner\CustomerController as OwnerCustomerController;
+use App\Http\Controllers\Panel\Owner\EmployeeController as OwnerEmployeeController;
+use App\Http\Controllers\Panel\Owner\MaintenanceController as OwnerMaintenanceController;
+use App\Http\Controllers\Panel\Owner\SaleController as OwnerSaleController;
+use App\Http\Controllers\Panel\Owner\TripController as OwnerTripController;
+use App\Http\Controllers\Panel\Owner\VendorController as OwnerVendorController;
 use App\Http\Controllers\Panel\UserController as PanelUserController;
 use App\Http\Controllers\PerformanceCompareController;
 use App\Http\Controllers\PortController;
@@ -338,6 +348,57 @@ $adminPanel = function () use ($operationsConsole): void {
             Route::delete('/users/{user}', [PanelUserController::class, 'destroy'])->name('panel.users.destroy');
 
             $operationsConsole();
+        });
+
+        /*
+         * بوابة المالك: أسطوله وطاقمه وعملاؤه، ثم رحلاته بدورتها والبيع
+         * والإرسال للدلال. كل سجل مقيّد بمالكه — انظر ResolvesOwnerRecords.
+         */
+        Route::prefix('owner')->name('panel.owner.')->middleware('panel:owner')->group(function (): void {
+            Route::get('/boats', [OwnerBoatController::class, 'index'])->name('boats');
+            Route::post('/boats', [OwnerBoatController::class, 'store'])->name('boats.store');
+            Route::put('/boats/{boat}', [OwnerBoatController::class, 'update'])->name('boats.update');
+            Route::delete('/boats/{boat}', [OwnerBoatController::class, 'destroy'])->name('boats.destroy');
+
+            Route::get('/maintenance', [OwnerMaintenanceController::class, 'index'])->name('maintenance');
+            Route::post('/maintenance', [OwnerMaintenanceController::class, 'store'])->name('maintenance.store');
+            Route::put('/maintenance/{maintenance}', [OwnerMaintenanceController::class, 'update'])->name('maintenance.update');
+            Route::delete('/maintenance/{maintenance}', [OwnerMaintenanceController::class, 'destroy'])->name('maintenance.destroy');
+
+            Route::get('/captains', [OwnerCaptainController::class, 'index'])->name('captains');
+            Route::post('/captains', [OwnerCaptainController::class, 'store'])->name('captains.store');
+            Route::put('/captains/{captain}', [OwnerCaptainController::class, 'update'])->name('captains.update');
+            Route::post('/captains/{captain}/toggle', [OwnerCaptainController::class, 'toggle'])->name('captains.toggle');
+
+            Route::get('/crew', [OwnerCrewController::class, 'index'])->name('crew');
+            Route::post('/crew', [OwnerCrewController::class, 'store'])->name('crew.store');
+            Route::put('/crew/{crew}', [OwnerCrewController::class, 'update'])->name('crew.update');
+            Route::delete('/crew/{crew}', [OwnerCrewController::class, 'destroy'])->name('crew.destroy');
+
+            foreach (['employees' => OwnerEmployeeController::class, 'customers' => OwnerCustomerController::class, 'vendors' => OwnerVendorController::class] as $segment => $controller) {
+                Route::get("/{$segment}", [$controller, 'index'])->name($segment);
+                Route::post("/{$segment}", [$controller, 'store'])->name("{$segment}.store");
+                Route::put("/{$segment}/{id}", [$controller, 'update'])->name("{$segment}.update");
+                Route::delete("/{$segment}/{id}", [$controller, 'destroy'])->name("{$segment}.destroy");
+            }
+
+            Route::get('/trips', [OwnerTripController::class, 'index'])->name('trips');
+            Route::post('/trips', [OwnerTripController::class, 'store'])->name('trips.store');
+            Route::get('/trips/{trip}', [OwnerTripController::class, 'show'])->name('trips.show');
+            Route::put('/trips/{trip}', [OwnerTripController::class, 'update'])->name('trips.update');
+            Route::post('/trips/{trip}/start', [OwnerTripController::class, 'start'])->name('trips.start');
+            Route::post('/trips/{trip}/cancel', [OwnerTripController::class, 'cancel'])->name('trips.cancel');
+            Route::post('/trips/{trip}/catch', [OwnerTripController::class, 'submitCatch'])->name('trips.catch');
+
+            Route::get('/sales', [OwnerSaleController::class, 'index'])->name('sales');
+            Route::get('/sales/create', [OwnerSaleController::class, 'create'])->name('sales.create');
+            Route::post('/sales', [OwnerSaleController::class, 'store'])->name('sales.store');
+            Route::get('/sales/{sale}', [OwnerSaleController::class, 'show'])->name('sales.show');
+
+            Route::get('/consignments', [OwnerConsignmentController::class, 'index'])->name('consignments');
+            Route::get('/consignments/create', [OwnerConsignmentController::class, 'create'])->name('consignments.create');
+            Route::post('/consignments', [OwnerConsignmentController::class, 'store'])->name('consignments.store');
+            Route::get('/consignments/{consignment}', [OwnerConsignmentController::class, 'show'])->name('consignments.show');
         });
     });
 };

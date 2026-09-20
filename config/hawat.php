@@ -229,6 +229,26 @@ return [
                 'title' => 'المالك',
                 'items' => [
                     ['label' => 'الرئيسية', 'route' => 'panel.home', 'icon' => 'layout-dashboard'],
+                    ['label' => 'الرحلات', 'route' => 'panel.owner.trips', 'icon' => 'route'],
+                    ['label' => 'المبيعات', 'route' => 'panel.owner.sales', 'icon' => 'coins'],
+                    ['label' => 'الإرسال للدلال', 'route' => 'panel.owner.consignments', 'icon' => 'send'],
+                ],
+            ],
+            [
+                'title' => 'الأسطول',
+                'items' => [
+                    ['label' => 'القوارب', 'route' => 'panel.owner.boats', 'icon' => 'ship'],
+                    ['label' => 'الصيانة', 'route' => 'panel.owner.maintenance', 'icon' => 'hammer'],
+                    ['label' => 'الكباتن', 'route' => 'panel.owner.captains', 'icon' => 'user-check'],
+                    ['label' => 'الطاقم', 'route' => 'panel.owner.crew', 'icon' => 'users'],
+                ],
+            ],
+            [
+                'title' => 'الجهات',
+                'items' => [
+                    ['label' => 'العملاء', 'route' => 'panel.owner.customers', 'icon' => 'handshake'],
+                    ['label' => 'الموردون', 'route' => 'panel.owner.vendors', 'icon' => 'truck'],
+                    ['label' => 'الموظفون', 'route' => 'panel.owner.employees', 'icon' => 'user'],
                 ],
             ],
         ],

@@ -439,6 +439,25 @@ html.dark .note-box svg { color: hsl(160 60% 62%); }
 .field[hidden] { display: none; }
 .field > span { font-size: .7rem; font-weight: 600; color: hsl(var(--muted-foreground)); }
 /*
+ * بوابة المالك: شريط خطوات الرحلة الأربع كما في التطبيق، وجدول سطور البيع
+ * الذي تُكتب فيه الأوزان والأسعار مباشرة، وقائمة تفاصيل مفتاح/قيمة.
+ */
+.trip-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; list-style: none; margin: 0; padding: 0; }
+.trip-steps li { display: flex; flex-direction: column; align-items: center; gap: .4rem; text-align: center; font-size: .72rem; color: hsl(var(--muted-foreground)); }
+.trip-steps li .dot { display: flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; border: 1px solid var(--hair); background: var(--surface); font-family: 'Chakra Petch', sans-serif; font-weight: 700; }
+.trip-steps li .dot svg { width: 14px; height: 14px; }
+.trip-steps li.is-done .dot { background: hsl(var(--primary)); border-color: hsl(var(--primary)); color: #fff; }
+.trip-steps li.is-current .dot { border-color: hsl(var(--primary)); color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / .18); }
+.trip-steps li.is-done, .trip-steps li.is-current { color: hsl(var(--foreground)); font-weight: 600; }
+.trip-steps[data-cancelled] li { opacity: .45; }
+.lines-table td { vertical-align: middle; }
+.lines-table .input, .lines-table .select { width: 100%; min-width: 6rem; }
+.lines-table .num { font-family: 'Chakra Petch', sans-serif; font-weight: 600; white-space: nowrap; }
+.detail-list { display: grid; grid-template-columns: auto 1fr; gap: .35rem 1rem; font-size: .8rem; margin: 0; }
+.detail-list dt { color: hsl(var(--muted-foreground)); white-space: nowrap; }
+.detail-list dd { margin: 0; }
+.num { font-family: 'Chakra Petch', sans-serif; }
+/*
  * الحقول تتبع قاعدة اللوحة نفسها: لا لونَ خلفيةٍ خاص بها. كانت تُملأ بـ
  * `--background` فبدت في الوضع الداكن مربّعاتٍ سوداء مقتطعة من الصفحة بعد أن
  * خفّت زرقة الخلفية؛ فصارت شفّافةً يحدّها الخطّ الشعري وحده كما البطاقات،
@@ -489,6 +508,8 @@ html.dark .note-box svg { color: hsl(160 60% 62%); }
 .drawer-body { padding: 1.4rem; display: flex; flex-direction: column; gap: 1rem; }
 .form-grid { display: grid; gap: .9rem; grid-template-columns: 1fr; }
 @media (min-width: 640px) { .form-grid { grid-template-columns: repeat(2, 1fr); } .form-grid .wide { grid-column: span 2; } }
+/* النماذج الطويلة (القارب) تُعرض في ثلاثة أعمدة على الدرج العريض. */
+@media (min-width: 900px) { .form-grid.cols-3 { grid-template-columns: repeat(3, 1fr); } .form-grid.cols-3 .wide { grid-column: span 3; } }
 
 .tag { display: inline-flex; align-items: center; gap: .25rem; padding: .1rem .45rem; font-size: 10px; font-weight: 600; border: 1px solid; }
 .tag-gulf { background: #0369a114; color: #0369a1; border-color: #0369a144; }

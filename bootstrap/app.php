@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureApiAccountActive;
+use App\Http\Middleware\EnsureApiRole;
 use App\Http\Middleware\EnsurePanelAccess;
 use App\Http\Middleware\ForceJsonResponse;
 use Illuminate\Foundation\Application;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'panel' => EnsurePanelAccess::class,
             'api.active' => EnsureApiAccountActive::class,
+            'api.role' => EnsureApiRole::class,
         ]);
 
         // واجهة التطبيق تردّ JSON دائمًا، طلب العميل ذلك أم لم يطلبه.

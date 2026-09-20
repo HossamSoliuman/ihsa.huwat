@@ -97,6 +97,52 @@ class User extends Authenticatable
     }
 
     /**
+     * ما يملكه المالك ويديره من بوابته.
+     */
+    public function boats(): HasMany
+    {
+        return $this->hasMany(Boat::class, 'owner_id');
+    }
+
+    public function ownedTrips(): HasMany
+    {
+        return $this->hasMany(Trip::class, 'owner_id');
+    }
+
+    public function customers(): HasMany
+    {
+        return $this->hasMany(Customer::class, 'account_user_id');
+    }
+
+    public function vendors(): HasMany
+    {
+        return $this->hasMany(Vendor::class, 'owner_id');
+    }
+
+    public function employees(): HasMany
+    {
+        return $this->hasMany(OwnerEmployee::class, 'owner_id');
+    }
+
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class, 'seller_id');
+    }
+
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class, 'holder_id');
+    }
+
+    /**
+     * سجلّ الصياد في الوزارة لحساب الكابتن (الهوية والرخصة والميناء).
+     */
+    public function fisher(): HasOne
+    {
+        return $this->hasOne(Fisher::class);
+    }
+
+    /**
      * مفتاح دور التطبيق أو null لمن لا دور له (موظفو الوزارة).
      */
     public function getAppRoleKeyAttribute(): ?string
