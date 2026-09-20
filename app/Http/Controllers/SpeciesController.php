@@ -55,6 +55,28 @@ class SpeciesController extends Controller
         return view('species.index', compact('groups', 'stats', 'selected') + ['filteredCount' => $filtered->count()]);
     }
 
+    public function store(Request $request): RedirectResponse
+    {
+        $species = Species::create($request->validate([
+            'name_ar' => ['required', 'string', 'max:255', 'unique:species,name_ar'],
+            'code' => ['nullable', 'integer', 'min:1', 'unique:species,code'],
+            'name_sci' => ['nullable', 'string', 'max:255'],
+            'name_en' => ['nullable', 'string', 'max:255'],
+            'name_local_gulf' => ['nullable', 'string', 'max:255'],
+            'name_local_red_sea' => ['nullable', 'string', 'max:255'],
+            'category' => ['required', 'in:أسماك,روبيان,قشريات,رخويات,أخرى'],
+            'status' => ['required', 'in:مستقر,مراقبة,ضغط صيد مرتفع,انخفاض حاد'],
+            'review_status' => ['nullable', 'in:مصحح وموثق,منسق آليًا,مقبول مبدئيًا'],
+            'avg_weight_kg' => ['nullable', 'numeric', 'min:0'],
+            'avg_length_cm' => ['nullable', 'numeric', 'min:0'],
+            'season' => ['nullable', 'string', 'max:255'],
+            'regions' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string'],
+        ]));
+
+        return redirect()->route('species', ['selected' => $species->id])->with('status', 'تم إضافة النوع بنجاح');
+    }
+
     public function update(Request $request, Species $species): RedirectResponse
     {
         $species->update($request->validate([

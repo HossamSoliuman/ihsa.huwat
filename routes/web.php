@@ -296,6 +296,7 @@ $operationsConsole = function (): void {
     Route::delete('/regions/{region}', [RegionController::class, 'destroy'])->name('regions.destroy');
 
     Route::get('/species', [SpeciesController::class, 'index'])->name('species');
+    Route::post('/species', [SpeciesController::class, 'store'])->name('species.store');
     Route::put('/species/{species}', [SpeciesController::class, 'update'])->name('species.update');
 
     Route::get('/fishing-seasons', [FishingSeasonController::class, 'index'])->name('fishing-seasons');

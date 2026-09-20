@@ -16,6 +16,9 @@
                 <p>الأنواع المصادة، تصنيفها، مواسمها، وحالة المخزون</p>
             </div>
         </div>
+        <div class="actions">
+            <button type="button" class="btn btn-primary" onclick="toggleDrawer('speciesDrawer', true)">@include('partials.icon', ['name' => 'plus']) إضافة نوع</button>
+        </div>
     </div>
 
     @if (session('status'))<div class="flash">{{ session('status') }}</div>@endif
@@ -96,6 +99,59 @@
             @endif
         </section>
     @endforeach
+
+    <div class="drawer-overlay {{ $errors->any() && ! $selected ? 'is-open' : '' }}" id="speciesDrawer-overlay" onclick="toggleDrawer('speciesDrawer', false)"></div>
+    <div class="drawer {{ $errors->any() && ! $selected ? 'is-open' : '' }}" id="speciesDrawer">
+        <div class="drawer-head">
+            <h3>إضافة نوع</h3>
+            <button type="button" class="icon-action" onclick="toggleDrawer('speciesDrawer', false)">@include('partials.icon', ['name' => 'x'])</button>
+        </div>
+        <form method="POST" action="{{ route('species.store') }}" class="drawer-body">
+            @csrf
+            @if ($errors->any())
+                <div class="flash" style="border-color:hsl(var(--danger));color:hsl(var(--danger))">{{ $errors->first() }}</div>
+            @endif
+            <label class="field"><span>الاسم العربي *</span><input class="input" name="name_ar" value="{{ old('name_ar') }}" required placeholder="الهامور"></label>
+            <div class="form-grid">
+                <label class="field"><span>الرمز</span><input class="input" type="number" name="code" value="{{ old('code') }}" min="1" placeholder="105"></label>
+                <label class="field"><span>الاسم الإنجليزي</span><input class="input" name="name_en" value="{{ old('name_en') }}" placeholder="Grouper"></label>
+                <label class="field wide"><span>الاسم العلمي</span><input class="input" name="name_sci" value="{{ old('name_sci') }}" placeholder="Epinephelus coioides"></label>
+                <label class="field"><span>الاسم المحلي – الخليج</span><input class="input" name="name_local_gulf" value="{{ old('name_local_gulf') }}"></label>
+                <label class="field"><span>الاسم المحلي – البحر الأحمر</span><input class="input" name="name_local_red_sea" value="{{ old('name_local_red_sea') }}"></label>
+                <label class="field"><span>التصنيف *</span>
+                    <select class="select" name="category">
+                        @foreach (['أسماك', 'روبيان', 'قشريات', 'رخويات', 'أخرى'] as $c)
+                            <option value="{{ $c }}" @selected(old('category', 'أسماك') === $c)>{{ $c }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <label class="field"><span>حالة المخزون *</span>
+                    <select class="select" name="status">
+                        @foreach (['مستقر', 'مراقبة', 'ضغط صيد مرتفع', 'انخفاض حاد'] as $st)
+                            <option value="{{ $st }}" @selected(old('status', 'مستقر') === $st)>{{ $st }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <label class="field wide"><span>حالة المراجعة</span>
+                    <select class="select" name="review_status">
+                        <option value="">— بدون —</option>
+                        @foreach (['مصحح وموثق', 'منسق آليًا', 'مقبول مبدئيًا'] as $r)
+                            <option value="{{ $r }}" @selected(old('review_status', 'مقبول مبدئيًا') === $r)>{{ $r }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <label class="field"><span>متوسط الوزن (كجم)</span><input class="input" type="number" step="0.01" min="0" name="avg_weight_kg" value="{{ old('avg_weight_kg') }}"></label>
+                <label class="field"><span>متوسط الطول (سم)</span><input class="input" type="number" step="0.01" min="0" name="avg_length_cm" value="{{ old('avg_length_cm') }}"></label>
+                <label class="field"><span>موسم الصيد</span><input class="input" name="season" value="{{ old('season') }}" placeholder="أكتوبر – مارس"></label>
+                <label class="field"><span>مناطق الانتشار</span><input class="input" name="regions" value="{{ old('regions') }}"></label>
+                <label class="field wide"><span>ملاحظات</span><textarea class="input" name="notes" rows="2">{{ old('notes') }}</textarea></label>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:.5rem;padding-top:.5rem">
+                <button type="button" class="btn btn-outline" onclick="toggleDrawer('speciesDrawer', false)">إلغاء</button>
+                <button type="submit" class="btn btn-primary">حفظ</button>
+            </div>
+        </form>
+    </div>
 
     @if ($selected)
         <div class="drawer-overlay is-open" onclick="location.href='{{ request()->fullUrlWithQuery(['selected' => null]) }}'"></div>

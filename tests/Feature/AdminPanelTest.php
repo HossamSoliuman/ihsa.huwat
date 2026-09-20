@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Role;
+use App\Models\Species;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -224,6 +225,31 @@ class AdminPanelTest extends TestCase
         $this->get(route('panel.users', ['role' => Role::DALAL]))
             ->assertSee('0522222222')
             ->assertDontSee('0511111111');
+    }
+
+    public function test_the_super_admin_adds_a_species_from_the_species_page(): void
+    {
+        $this->actingAs($this->superAdmin());
+
+        $this->get(route('species'))->assertOk()->assertSee('إضافة نوع');
+
+        $this->post(route('species.store'), [
+            'name_ar' => 'الهامور (اختبار)',
+            'code' => 905,
+            'name_sci' => 'Epinephelus coioides',
+            'category' => 'أسماك',
+            'status' => 'مستقر',
+            'review_status' => 'مقبول مبدئيًا',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('species', ['name_ar' => 'الهامور (اختبار)', 'code' => 905, 'category' => 'أسماك']);
+
+        // الاسم العربي والرمز فريدان، فالتكرار يُرَدّ بخطأ لا بسجل ثانٍ.
+        $this->from(route('species'))
+            ->post(route('species.store'), ['name_ar' => 'الهامور (اختبار)', 'category' => 'أسماك', 'status' => 'مستقر'])
+            ->assertRedirect(route('species'))
+            ->assertSessionHasErrors('name_ar');
+        $this->assertSame(1, Species::where('name_ar', 'الهامور (اختبار)')->count());
     }
 
     public function test_the_api_docs_page_and_spec_are_served(): void
