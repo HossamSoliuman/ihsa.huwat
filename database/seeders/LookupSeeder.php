@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 
 /**
- * القوائم المرجعية لبوابة المالك — كل قائمة بذّارها المستقل، وهذا يجمعها
+ * القوائم المرجعية لبوابات التطبيق — كل قائمة بذّارها المستقل، وهذا يجمعها
  * بترتيب واحد حتى يُستدعى في الإنتاج بأمر واحد: db:seed --class=LookupSeeder.
  */
 class LookupSeeder extends Seeder
@@ -24,6 +24,7 @@ class LookupSeeder extends Seeder
             PaymentStatusSeeder::class,
             CustomerTypeSeeder::class,
             StockMovementTypeSeeder::class,
+            NotificationTypeSeeder::class,
         ]);
     }
 }

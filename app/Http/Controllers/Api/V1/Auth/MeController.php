@@ -3,55 +3,50 @@
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Account\AvatarRequest;
+use App\Http\Requests\Account\ChangePasswordRequest;
+use App\Http\Requests\Account\ProfileRequest;
 use App\Http\Resources\Api\UserResource;
+use App\Services\Account\ProfileService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 /**
- * حساب المستخدم الداخل: عرضه، وتعديل بياناته، وتغيير كلمة مروره، ورمز إشعاراته.
+ * حساب المستخدم الداخل: عرضه، وتعديل بياناته وصورته، وتغيير كلمة مروره،
+ * ورمز إشعاراته. الطلبات والخدمة مشتركة مع صفحة الملف الشخصي في اللوحة.
  */
 class MeController extends Controller
 {
+    private const WITH = ['appRole', 'owner', 'fisher.port.governorate'];
+
+    public function __construct(private readonly ProfileService $profile) {}
+
     public function show(Request $request): UserResource
     {
-        return new UserResource($request->user()->load(['appRole', 'owner']));
+        return new UserResource($request->user()->load(self::WITH));
     }
 
-    public function update(Request $request): UserResource
+    public function update(ProfileRequest $request): UserResource
     {
-        $user = $request->user();
-
-        $data = $request->validate([
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'email' => ['sometimes', 'nullable', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user)],
-            'locale' => ['sometimes', 'required', Rule::in(['ar', 'en'])],
-        ]);
-
-        $user->update($data);
-
-        return new UserResource($user->load(['appRole', 'owner']));
+        return new UserResource($this->profile->update($request->user(), $request->validated())->load(self::WITH));
     }
 
-    public function changePassword(Request $request): JsonResponse
+    public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'current_password' => ['required', 'string'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
-
-        if (! Hash::check($data['current_password'], $request->user()->password)) {
-            throw ValidationException::withMessages(['current_password' => 'كلمة المرور الحالية غير صحيحة.']);
-        }
-
-        $request->user()->update(['password' => $data['password']]);
-
         // تغيير كلمة المرور يُخرج بقية الأجهزة؛ الجهاز الحالي يبقى داخلًا.
-        $request->user()->tokens()->whereKeyNot($request->user()->currentAccessToken()->id)->delete();
+        $this->profile->changePassword($request->user(), $request->validated('password'), $request->user()->currentAccessToken()->id);
 
         return response()->json(['message' => 'تم تغيير كلمة المرور.']);
+    }
+
+    public function updateAvatar(AvatarRequest $request): UserResource
+    {
+        return new UserResource($this->profile->storeAvatar($request->user(), $request->file('avatar'))->load(self::WITH));
+    }
+
+    public function removeAvatar(Request $request): UserResource
+    {
+        return new UserResource($this->profile->removeAvatar($request->user())->load(self::WITH));
     }
 
     public function updateFcmToken(Request $request): JsonResponse

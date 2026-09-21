@@ -30,8 +30,8 @@ class RoleSeeder extends Seeder
         Role::CAPTAIN => [
             'name' => 'الكابتن',
             'name_en' => 'Captain',
-            'description' => 'يبدأ الرحلة المسندة إليه ويسجّل مخرجاتها من التطبيق.',
-            'has_portal' => false,
+            'description' => 'يبدأ الرحلة المسندة إليه ويسجّل مخرجاتها من التطبيق أو من بوابته.',
+            'has_portal' => true,
         ],
         Role::CREW => [
             'name' => 'فرد طاقم',

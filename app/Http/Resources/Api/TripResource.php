@@ -21,8 +21,10 @@ class TripResource extends JsonResource
             'sale_status' => $this->sale_status,
             'can_sell' => $this->canSell(),
             'boat' => $this->whenLoaded('boat', fn () => $this->boat ? ['id' => $this->boat->id, 'name' => $this->boat->name, 'boat_number' => $this->boat->boat_number] : null),
-            'captain' => $this->whenLoaded('captain', fn () => $this->captain ? ['id' => $this->captain->id, 'name' => $this->captain->name, 'phone' => $this->captain->phone] : ['id' => null, 'name' => $this->captain_name, 'phone' => null]),
-            'counter' => $this->whenLoaded('counter', fn () => $this->counter ? ['id' => $this->counter->id, 'name' => $this->counter->name] : ($this->statistics_officer ? ['id' => null, 'name' => $this->statistics_officer] : null)),
+            // العلاقة المحمّلة الفارغة تُرجع null من whenLoaded دون استدعاء الدالة،
+            // فالرجوع إلى العمود النصي القديم (captain_name / statistics_officer) يمرّ بـ when.
+            'captain' => $this->when($this->relationLoaded('captain'), fn () => $this->captain ? ['id' => $this->captain->id, 'name' => $this->captain->name, 'phone' => $this->captain->phone] : ['id' => null, 'name' => $this->captain_name, 'phone' => null]),
+            'counter' => $this->when($this->relationLoaded('counter'), fn () => $this->counter ? ['id' => $this->counter->id, 'name' => $this->counter->name] : ($this->statistics_officer ? ['id' => null, 'name' => $this->statistics_officer] : null)),
             'departure_port' => $this->whenLoaded('departurePort', fn () => $this->departurePort ? ['id' => $this->departurePort->id, 'name' => $this->departurePort->name] : null),
             'return_port' => $this->whenLoaded('returnPort', fn () => $this->returnPort ? ['id' => $this->returnPort->id, 'name' => $this->returnPort->name] : null),
             'trip_type' => $this->whenLoaded('tripType', fn () => $this->tripType ? ['id' => $this->tripType->id, 'name' => $this->tripType->name] : null),

@@ -14,6 +14,18 @@
     </a>
 
     <div class="topbar-actions">
+        @php
+            // جرس الإشعارات لحسابات التطبيق في لوحة الإدارة وحدها — بوابات
+            // الوزارة المفتوحة لا حساب فيها.
+            $bellUser = App\Support\Nav::portalKey() === App\Support\Nav::OPS ? auth()->user() : null;
+            $unreadCount = $bellUser?->app_role_key ? $bellUser->appNotifications()->unread()->count() : 0;
+        @endphp
+        @if ($bellUser?->app_role_key)
+            <a class="icon-btn topbar-bell" href="{{ route('panel.notifications') }}" title="الإشعارات" aria-label="الإشعارات">
+                @include('partials.icon', ['name' => 'bell'])
+                @if ($unreadCount > 0)<span class="count">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>@endif
+            </a>
+        @endif
         <button class="icon-btn" onclick="toggleTheme()" title="الوضع الداكن" aria-label="الوضع الداكن">
             @include('partials.icon', ['name' => 'moon'])
         </button>

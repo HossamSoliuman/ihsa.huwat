@@ -45,6 +45,16 @@ class DemoOwnerSeeder extends Seeder
         foreach ($boats as $i => $boat) {
             $boat->update(['owner_id' => $owner->id] + ($i === 0 ? ['captain_id' => $captain->id] : []));
             Trip::where('boat_id', $boat->id)->whereNull('owner_id')->update(['owner_id' => $owner->id]);
+
+            // رحلات القارب الأول تُسند للكابتن التجريبي حتى تمتلئ بوابته من أول دخول.
+            if ($i === 0) {
+                Trip::where('boat_id', $boat->id)->whereNull('captain_id')->update(['captain_id' => $captain->id, 'captain_name' => $captain->name]);
+            }
+        }
+
+        // رحلة بانتظار الكابتن دائمًا — ليُجرَّب البدء والإلغاء وإرسال المخرجات.
+        if ($boats->isNotEmpty() && ! Trip::forCaptain($captain)->awaitingCaptain()->exists()) {
+            app(TripService::class)->create($owner, ['boat_id' => $boats->first()->id, 'captain_id' => $captain->id, 'planned_days' => 3]);
         }
 
         // الرحلات المبذورة التي عُدّت قبل أن يكون لها مالك: يُفتح مصيدها للبيع

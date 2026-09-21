@@ -212,7 +212,8 @@ return [
     /*
      * قوائم لوحة الإدارة حسب دور التطبيق. المدير العام يرى هذه الأقسام ثم
      * مركز المعلومات (nav أدناه) كاملًا — انظر App\Support\Nav::panelSections().
-     * بقية الأدوار تُملأ قوائمها مع بناء بوابة كل دور.
+     * بقية الأدوار تُملأ قوائمها مع بناء بوابة كل دور. قسم "الحساب" (الإشعارات
+     * والملف الشخصي) واحد لكل الأدوار — شاشتا التطبيق المشتركتان.
      */
     'nav_panel' => [
         'super_admin' => [
@@ -221,6 +222,13 @@ return [
                 'items' => [
                     ['label' => 'الرئيسية', 'route' => 'panel.home', 'icon' => 'layout-dashboard'],
                     ['label' => 'حسابات التطبيق', 'route' => 'panel.users', 'icon' => 'user-cog'],
+                ],
+            ],
+            [
+                'title' => 'الحساب',
+                'items' => [
+                    ['label' => 'الإشعارات', 'route' => 'panel.notifications', 'icon' => 'bell'],
+                    ['label' => 'الملف الشخصي', 'route' => 'panel.profile', 'icon' => 'user'],
                 ],
             ],
         ],
@@ -251,12 +259,38 @@ return [
                     ['label' => 'الموظفون', 'route' => 'panel.owner.employees', 'icon' => 'user'],
                 ],
             ],
+            [
+                'title' => 'الحساب',
+                'items' => [
+                    ['label' => 'الإشعارات', 'route' => 'panel.notifications', 'icon' => 'bell'],
+                    ['label' => 'الملف الشخصي', 'route' => 'panel.profile', 'icon' => 'user'],
+                ],
+            ],
+        ],
+        'captain' => [
+            [
+                'title' => 'الكابتن',
+                'items' => [
+                    ['label' => 'الرئيسية', 'route' => 'panel.home', 'icon' => 'layout-dashboard'],
+                    ['label' => 'الرحلات', 'route' => 'panel.captain.trips', 'icon' => 'route'],
+                    ['label' => 'سجل الصيد', 'route' => 'panel.captain.catch-log', 'icon' => 'fish'],
+                ],
+            ],
+            [
+                'title' => 'الحساب',
+                'items' => [
+                    ['label' => 'الإشعارات', 'route' => 'panel.notifications', 'icon' => 'bell'],
+                    ['label' => 'الملف الشخصي', 'route' => 'panel.profile', 'icon' => 'user'],
+                ],
+            ],
         ],
         'employee' => [
             [
                 'title' => 'الموظف',
                 'items' => [
                     ['label' => 'الرئيسية', 'route' => 'panel.home', 'icon' => 'layout-dashboard'],
+                    ['label' => 'الإشعارات', 'route' => 'panel.notifications', 'icon' => 'bell'],
+                    ['label' => 'الملف الشخصي', 'route' => 'panel.profile', 'icon' => 'user'],
                 ],
             ],
         ],
@@ -265,6 +299,8 @@ return [
                 'title' => 'الدلال',
                 'items' => [
                     ['label' => 'الرئيسية', 'route' => 'panel.home', 'icon' => 'layout-dashboard'],
+                    ['label' => 'الإشعارات', 'route' => 'panel.notifications', 'icon' => 'bell'],
+                    ['label' => 'الملف الشخصي', 'route' => 'panel.profile', 'icon' => 'user'],
                 ],
             ],
         ],
@@ -273,6 +309,8 @@ return [
                 'title' => 'التاجر',
                 'items' => [
                     ['label' => 'الرئيسية', 'route' => 'panel.home', 'icon' => 'layout-dashboard'],
+                    ['label' => 'الإشعارات', 'route' => 'panel.notifications', 'icon' => 'bell'],
+                    ['label' => 'الملف الشخصي', 'route' => 'panel.profile', 'icon' => 'user'],
                 ],
             ],
         ],

@@ -450,6 +450,30 @@ html.dark .note-box svg { color: hsl(160 60% 62%); }
 .trip-steps li.is-current .dot { border-color: hsl(var(--primary)); color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / .18); }
 .trip-steps li.is-done, .trip-steps li.is-current { color: hsl(var(--foreground)); font-weight: 600; }
 .trip-steps[data-cancelled] li { opacity: .45; }
+/*
+ * بوابة الكابتن: بطاقة الرحلة كما في التطبيق (رأس برقمها وحالتها، شبكة
+ * بيانات، ثم أزرار الفعل)، وسطر الإشعار (غير المقروء بحافّة أوّلية مميّزة).
+ */
+.trip-card { border: 1px solid var(--hair); background: hsl(var(--foreground) / .02); padding: .85rem .95rem; display: flex; flex-direction: column; gap: .7rem; }
+.trip-card + .trip-card { margin-top: .65rem; }
+.trip-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
+.trip-card-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: .5rem .9rem; margin: 0; }
+.trip-card-meta dt { font-size: .66rem; color: hsl(var(--muted-foreground)); }
+.trip-card-meta dd { margin: 0; font-size: .8rem; font-weight: 600; }
+.trip-card-actions { display: flex; flex-wrap: wrap; gap: .4rem; border-top: 1px solid var(--hair); padding-top: .65rem; }
+.notif-item { display: flex; align-items: flex-start; gap: .8rem; border: 1px solid var(--hair); border-inline-start: 3px solid transparent; background: var(--surface); padding: .8rem .95rem; }
+.notif-item + .notif-item { margin-top: .5rem; }
+.notif-item.is-unread { border-inline-start-color: hsl(var(--primary)); background: hsl(var(--primary) / .05); }
+.notif-item .n-icon { display: flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; flex-shrink: 0; border: 1px solid hsl(var(--primary) / .28); background: hsl(var(--primary) / .08); color: hsl(var(--primary)); }
+.notif-item .n-icon svg { width: 15px; height: 15px; }
+.notif-item .n-title { font-size: .84rem; font-weight: 700; }
+.notif-item .n-body { font-size: .74rem; color: hsl(var(--muted-foreground)); line-height: 1.8; margin-top: .15rem; }
+.notif-item .n-time { font-size: .66rem; color: hsl(var(--muted-foreground)); white-space: nowrap; }
+.notif-item form { margin-inline-start: auto; }
+.topbar-bell { position: relative; }
+.topbar-bell .count { position: absolute; top: -.2rem; inset-inline-end: -.2rem; min-width: 1.05rem; height: 1.05rem; padding: 0 .25rem; display: flex; align-items: center; justify-content: center; background: #d61f47; color: #fff; font-family: 'Chakra Petch', sans-serif; font-size: .62rem; font-weight: 700; }
+.avatar-lg { width: 5rem; height: 5rem; display: flex; align-items: center; justify-content: center; border: 1px solid var(--hair); background: hsl(var(--primary) / .1); color: hsl(var(--primary)); font-size: 1.8rem; font-weight: 700; overflow: hidden; flex-shrink: 0; }
+.avatar-lg img { width: 100%; height: 100%; object-fit: cover; }
 .lines-table td { vertical-align: middle; }
 .lines-table .input, .lines-table .select { width: 100%; min-width: 6rem; }
 .lines-table .num { font-family: 'Chakra Petch', sans-serif; font-weight: 600; white-space: nowrap; }

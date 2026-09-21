@@ -3,6 +3,17 @@
 المواصفة الكاملة: `docs/api/openapi.yaml` (تُعرض على `/api/docs`، وتُستورد في Postman من `/api/openapi.yaml`).
 كل ردّ في الاختبارات يُطابَق مع المواصفة (Spectator)، فما هنا هو ما يعمل فعلًا.
 
+## 1.2.0 — 2026-09-21 — المرحلة 2: بوابة الكابتن والإشعارات
+
+### جديد
+- **الكابتن** (`/captain/*`، دور `captain`، الرحلة المسندة لغيره `404`): `GET /captain/dashboard` (الأعداد، الرحلات التي بانتظارك، النشطة، آخر الرحلات)، `GET /captain/trips` (`?view=pending|active|completed|cancelled`، `status`، `search`)، `GET /captain/trips/{trip}`، `POST /captain/trips/{trip}/start|cancel|catch` بحساب الكابتن نفسه، `GET /captain/catch-log` + `GET /captain/catch-log/summary` (سجل الصيد وملخصه بالصنف).
+- **الإشعارات** (لكل الأدوار): `GET /notifications` (`?unread=1`؛ `meta.unread_count`)، `GET /notifications/unread-count`، `POST /notifications/{notification}/read`، `POST /notifications/read-all`. تُكتب عند: إسناد رحلة (الكابتن)، بدئها وإلغائها وإرسال مخرجاتها (الطرف الآخر)، واكتمال العد (الكابتن "الرحلة مكتملة" + المالك "اكتمل العد"). تُدفع إلى الجوال عبر Firebase حين يُفعَّل التكامل (`fcm_token` من `POST /auth/fcm-token`)؛ إلى ذلك الحين تُكتب في السجل.
+- **الصورة الشخصية**: `POST /auth/avatar` (multipart، حتى 2MB) و`DELETE /auth/avatar`؛ `avatar_url` في `User`.
+
+### تغيّر
+- `User` يحمل `port` (ميناء الكابتن من سجلّ الصياد: `id`, `name`, `governorate`) — `null` لغير الكباتن.
+- `Trip.captain` و`Trip.counter` يعودان الآن بالاسم النصي القديم (`captain_name` / `statistics_officer`) حين لا حساب مرتبط — كانا `null`.
+
 ## 1.1.0 — 2026-09-20 — المرحلة 1: بوابة المالك
 
 ### جديد

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\Notifications\LogPushSender;
+use App\Services\Notifications\PushSender;
 use App\Services\Sms\LogSmsSender;
 use App\Services\Sms\SmsSender;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -21,6 +23,12 @@ class AppServiceProvider extends ServiceProvider
          * = sms) تُكتب الرموز في السجل. حين يُضاف المزوّد يُستبدل هذا الربط.
          */
         $this->app->singleton(SmsSender::class, LogSmsSender::class);
+
+        /*
+         * دافع إشعارات الجوال: الشيء نفسه مع Firebase (provider = firebase) —
+         * الإشعار يُحفظ في الجدول ويُكتب في السجل إلى أن يُهيّأ حساب الخدمة.
+         */
+        $this->app->singleton(PushSender::class, LogPushSender::class);
     }
 
     /**

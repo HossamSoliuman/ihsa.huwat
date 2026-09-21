@@ -31,8 +31,11 @@ use App\Http\Controllers\MonthlyReportsController;
 use App\Http\Controllers\MyWorkspaceController;
 use App\Http\Controllers\NationalIndicatorsController;
 use App\Http\Controllers\OrgStructureController;
+use App\Http\Controllers\Panel\Captain\CatchLogController as CaptainCatchLogController;
+use App\Http\Controllers\Panel\Captain\TripController as CaptainTripController;
 use App\Http\Controllers\Panel\HomeController as PanelHomeController;
 use App\Http\Controllers\Panel\LoginController as PanelLoginController;
+use App\Http\Controllers\Panel\NotificationController as PanelNotificationController;
 use App\Http\Controllers\Panel\Owner\BoatController as OwnerBoatController;
 use App\Http\Controllers\Panel\Owner\CaptainController as OwnerCaptainController;
 use App\Http\Controllers\Panel\Owner\ConsignmentController as OwnerConsignmentController;
@@ -43,6 +46,7 @@ use App\Http\Controllers\Panel\Owner\MaintenanceController as OwnerMaintenanceCo
 use App\Http\Controllers\Panel\Owner\SaleController as OwnerSaleController;
 use App\Http\Controllers\Panel\Owner\TripController as OwnerTripController;
 use App\Http\Controllers\Panel\Owner\VendorController as OwnerVendorController;
+use App\Http\Controllers\Panel\ProfileController as PanelProfileController;
 use App\Http\Controllers\Panel\UserController as PanelUserController;
 use App\Http\Controllers\PerformanceCompareController;
 use App\Http\Controllers\PortController;
@@ -324,8 +328,8 @@ $operationsConsole = function (): void {
  *
  * الدخول بالجوال أو البريد (PanelLoginController)، ثم رئيسة تتفرّع على الدور،
  * ثم صفحات كل دور تحت وسيط panel:<role>. المدير العام يدير حسابات التطبيق
- * ومعه مركز المعلومات التشغيلي كاملًا؛ بوابات الملاك والدلالين والتجار تُضاف
- * تحت الوسيط نفسه كلٌّ بدوره.
+ * ومعه مركز المعلومات التشغيلي كاملًا؛ بوابات الملاك والكباتن والدلالين
+ * والتجار تحت الوسيط نفسه كلٌّ بدوره. الملف الشخصي والإشعارات لكل الأدوار.
  *
  * أسماء المسارات بالبادئة panel. — لا admin. لأنها لبوابة المعلومات — وهي ما
  * يميّز صفحتي الدخول عن بعضهما في bootstrap/app.php.
@@ -340,6 +344,17 @@ $adminPanel = function () use ($operationsConsole): void {
 
     Route::middleware(['auth', 'panel'])->group(function () use ($operationsConsole): void {
         Route::get('/', [PanelHomeController::class, 'index'])->name('panel.home');
+
+        // الملف الشخصي والإشعارات — شاشتا التطبيق المشتركتان بين الأدوار كلها.
+        Route::get('/profile', [PanelProfileController::class, 'show'])->name('panel.profile');
+        Route::put('/profile', [PanelProfileController::class, 'update'])->name('panel.profile.update');
+        Route::post('/profile/avatar', [PanelProfileController::class, 'avatar'])->name('panel.profile.avatar');
+        Route::delete('/profile/avatar', [PanelProfileController::class, 'removeAvatar'])->name('panel.profile.avatar.remove');
+        Route::post('/profile/password', [PanelProfileController::class, 'password'])->name('panel.profile.password');
+
+        Route::get('/notifications', [PanelNotificationController::class, 'index'])->name('panel.notifications');
+        Route::post('/notifications/read-all', [PanelNotificationController::class, 'readAll'])->name('panel.notifications.read-all');
+        Route::post('/notifications/{notification}/read', [PanelNotificationController::class, 'read'])->name('panel.notifications.read');
 
         Route::middleware('panel:super_admin')->group(function () use ($operationsConsole): void {
             Route::get('/users', [PanelUserController::class, 'index'])->name('panel.users');
@@ -400,6 +415,21 @@ $adminPanel = function () use ($operationsConsole): void {
             Route::get('/consignments/create', [OwnerConsignmentController::class, 'create'])->name('consignments.create');
             Route::post('/consignments', [OwnerConsignmentController::class, 'store'])->name('consignments.store');
             Route::get('/consignments/{consignment}', [OwnerConsignmentController::class, 'show'])->name('consignments.show');
+        });
+
+        /*
+         * بوابة الكابتن: الرحلات المسندة إليه (بانتظارك / النشطة / القائمة)
+         * بأفعاله الثلاثة، وسجل الصيد. الرحلة المسندة لغيره 404 — انظر
+         * ResolvesCaptainRecords.
+         */
+        Route::prefix('captain')->name('panel.captain.')->middleware('panel:captain')->group(function (): void {
+            Route::get('/trips', [CaptainTripController::class, 'index'])->name('trips');
+            Route::get('/trips/{trip}', [CaptainTripController::class, 'show'])->name('trips.show');
+            Route::post('/trips/{trip}/start', [CaptainTripController::class, 'start'])->name('trips.start');
+            Route::post('/trips/{trip}/cancel', [CaptainTripController::class, 'cancel'])->name('trips.cancel');
+            Route::post('/trips/{trip}/catch', [CaptainTripController::class, 'submitCatch'])->name('trips.catch');
+
+            Route::get('/catch-log', [CaptainCatchLogController::class, 'index'])->name('catch-log');
         });
     });
 };

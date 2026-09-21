@@ -135,6 +135,22 @@ class User extends Authenticatable
     }
 
     /**
+     * الرحلات المسندة إلى هذا الحساب كابتنًا.
+     */
+    public function captainedTrips(): HasMany
+    {
+        return $this->hasMany(Trip::class, 'captain_id');
+    }
+
+    /**
+     * إشعارات التطبيق — لا notifications() التي يحجزها Notifiable لقناة قاعدة البيانات.
+     */
+    public function appNotifications(): HasMany
+    {
+        return $this->hasMany(AppNotification::class);
+    }
+
+    /**
      * سجلّ الصياد في الوزارة لحساب الكابتن (الهوية والرخصة والميناء).
      */
     public function fisher(): HasOne

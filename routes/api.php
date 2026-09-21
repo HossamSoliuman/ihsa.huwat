@@ -3,7 +3,11 @@
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
+use App\Http\Controllers\Api\V1\Captain\CatchLogController as CaptainCatchLogController;
+use App\Http\Controllers\Api\V1\Captain\DashboardController as CaptainDashboardController;
+use App\Http\Controllers\Api\V1\Captain\TripController as CaptainTripController;
 use App\Http\Controllers\Api\V1\LookupController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\Owner\BoatController as OwnerBoatController;
 use App\Http\Controllers\Api\V1\Owner\CaptainController as OwnerCaptainController;
 use App\Http\Controllers\Api\V1\Owner\ConsignmentController as OwnerConsignmentController;
@@ -46,6 +50,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::get('me', [MeController::class, 'show'])->name('me');
             Route::put('me', [MeController::class, 'update'])->name('me.update');
             Route::post('change-password', [MeController::class, 'changePassword'])->name('change-password');
+            Route::post('avatar', [MeController::class, 'updateAvatar'])->name('avatar');
+            Route::delete('avatar', [MeController::class, 'removeAvatar'])->name('avatar.remove');
             Route::post('fcm-token', [MeController::class, 'updateFcmToken'])->name('fcm-token');
         });
     });
@@ -53,6 +59,12 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::middleware(['auth:sanctum', 'api.active'])->group(function (): void {
         // القوائم المرجعية لكل الأدوار في ردّ واحد.
         Route::get('lookups', [LookupController::class, 'index'])->name('lookups');
+
+        // إشعارات الحساب الداخل — لكل الأدوار.
+        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications');
+        Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+        Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+        Route::post('notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
 
         /*
          * بوابة المالك: الأسطول والطاقم والعملاء، ثم الرحلات بدورتها
@@ -80,6 +92,23 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::get('dalals', [OwnerDalalController::class, 'index'])->name('dalals');
             Route::get('stock', [OwnerStockController::class, 'index'])->name('stock');
             Route::get('stock/movements', [OwnerStockController::class, 'movements'])->name('stock.movements');
+        });
+
+        /*
+         * بوابة الكابتن: رئيسته، ورحلاته المسندة إليه بأفعاله الثلاثة،
+         * وسجل صيده. الرحلة المسندة لغيره 404.
+         */
+        Route::prefix('captain')->name('captain.')->middleware('api.role:captain')->group(function (): void {
+            Route::get('dashboard', [CaptainDashboardController::class, 'index'])->name('dashboard');
+
+            Route::get('trips', [CaptainTripController::class, 'index'])->name('trips.index');
+            Route::get('trips/{trip}', [CaptainTripController::class, 'show'])->name('trips.show');
+            Route::post('trips/{trip}/start', [CaptainTripController::class, 'start'])->name('trips.start');
+            Route::post('trips/{trip}/cancel', [CaptainTripController::class, 'cancel'])->name('trips.cancel');
+            Route::post('trips/{trip}/catch', [CaptainTripController::class, 'submitCatch'])->name('trips.catch');
+
+            Route::get('catch-log', [CaptainCatchLogController::class, 'index'])->name('catch-log');
+            Route::get('catch-log/summary', [CaptainCatchLogController::class, 'summary'])->name('catch-log.summary');
         });
     });
 });

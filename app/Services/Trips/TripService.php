@@ -7,18 +7,23 @@ use App\Models\Boat;
 use App\Models\CatchRecord;
 use App\Models\Trip;
 use App\Models\User;
+use App\Services\Notifications\Notifier;
 use App\Services\Stock\StockLedger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * دورة الرحلة من الإنشاء إلى اكتمال العد — مسار واحد تستدعيه بوابة المالك
- * وواجهة التطبيق وصفحة الإحصاء الميداني، فتبقى الرحلة الواحدة صادقة في
- * كل لوحة: الحالة بمفردات الوزارة، والمخزون في الدفتر، وحالة القارب.
+ * دورة الرحلة من الإنشاء إلى اكتمال العد — مسار واحد تستدعيه بوابتا المالك
+ * والكابتن وواجهة التطبيق وصفحة الإحصاء الميداني، فتبقى الرحلة الواحدة صادقة
+ * في كل لوحة: الحالة بمفردات الوزارة، والمخزون في الدفتر، وحالة القارب،
+ * والإشعار للطرف الآخر عند كل انتقال (Notifier).
  */
 class TripService
 {
-    public function __construct(private readonly StockLedger $ledger) {}
+    public function __construct(
+        private readonly StockLedger $ledger,
+        private readonly Notifier $notifier,
+    ) {}
 
     /**
      * ينشئ المالك الرحلة ويسندها لكابتن → مجدولة. القارب يحدّد الميناء
@@ -29,7 +34,7 @@ class TripService
         $boat = Boat::forOwner($owner)->findOrFail($data['boat_id']);
         $captain = $this->captainOf($owner, $data['captain_id'] ?? $boat->captain_id);
 
-        return Trip::create([
+        $trip = Trip::create([
             'trip_number' => Trip::nextNumber(),
             'owner_id' => $owner->id,
             'boat_id' => $boat->id,
@@ -47,6 +52,10 @@ class TripService
             'status' => Trip::SCHEDULED,
             'sale_status' => Trip::SALE_NOT_STARTED,
         ]);
+
+        $this->notifier->tripAssigned($trip->setRelation('boat', $boat)->setRelation('captain', $captain));
+
+        return $trip;
     }
 
     /**
@@ -55,6 +64,8 @@ class TripService
     public function update(Trip $trip, array $data): Trip
     {
         $this->assertStatus($trip, [Trip::SCHEDULED], 'لا يمكن تعديل رحلة انطلقت.');
+
+        $previousCaptain = $trip->captain_id;
 
         if (array_key_exists('captain_id', $data)) {
             $captain = $this->captainOf($trip->owner, $data['captain_id']);
@@ -65,6 +76,11 @@ class TripService
             'boat_id', 'captain_id', 'captain_name', 'departure_port_id', 'return_port_id', 'trip_type_id',
             'crew_count', 'departure_time', 'planned_days', 'gear_type', 'license_number', 'notes',
         ])->all());
+
+        // كابتن جديد على الرحلة يُبلَّغ بها كأنها أُسندت إليه الآن.
+        if ($trip->captain_id !== null && $trip->captain_id !== $previousCaptain) {
+            $this->notifier->tripAssigned($trip->unsetRelation('captain')->unsetRelation('boat'));
+        }
 
         return $trip;
     }
@@ -85,6 +101,7 @@ class TripService
             $trip->boat?->update(['status' => Trip::AT_SEA]);
 
             $this->log('بدء رحلة', $trip, $by, 'انطلقت الرحلة');
+            $this->notifier->tripStarted($trip, $by);
 
             return $trip;
         });
@@ -111,6 +128,7 @@ class TripService
             }
 
             $this->log('إلغاء رحلة', $trip, $by, "سبب الإلغاء: {$reason}");
+            $this->notifier->tripCancelled($trip, $by);
 
             return $trip;
         });
@@ -160,6 +178,7 @@ class TripService
             $trip->boat?->update(['status' => 'نشط']);
 
             $this->log('إرسال مخرجات', $trip, $by, 'المصيد المعلن '.round($total, 2).' كجم');
+            $this->notifier->catchSubmitted($trip, $by);
 
             return $trip;
         });
@@ -196,7 +215,9 @@ class TripService
         // إعادة العد قبل الاعتماد مباحة لتصحيح الوزن؛ المخزون أُدخل في أول عدّ ولا يُكرَّر.
         $this->assertStatus($trip, [Trip::RETURNED, Trip::AWAITING_COUNT, Trip::COUNTING, Trip::AWAITING_APPROVAL], 'الرحلة ليست في طور العد.');
 
-        return DB::transaction(function () use ($trip, $counted, $counter, $totalKg, $notes) {
+        $firstCount = $trip->counted_at === null;
+
+        return DB::transaction(function () use ($trip, $counted, $counter, $totalKg, $notes, $firstCount) {
             $sum = 0.0;
             foreach ($trip->catchRecords as $record) {
                 $entry = $counted[$record->species_id] ?? null;
@@ -226,6 +247,11 @@ class TripService
             $this->openForSale($trip);
 
             $this->log('إحصاء', $trip, $counter, 'الوزن الفعلي '.round($actual, 2).' كجم بفرق '.$trip->diff_kg.' كجم');
+
+            // إعادة العد تصحيح لا حدث جديد — الإشعار عند أول اكتمال فقط.
+            if ($firstCount) {
+                $this->notifier->countCompleted($trip);
+            }
 
             return $trip;
         });

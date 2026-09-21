@@ -111,9 +111,35 @@ class Trip extends BaseModel
         return $this->hasMany(StockMovement::class);
     }
 
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(AppNotification::class);
+    }
+
     public function scopeForOwner(Builder $query, User $owner): Builder
     {
         return $query->where('owner_id', $owner->id);
+    }
+
+    public function scopeForCaptain(Builder $query, User $captain): Builder
+    {
+        return $query->where('captain_id', $captain->id);
+    }
+
+    /**
+     * شاشة الكابتن "الرحلات التي بانتظارك": مسندة إليه ولم تنطلق.
+     */
+    public function scopeAwaitingCaptain(Builder $query): Builder
+    {
+        return $query->where('status', self::SCHEDULED);
+    }
+
+    /**
+     * شاشة الكابتن "الرحلات النشطة": في البحر حتى يرسل مخرجاتها.
+     */
+    public function scopeActiveForCaptain(Builder $query): Builder
+    {
+        return $query->where('status', self::AT_SEA);
     }
 
     /**
@@ -135,6 +161,24 @@ class Trip extends BaseModel
     public function isCounted(): bool
     {
         return in_array($this->status, [self::AWAITING_APPROVAL, self::APPROVED], true);
+    }
+
+    /**
+     * ما يستطيعه الكابتن على الرحلة الآن — تقرؤه الشاشات وواجهة التطبيق.
+     */
+    public function canStart(): bool
+    {
+        return $this->status === self::SCHEDULED;
+    }
+
+    public function canCancel(): bool
+    {
+        return in_array($this->status, [self::SCHEDULED, self::AT_SEA], true);
+    }
+
+    public function canSubmitCatch(): bool
+    {
+        return $this->status === self::AT_SEA;
     }
 
     public function canSell(): bool

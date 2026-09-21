@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Hawat Mobile API
-  version: 1.1.0
+  version: 1.2.0
   description: |
     Hawat mobile app API (com.os.hawat). All responses are JSON.
 
@@ -12,6 +12,8 @@ info:
     - Throttling: login 6/min, OTP request 3/min per phone number.
     - Lookup lists: `GET /lookups` once after login.
     - The owner portal lives under `/owner/*` and requires the `owner` role; every record is scoped to its owner (`404` otherwise).
+    - The captain portal lives under `/captain/*` and requires the `captain` role; only trips assigned to the captain are visible (`404` otherwise).
+    - Notifications (`/notifications`) are per account for every role; the app registers its device with `POST /auth/fcm-token` to receive pushes.
     - Paginated lists return `{ data: [...], links: {...}, meta: {...} }` with `?page=` and `?per_page=` (max 100).
     - Changelog: docs/api/CHANGELOG.md.
 servers:
@@ -31,6 +33,10 @@ tags:
   description: المالك — الرحلات
 - name: owner-sales
   description: المالك — البيع والإرسال للدلال
+- name: notifications
+  description: إشعارات الحساب — لكل الأدوار
+- name: captain
+  description: بوابة الكابتن — الرئيسة والرحلات وسجل الصيد
 paths:
   /auth/login:
     post:
@@ -175,6 +181,54 @@ paths:
           $ref: '#/components/responses/Message'
         '422':
           $ref: '#/components/responses/ValidationError'
+  /auth/avatar:
+    post:
+      tags:
+      - auth
+      summary: رفع الصورة الشخصية (multipart)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - avatar
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+                  description: JPG/PNG/WebP حتى 2MB
+      responses:
+        '200':
+          description: الحساب بعد التعديل
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags:
+      - auth
+      summary: إزالة الصورة الشخصية
+      responses:
+        '200':
+          description: الحساب بعد التعديل
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
   /auth/fcm-token:
     post:
       tags:
@@ -320,6 +374,382 @@ paths:
                 properties:
                   data:
                     $ref: '#/components/schemas/Lookups'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /notifications:
+    get:
+      tags:
+      - notifications
+      summary: إشعارات الحساب (الأحدث أولًا) — meta.unread_count يحمل عدد غير المقروء
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          default: 25
+      - name: unread
+        in: query
+        description: 1 = غير المقروء فقط
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: الإشعارات
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Notification'
+                - $ref: '#/components/schemas/Pagination'
+                - type: object
+                  properties:
+                    meta:
+                      type: object
+                      properties:
+                        unread_count:
+                          type: integer
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /notifications/unread-count:
+    get:
+      tags:
+      - notifications
+      summary: عدد غير المقروء — لشارة الجرس
+      responses:
+        '200':
+          description: العدد
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      unread_count:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+  /notifications/read-all:
+    post:
+      tags:
+      - notifications
+      summary: تعليم كل الإشعارات مقروءة
+      responses:
+        '200':
+          description: عدد ما عُلّم
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      marked:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+  /notifications/{notification}/read:
+    parameters:
+    - name: notification
+      in: path
+      required: true
+      description: معرّف الإشعار
+      schema:
+        type: integer
+    post:
+      tags:
+      - notifications
+      summary: تعليم إشعار مقروءًا
+      responses:
+        '200':
+          description: الإشعار بعد التعليم
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Notification'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /captain/dashboard:
+    get:
+      tags:
+      - captain
+      summary: رئيسة الكابتن — الأعداد، الرحلات التي بانتظاره، النشطة، وآخر رحلاته
+      responses:
+        '200':
+          description: الرئيسة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CaptainDashboard'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /captain/trips:
+    get:
+      tags:
+      - captain
+      summary: رحلات الكابتن — view=pending (بانتظارك) / active (في البحر) / completed / cancelled
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          default: 25
+      - name: view
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - active
+          - completed
+          - cancelled
+      - name: status
+        in: query
+        description: حالة الوزارة
+        schema:
+          type: string
+      - name: search
+        in: query
+        description: رقم الرحلة
+        schema:
+          type: string
+      responses:
+        '200':
+          description: الرحلات
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Trip'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /captain/trips/{trip}:
+    parameters:
+    - name: trip
+      in: path
+      required: true
+      description: معرّف رحلة مسندة إلى الكابتن
+      schema:
+        type: integer
+    get:
+      tags:
+      - captain
+      summary: تفاصيل رحلة مع سطور المصيد
+      responses:
+        '200':
+          description: رحلة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /captain/trips/{trip}/start:
+    parameters:
+    - name: trip
+      in: path
+      required: true
+      description: معرّف الرحلة
+      schema:
+        type: integer
+    post:
+      tags:
+      - captain
+      summary: ابدأ الرحلة → في البحر (يُبلَّغ المالك)
+      responses:
+        '200':
+          description: الرحلة بعد الفعل
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /captain/trips/{trip}/cancel:
+    parameters:
+    - name: trip
+      in: path
+      required: true
+      description: معرّف الرحلة
+      schema:
+        type: integer
+    post:
+      tags:
+      - captain
+      summary: إلغاء الرحلة بسبب إلزامي (قبل إرسال المخرجات)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+              required:
+              - reason
+      responses:
+        '200':
+          description: الرحلة بعد الفعل
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /captain/trips/{trip}/catch:
+    parameters:
+    - name: trip
+      in: path
+      required: true
+      description: معرّف الرحلة
+      schema:
+        type: integer
+    post:
+      tags:
+      - captain
+      summary: تأكيد المخرجات وإنهاء الرحلة → بانتظار الإحصاء
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatchInput'
+      responses:
+        '200':
+          description: الرحلة بعد الفعل مع سطور المصيد
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /captain/catch-log:
+    get:
+      tags:
+      - captain
+      summary: سجل الصيد — سطور المصيد على رحلات الكابتن (الأحدث أولًا)
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          default: 25
+      - name: search
+        in: query
+        description: رقم الرحلة أو اسم الصنف
+        schema:
+          type: string
+      responses:
+        '200':
+          description: السطور
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/CatchLogEntry'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /captain/catch-log/summary:
+    get:
+      tags:
+      - captain
+      summary: ملخص سجل الصيد بالصنف
+      responses:
+        '200':
+          description: الملخص
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CatchLogSummary'
         '401':
           $ref: '#/components/responses/Unauthenticated'
         '403':
@@ -1887,6 +2317,18 @@ components:
               type: string
             phone:
               type: string
+        port:
+          type: object
+          nullable: true
+          description: ميناء الكابتن من سجلّ الصياد
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            governorate:
+              type: string
+              nullable: true
         active:
           type: boolean
         locale:
@@ -3252,6 +3694,169 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Sale'
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+              example: رحلة جديدة بانتظارك
+            name_en:
+              type: string
+              nullable: true
+            icon:
+              type: string
+              nullable: true
+        title:
+          type: string
+        body:
+          type: string
+        trip:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            trip_number:
+              type: string
+            status:
+              type: string
+            app_status:
+              type: string
+        payload:
+          type: object
+          description: بيانات فتح الشاشة (type, trip_id, trip_number, status)
+          additionalProperties: true
+        read:
+          type: boolean
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    CaptainDashboard:
+      type: object
+      properties:
+        kpis:
+          type: object
+          properties:
+            pending:
+              type: integer
+            active:
+              type: integer
+            awaiting_count:
+              type: integer
+            completed:
+              type: integer
+            cancelled:
+              type: integer
+            total:
+              type: integer
+            catch_kg:
+              type: number
+            unread_notifications:
+              type: integer
+        pending_trips:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trip'
+        active_trips:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trip'
+        recent_trips:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trip'
+    CatchLogEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        species:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            name_sci:
+              type: string
+              nullable: true
+        trip:
+          type: object
+          properties:
+            id:
+              type: integer
+            trip_number:
+              type: string
+            status:
+              type: string
+            app_status:
+              type: string
+            boat:
+              type: string
+              nullable: true
+            return_time:
+              type: string
+              format: date-time
+              nullable: true
+        captain_kg:
+          type: number
+          nullable: true
+        counted_kg:
+          type: number
+          nullable: true
+        captain_notes:
+          type: string
+          nullable: true
+        counter_notes:
+          type: string
+          nullable: true
+        verified:
+          type: boolean
+        recorded_at:
+          type: string
+          format: date
+          nullable: true
+    CatchLogSummary:
+      type: object
+      properties:
+        totals:
+          type: object
+          properties:
+            captain_kg:
+              type: number
+            counted_kg:
+              type: number
+            species:
+              type: integer
+        by_species:
+          type: array
+          items:
+            type: object
+            properties:
+              species_id:
+                type: integer
+              species:
+                type: string
+              name_sci:
+                type: string
+                nullable: true
+              trips:
+                type: integer
+              captain_kg:
+                type: number
+              counted_kg:
+                type: number
     Pagination:
       type: object
       properties:

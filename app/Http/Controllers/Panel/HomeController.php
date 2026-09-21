@@ -9,6 +9,7 @@ use App\Models\Role;
 use App\Models\Sale;
 use App\Models\Trip;
 use App\Models\User;
+use App\Services\Captain\CaptainDashboard;
 use App\Services\Owner\OwnerDashboard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -20,12 +21,12 @@ use Illuminate\View\View;
  * رئيسة لوحة الإدارة — تتفرّع على دور المستخدم.
  *
  * المدير العام يرى حال الأسطول والرحلات والمصيد والمبيعات على مستوى النظام،
- * والمالك يرى مؤشراته ورحلاته النشطة، وبقية الأدوار ترى رئيسة بوابتها حين
- * تُبنى؛ إلى ذلك الحين بطاقة تعريف بالحساب.
+ * والمالك يرى مؤشراته ورحلاته النشطة، والكابتن رحلاته التي بانتظاره والنشطة،
+ * وبقية الأدوار ترى رئيسة بوابتها حين تُبنى؛ إلى ذلك الحين بطاقة تعريف بالحساب.
  */
 class HomeController extends Controller
 {
-    public function index(Request $request, OwnerDashboard $dashboard): View
+    public function index(Request $request, OwnerDashboard $ownerDashboard, CaptainDashboard $captainDashboard): View
     {
         $user = $request->user();
 
@@ -34,7 +35,11 @@ class HomeController extends Controller
         }
 
         if ($user->hasAppRole(Role::OWNER)) {
-            return view('panel.owner.home', ['user' => $user] + $dashboard->for($user));
+            return view('panel.owner.home', ['user' => $user] + $ownerDashboard->for($user));
+        }
+
+        if ($user->hasAppRole(Role::CAPTAIN)) {
+            return view('panel.captain.home', ['user' => $user] + $captainDashboard->for($user));
         }
 
         return view('panel.home.role', ['user' => $user]);

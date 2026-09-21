@@ -31,6 +31,12 @@ class UserResource extends JsonResource
                 'name' => $this->owner->name,
                 'phone' => $this->owner->phone,
             ] : null),
+            // ميناء الكابتن من سجلّ الصياد — يُعرض في ملفه الشخصي (الهفوف — المحافظة).
+            'port' => $this->whenLoaded('fisher', fn () => $this->fisher?->port ? [
+                'id' => $this->fisher->port->id,
+                'name' => $this->fisher->port->name,
+                'governorate' => $this->fisher->port->governorate?->name,
+            ] : null),
             'active' => $this->active,
             'locale' => $this->locale,
             'avatar_url' => $this->avatar_path ? asset('storage/'.$this->avatar_path) : null,
