@@ -49,7 +49,7 @@ class RoleSeeder extends Seeder
             'name' => 'العدّاد',
             'name_en' => 'Counter',
             'description' => 'موظف الإحصاء في الميناء: يستلم المصيد ويعدّه ويؤكد وزنه.',
-            'has_portal' => false,
+            'has_portal' => true,
         ],
         Role::DALAL => [
             'name' => 'الدلال',

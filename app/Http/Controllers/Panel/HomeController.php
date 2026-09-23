@@ -10,6 +10,7 @@ use App\Models\Sale;
 use App\Models\Trip;
 use App\Models\User;
 use App\Services\Captain\CaptainDashboard;
+use App\Services\Counter\CounterDashboard;
 use App\Services\Owner\OwnerDashboard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -26,7 +27,7 @@ use Illuminate\View\View;
  */
 class HomeController extends Controller
 {
-    public function index(Request $request, OwnerDashboard $ownerDashboard, CaptainDashboard $captainDashboard): View
+    public function index(Request $request, OwnerDashboard $ownerDashboard, CaptainDashboard $captainDashboard, CounterDashboard $counterDashboard): View
     {
         $user = $request->user();
 
@@ -40,6 +41,10 @@ class HomeController extends Controller
 
         if ($user->hasAppRole(Role::CAPTAIN)) {
             return view('panel.captain.home', ['user' => $user] + $captainDashboard->for($user));
+        }
+
+        if ($user->hasAppRole(Role::COUNTER)) {
+            return view('panel.counter.home', ['user' => $user] + $counterDashboard->for($user));
         }
 
         return view('panel.home.role', ['user' => $user]);

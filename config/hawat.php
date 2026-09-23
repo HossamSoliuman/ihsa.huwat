@@ -284,6 +284,22 @@ return [
                 ],
             ],
         ],
+        'counter' => [
+            [
+                'title' => 'العدّاد',
+                'items' => [
+                    ['label' => 'الرئيسية', 'route' => 'panel.home', 'icon' => 'layout-dashboard'],
+                    ['label' => 'طابور العد', 'route' => 'panel.counter.trips', 'icon' => 'clipboard-check'],
+                ],
+            ],
+            [
+                'title' => 'الحساب',
+                'items' => [
+                    ['label' => 'الإشعارات', 'route' => 'panel.notifications', 'icon' => 'bell'],
+                    ['label' => 'الملف الشخصي', 'route' => 'panel.profile', 'icon' => 'user'],
+                ],
+            ],
+        ],
         'employee' => [
             [
                 'title' => 'الموظف',

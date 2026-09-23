@@ -37,6 +37,13 @@ class Trip extends BaseModel
         self::COUNTING, self::AWAITING_APPROVAL, self::APPROVED, self::CANCELLED,
     ];
 
+    /**
+     * ما يعني العدّاد من دورة الرحلة: منذ عودتها بمصيدها إلى اعتماد الوزارة.
+     */
+    public const COUNTER_STATUSES = [
+        self::RETURNED, self::AWAITING_COUNT, self::COUNTING, self::AWAITING_APPROVAL, self::APPROVED,
+    ];
+
     /** الرحلة لم يُعدّ مصيدها بعد — لا يمكن بيعها. */
     public const SALE_NOT_STARTED = 'لم يبدأ';
 
@@ -143,6 +150,45 @@ class Trip extends BaseModel
     }
 
     /**
+     * ما يخصّ العدّاد من رحلات ميناء واحد: منذ عودتها إلى ما بعد عدّها.
+     * الرحلة المجدولة أو التي في البحر ليست من شأنه، ورحلة ميناء آخر لا
+     * يراها ولا يعدّها (404) — إلا رحلة عدّها هو ثم نُقل عن الميناء.
+     *
+     * ميناء الرحلة ميناء عودتها، وإن لم يُحدَّد فميناء مغادرتها.
+     *
+     * @param  array<int, int>  $portIds
+     */
+    public function scopeAtPorts(Builder $query, array $portIds): Builder
+    {
+        return $query->where(fn (Builder $q) => $q
+            ->whereIn('return_port_id', $portIds)
+            ->orWhere(fn (Builder $w) => $w->whereNull('return_port_id')->whereIn('departure_port_id', $portIds)));
+    }
+
+    public function scopeForCounter(Builder $query, User $counter): Builder
+    {
+        return $query
+            ->whereIn('status', self::COUNTER_STATUSES)
+            ->where(fn (Builder $q) => $q->atPorts($counter->counterPortIds())->orWhere('counter_id', $counter->id));
+    }
+
+    /**
+     * شاشة العدّاد "رحلات بحاجة لموافقتك": عادت بمصيدها ولم تُستلم بعد.
+     */
+    public function scopeAwaitingCounter(Builder $query): Builder
+    {
+        return $query->whereIn('status', [self::RETURNED, self::AWAITING_COUNT]);
+    }
+
+    /**
+     * شاشة العدّاد "الرحلات النشطة": استُلمت وجارٍ عدّها.
+     */
+    public function scopeUnderCount(Builder $query): Builder
+    {
+        return $query->where('status', self::COUNTING);
+    }
+
+    /**
      * الرحلات التي يتابعها المالك في شاشة "الرحلات النشطة": من الانطلاق حتى
      * ما بعد العد ما دام مصيدها لم يُبع.
      */
@@ -179,6 +225,19 @@ class Trip extends BaseModel
     public function canSubmitCatch(): bool
     {
         return $this->status === self::AT_SEA;
+    }
+
+    /**
+     * ما يستطيعه العدّاد على الرحلة الآن — تقرؤه الشاشات وواجهة التطبيق.
+     */
+    public function canReceive(): bool
+    {
+        return in_array($this->status, [self::RETURNED, self::AWAITING_COUNT], true);
+    }
+
+    public function canCount(): bool
+    {
+        return in_array($this->status, [self::RETURNED, self::AWAITING_COUNT, self::COUNTING, self::AWAITING_APPROVAL], true);
     }
 
     public function canSell(): bool

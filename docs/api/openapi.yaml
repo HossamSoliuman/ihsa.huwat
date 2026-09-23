@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Hawat Mobile API
-  version: 1.2.0
+  version: 1.3.0
   description: |
     Hawat mobile app API (com.os.hawat). All responses are JSON.
 
@@ -13,6 +13,7 @@ info:
     - Lookup lists: `GET /lookups` once after login.
     - The owner portal lives under `/owner/*` and requires the `owner` role; every record is scoped to its owner (`404` otherwise).
     - The captain portal lives under `/captain/*` and requires the `captain` role; only trips assigned to the captain are visible (`404` otherwise).
+    - The counter portal lives under `/counter/*` and requires the `counter` role; only trips that returned to the counter's port are visible (`404` otherwise).
     - Notifications (`/notifications`) are per account for every role; the app registers its device with `POST /auth/fcm-token` to receive pushes.
     - Paginated lists return `{ data: [...], links: {...}, meta: {...} }` with `?page=` and `?per_page=` (max 100).
     - Changelog: docs/api/CHANGELOG.md.
@@ -37,6 +38,8 @@ tags:
   description: إشعارات الحساب — لكل الأدوار
 - name: captain
   description: بوابة الكابتن — الرئيسة والرحلات وسجل الصيد
+- name: counter
+  description: بوابة العدّاد — طابور الميناء والعد والتقرير المفصّل
 paths:
   /auth/login:
     post:
@@ -754,6 +757,198 @@ paths:
           $ref: '#/components/responses/Unauthenticated'
         '403':
           $ref: '#/components/responses/Forbidden'
+  /counter/dashboard:
+    get:
+      tags:
+      - counter
+      summary: رئيسة العدّاد — ميناء عمله وأعداده وطابوره وما جرى عدّه
+      responses:
+        '200':
+          description: الرئيسة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CounterDashboard'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /counter/trips:
+    get:
+      tags:
+      - counter
+      summary: رحلات ميناء العدّاد — view=awaiting (بحاجة لموافقتك) / counting (جارية العد) / counted (معدودة)
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          default: 25
+      - name: view
+        in: query
+        schema:
+          type: string
+          enum:
+          - awaiting
+          - counting
+          - counted
+      - name: status
+        in: query
+        description: حالة الوزارة
+        schema:
+          type: string
+      - name: search
+        in: query
+        description: رقم الرحلة
+        schema:
+          type: string
+      responses:
+        '200':
+          description: الرحلات
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Trip'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /counter/trips/{trip}:
+    parameters:
+    - name: trip
+      in: path
+      required: true
+      description: معرّف رحلة عادت إلى ميناء العدّاد
+      schema:
+        type: integer
+    get:
+      tags:
+      - counter
+      summary: تفاصيل رحلة مع سطور المصيد المعلنة والمعدودة
+      responses:
+        '200':
+          description: رحلة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /counter/trips/{trip}/report:
+    parameters:
+    - name: trip
+      in: path
+      required: true
+      description: معرّف الرحلة
+      schema:
+        type: integer
+    get:
+      tags:
+      - counter
+      summary: تقرير مفصّل للرحلة — أقسام معنونة بسطور (تسمية، قيمة) وتفاصيل المصيد
+      responses:
+        '200':
+          description: التقرير
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TripReport'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /counter/trips/{trip}/receive:
+    parameters:
+    - name: trip
+      in: path
+      required: true
+      description: معرّف الرحلة
+      schema:
+        type: integer
+    post:
+      tags:
+      - counter
+      summary: استلام الرحلة وبدء عملية العد → تحت الإحصاء
+      responses:
+        '200':
+          description: الرحلة بعد الفعل
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /counter/trips/{trip}/count:
+    parameters:
+    - name: trip
+      in: path
+      required: true
+      description: معرّف الرحلة
+      schema:
+        type: integer
+    post:
+      tags:
+      - counter
+      summary: تأكيد الكميات وإنهاء العد → بانتظار الاعتماد، ويُفتح المصيد للبيع
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CountInput'
+      responses:
+        '200':
+          description: الرحلة بعد العد مع سطور المصيد
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
   /owner/dashboard:
     get:
       tags:
@@ -2320,7 +2515,7 @@ components:
         port:
           type: object
           nullable: true
-          description: ميناء الكابتن من سجلّ الصياد
+          description: ميناء الكابتن من سجلّ الصياد، وميناء العدّاد من سجلّ موظف الإحصاء
           properties:
             id:
               type: integer
@@ -3742,6 +3937,157 @@ components:
         created_at:
           type: string
           format: date-time
+    CountInput:
+      type: object
+      description: عدّ المصيد — سطر لكل صنف. الصنف الذي لم يعلنه الكابتن يُضاف سطرًا جديدًا منسوبًا إلى العدّاد.
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            properties:
+              species_id:
+                type: integer
+              weight_kg:
+                type: number
+                minimum: 0
+                description: الوزن المعدود؛ صفر لصنف أُعلن ولم يُوجد
+              notes:
+                type: string
+                nullable: true
+              verified:
+                type: boolean
+                default: true
+                description: مربّع "فحص الكمية"
+            required:
+            - species_id
+            - weight_kg
+        notes:
+          type: string
+          nullable: true
+          description: ملاحظة العد على الرحلة كلها
+      required:
+      - items
+    CounterDashboard:
+      type: object
+      properties:
+        port:
+          type: object
+          nullable: true
+          description: ميناء عمل العدّاد — طابوره يُحسب عليه
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            governorate:
+              type: string
+              nullable: true
+        kpis:
+          type: object
+          properties:
+            awaiting:
+              type: integer
+            counting:
+              type: integer
+            counted_today:
+              type: integer
+            counted:
+              type: integer
+            declared_kg:
+              type: number
+            counted_kg:
+              type: number
+            diff_kg:
+              type: number
+            unread_notifications:
+              type: integer
+        awaiting_trips:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trip'
+        counting_trips:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trip'
+        recent_trips:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trip'
+    TripReport:
+      type: object
+      properties:
+        trip:
+          $ref: '#/components/schemas/Trip'
+        sections:
+          type: array
+          description: أقسام التقرير بالترتيب — الرحلة، الموقع، الطاقم، المركب، الرخصة
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              rows:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    label:
+                      type: string
+                    value:
+                      type: string
+        catch:
+          type: array
+          items:
+            type: object
+            properties:
+              species:
+                type: string
+                nullable: true
+              name_sci:
+                type: string
+                nullable: true
+              total_kg:
+                type: number
+              captain_kg:
+                type: number
+                nullable: true
+              counted_kg:
+                type: number
+                nullable: true
+              captain_notes:
+                type: string
+                nullable: true
+              counter_notes:
+                type: string
+                nullable: true
+              verified:
+                type: boolean
+              added_by:
+                type: string
+                nullable: true
+              recorded_at:
+                type: string
+                format: date
+                nullable: true
+        totals:
+          type: object
+          properties:
+            species:
+              type: integer
+            captain_kg:
+              type: number
+              nullable: true
+            counted_kg:
+              type: number
+              nullable: true
+            diff_kg:
+              type: number
+              nullable: true
+            approved_kg:
+              type: number
+              nullable: true
     CaptainDashboard:
       type: object
       properties:

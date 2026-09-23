@@ -159,6 +159,42 @@ class User extends Authenticatable
     }
 
     /**
+     * سجلّ موظف الإحصاء لحساب العدّاد — منه ميناؤه ووردّيته.
+     */
+    public function statisticsOfficer(): HasOne
+    {
+        return $this->hasOne(StatisticsOfficer::class);
+    }
+
+    /**
+     * الرحلات التي عدّها هذا الحساب.
+     */
+    public function countedTrips(): HasMany
+    {
+        return $this->hasMany(Trip::class, 'counter_id');
+    }
+
+    /**
+     * ميناء الحساب: من سجلّ الصياد للكابتن، ومن سجلّ موظف الإحصاء للعدّاد.
+     * يُعرض في الملف الشخصي ويُحسب عليه طابور العدّاد.
+     */
+    public function getPortAttribute(): ?Port
+    {
+        return $this->fisher?->port ?? $this->statisticsOfficer?->port;
+    }
+
+    /**
+     * موانئ العدّاد التي يعدّ فيها — طابوره يُحسب عليها. سجلّ واحد اليوم،
+     * والدالة ترجع قائمة حتى يُسند إليه أكثر من ميناء دون تغيير المستدعين.
+     *
+     * @return array<int, int>
+     */
+    public function counterPortIds(): array
+    {
+        return array_values(array_filter([$this->statisticsOfficer?->port_id]));
+    }
+
+    /**
      * مفتاح دور التطبيق أو null لمن لا دور له (موظفو الوزارة).
      */
     public function getAppRoleKeyAttribute(): ?string

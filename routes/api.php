@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Captain\CatchLogController as CaptainCatchLogController;
 use App\Http\Controllers\Api\V1\Captain\DashboardController as CaptainDashboardController;
 use App\Http\Controllers\Api\V1\Captain\TripController as CaptainTripController;
+use App\Http\Controllers\Api\V1\Counter\DashboardController as CounterDashboardController;
+use App\Http\Controllers\Api\V1\Counter\TripController as CounterTripController;
 use App\Http\Controllers\Api\V1\LookupController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\Owner\BoatController as OwnerBoatController;
@@ -109,6 +111,20 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
             Route::get('catch-log', [CaptainCatchLogController::class, 'index'])->name('catch-log');
             Route::get('catch-log/summary', [CaptainCatchLogController::class, 'summary'])->name('catch-log.summary');
+        });
+
+        /*
+         * بوابة العدّاد: طابور ميناء عمله — الاستلام ثم العد بالصنف،
+         * والتقرير المفصّل. رحلة ميناء آخر 404.
+         */
+        Route::prefix('counter')->name('counter.')->middleware('api.role:counter')->group(function (): void {
+            Route::get('dashboard', [CounterDashboardController::class, 'index'])->name('dashboard');
+
+            Route::get('trips', [CounterTripController::class, 'index'])->name('trips.index');
+            Route::get('trips/{trip}', [CounterTripController::class, 'show'])->name('trips.show');
+            Route::get('trips/{trip}/report', [CounterTripController::class, 'report'])->name('trips.report');
+            Route::post('trips/{trip}/receive', [CounterTripController::class, 'receive'])->name('trips.receive');
+            Route::post('trips/{trip}/count', [CounterTripController::class, 'count'])->name('trips.count');
         });
     });
 });

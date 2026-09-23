@@ -60,6 +60,7 @@ class NotificationController extends Controller
         return match ($user->app_role_key) {
             Role::CAPTAIN => route('panel.captain.trips.show', $notification->trip_id),
             Role::OWNER => route('panel.owner.trips.show', $notification->trip_id),
+            Role::COUNTER => route('panel.counter.trips.show', $notification->trip_id),
             default => null,
         };
     }

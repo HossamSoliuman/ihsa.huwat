@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Port;
 use App\Models\Role;
+use App\Models\StatisticsOfficer;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +19,10 @@ use Illuminate\View\View;
  * ينشئ الملاك والعدّادين والدلالين والتجار والمديرين، أمّا الكابتن والطاقم
  * والموظف فينشئهم المالك من بوابته (Role::OWNER_MANAGED) ولا يُختارون هنا إلا
  * مع مالك يتبعونه. حسابات الوزارة (بلا دور تطبيق) لا تظهر في هذه القائمة.
+ *
+ * العدّاد وحده يُسأل عن ميناء: طابوره يُحسب عليه، ويُحفظ في سجلّ موظف
+ * الإحصاء (statistics_officers) لا في جدول المستخدمين — هو سجلّ الوزارة نفسه
+ * الذي تقرؤه صفحة موظفي الإحصاء.
  */
 class UserController extends Controller
 {
@@ -24,7 +30,7 @@ class UserController extends Controller
     {
         $roles = Role::orderBy('display_order')->get();
 
-        $query = User::with(['appRole', 'owner'])
+        $query = User::with(['appRole', 'owner', 'statisticsOfficer'])
             ->whereNotNull('role_id')
             ->when($request->filled('role'), fn ($q) => $q->whereHas('appRole', fn ($r) => $r->where('key', $request->query('role'))))
             ->when($request->query('status') === 'active', fn ($q) => $q->where('active', true))
@@ -44,6 +50,7 @@ class UserController extends Controller
             'users' => $query->paginate(25)->withQueryString(),
             'roles' => $roles,
             'owners' => User::whereHas('appRole', fn ($r) => $r->where('key', Role::OWNER))->orderBy('name')->get(['id', 'name']),
+            'ports' => Port::orderBy('name')->get(['id', 'name']),
             'counts' => [
                 'total' => User::whereNotNull('role_id')->count(),
                 'active' => User::whereNotNull('role_id')->where('active', true)->count(),
@@ -56,8 +63,10 @@ class UserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request);
+        $portId = $this->pullPortId($data);
 
         $user = User::create($data);
+        $this->syncCounterRecord($user, $portId);
 
         $this->log('إنشاء', $user);
 
@@ -69,12 +78,14 @@ class UserController extends Controller
         abort_if($user->role_id === null, 404);
 
         $data = $this->validated($request, $user);
+        $portId = $this->pullPortId($data);
 
         if (empty($data['password'])) {
             unset($data['password']);
         }
 
         $user->update($data);
+        $this->syncCounterRecord($user->refresh(), $portId);
 
         $this->log('تحديث', $user);
 
@@ -131,6 +142,7 @@ class UserController extends Controller
             'email' => ['nullable', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user)],
             'role_id' => ['required', Rule::exists('roles', 'id')->where('active', true)],
             'owner_id' => ['nullable', Rule::exists('users', 'id')],
+            'port_id' => ['nullable', Rule::exists('ports', 'id')],
             'password' => [$user ? 'nullable' : 'required', 'string', 'min:8'],
             'active' => ['nullable', 'boolean'],
         ], [
@@ -148,10 +160,52 @@ class UserController extends Controller
             $data['owner_id'] = null;
         }
 
+        // العدّاد لا بدّ له من ميناء يعمل فيه؛ وغيره لا ميناء له.
+        if ($role->key === Role::COUNTER) {
+            $request->validate(['port_id' => ['required']], ['port_id.required' => 'العدّاد يعمل في ميناء — اختر الميناء.']);
+        } else {
+            $data['port_id'] = null;
+        }
+
         $data['email'] = $data['email'] ?? null;
         $data['active'] = $request->boolean('active', true);
 
         return $data;
+    }
+
+    /**
+     * الميناء ليس عمودًا في users — يُنزع من بياناته ويُحفظ في سجلّ الموظف.
+     */
+    private function pullPortId(array &$data): ?int
+    {
+        $portId = $data['port_id'] ?? null;
+        unset($data['port_id']);
+
+        return $portId === null ? null : (int) $portId;
+    }
+
+    /**
+     * سجلّ موظف الإحصاء لحساب العدّاد: يُنشأ بميناء الحساب أو يُحدَّث به،
+     * ويُفكّ الربط إن لم يعد الحساب عدّادًا (السجلّ يبقى — هو سجلّ الوزارة).
+     */
+    private function syncCounterRecord(User $user, ?int $portId): void
+    {
+        if (! $user->hasAppRole(Role::COUNTER) || $portId === null) {
+            StatisticsOfficer::forUser($user)->update(['user_id' => null]);
+
+            return;
+        }
+
+        StatisticsOfficer::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'port_id' => $portId,
+                'name' => $user->name,
+                'phone' => $user->phone,
+                'email' => $user->email,
+                'status' => $user->active ? 'نشط' : 'غير نشط',
+            ] + (StatisticsOfficer::forUser($user)->exists() ? [] : ['employee_number' => StatisticsOfficer::numberFor($user)]),
+        );
     }
 
     private function log(string $action, User $subject): void

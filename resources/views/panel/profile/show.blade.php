@@ -3,7 +3,8 @@
 @section('title', 'الملف الشخصي')
 
 @php
-    $port = $user->fisher?->port;
+    // ميناء الكابتن من سجلّ الصياد، وميناء العدّاد من سجلّ موظف الإحصاء.
+    $port = $user->port;
 @endphp
 
 @section('content')

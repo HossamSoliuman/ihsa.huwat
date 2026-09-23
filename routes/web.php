@@ -33,6 +33,7 @@ use App\Http\Controllers\NationalIndicatorsController;
 use App\Http\Controllers\OrgStructureController;
 use App\Http\Controllers\Panel\Captain\CatchLogController as CaptainCatchLogController;
 use App\Http\Controllers\Panel\Captain\TripController as CaptainTripController;
+use App\Http\Controllers\Panel\Counter\TripController as CounterTripController;
 use App\Http\Controllers\Panel\HomeController as PanelHomeController;
 use App\Http\Controllers\Panel\LoginController as PanelLoginController;
 use App\Http\Controllers\Panel\NotificationController as PanelNotificationController;
@@ -430,6 +431,19 @@ $adminPanel = function () use ($operationsConsole): void {
             Route::post('/trips/{trip}/catch', [CaptainTripController::class, 'submitCatch'])->name('trips.catch');
 
             Route::get('/catch-log', [CaptainCatchLogController::class, 'index'])->name('catch-log');
+        });
+
+        /*
+         * بوابة العدّاد: طابور ميناء عمله — ما عاد بمصيده يُستلم ثم يُعدّ
+         * صنفًا صنفًا، وتقرير الرحلة المفصّل. رحلة ميناء آخر 404 — انظر
+         * ResolvesCounterRecords.
+         */
+        Route::prefix('counter')->name('panel.counter.')->middleware('panel:counter')->group(function (): void {
+            Route::get('/trips', [CounterTripController::class, 'index'])->name('trips');
+            Route::get('/trips/{trip}', [CounterTripController::class, 'show'])->name('trips.show');
+            Route::get('/trips/{trip}/report', [CounterTripController::class, 'report'])->name('trips.report');
+            Route::post('/trips/{trip}/receive', [CounterTripController::class, 'receive'])->name('trips.receive');
+            Route::post('/trips/{trip}/count', [CounterTripController::class, 'count'])->name('trips.count');
         });
     });
 };

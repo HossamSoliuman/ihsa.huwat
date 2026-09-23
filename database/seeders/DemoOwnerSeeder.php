@@ -8,15 +8,17 @@ use App\Models\CustomerType;
 use App\Models\Fisher;
 use App\Models\FisherRole;
 use App\Models\Role;
+use App\Models\StatisticsOfficer;
 use App\Models\Trip;
 use App\Models\User;
 use App\Services\Trips\TripService;
 use Illuminate\Database\Seeder;
 
 /**
- * يجهّز المالك التجريبي (0500000001) ليُختبر مسار البيع كاملًا من أول دخول:
+ * يجهّز المالك التجريبي (0500000001) ليُختبر مسار الرحلة كاملًا من أول دخول:
  * قاربان من الأسطول المبذور يُنسبان إليه مع رحلاتهما، وكابتن يدخل التطبيق
- * بجواله 0500000002، وزبونان. لا يُنشئ شيئًا جديدًا في الأسطول.
+ * بجواله 0500000002، وعدّاد على ميناء القارب الأول بجواله 0500000003،
+ * وزبونان. لا يُنشئ شيئًا جديدًا في الأسطول.
  */
 class DemoOwnerSeeder extends Seeder
 {
@@ -52,9 +54,13 @@ class DemoOwnerSeeder extends Seeder
             }
         }
 
+        // قارب المالك الأول — يُقرأ من أسطوله لا من الأسطول الحرّ حتى يعمل
+        // البذّار في التشغيل الثاني أيضًا (البذر الأول أسند القوارب إليه).
+        $homeBoat = Boat::forOwner($owner)->orderBy('id')->first();
+
         // رحلة بانتظار الكابتن دائمًا — ليُجرَّب البدء والإلغاء وإرسال المخرجات.
-        if ($boats->isNotEmpty() && ! Trip::forCaptain($captain)->awaitingCaptain()->exists()) {
-            app(TripService::class)->create($owner, ['boat_id' => $boats->first()->id, 'captain_id' => $captain->id, 'planned_days' => 3]);
+        if ($homeBoat !== null && ! Trip::forCaptain($captain)->awaitingCaptain()->exists()) {
+            app(TripService::class)->create($owner, ['boat_id' => $homeBoat->id, 'captain_id' => $captain->id, 'planned_days' => 3]);
         }
 
         // الرحلات المبذورة التي عُدّت قبل أن يكون لها مالك: يُفتح مصيدها للبيع
@@ -66,11 +72,30 @@ class DemoOwnerSeeder extends Seeder
             ->get()
             ->each(fn (Trip $trip) => app(TripService::class)->openForSale($trip));
 
-        if ($boats->isNotEmpty()) {
+        if ($homeBoat !== null) {
+            // العدّاد موظف الإحصاء في ميناء قارب المالك: يصله طابور ما يعود إليه.
+            $counter = User::firstOrCreate(
+                ['phone' => '0500000003'],
+                [
+                    'name' => 'عدّاد تجريبي',
+                    'password' => $password,
+                    'role_id' => Role::key(Role::COUNTER)->id,
+                ],
+            );
+
+            StatisticsOfficer::updateOrCreate(['user_id' => $counter->id], [
+                'port_id' => $homeBoat->port_id,
+                'name' => $counter->name,
+                'phone' => $counter->phone,
+                'employee_number' => StatisticsOfficer::numberFor($counter),
+                'shift' => 'صباحية',
+                'status' => 'نشط',
+            ]);
+
             Fisher::updateOrCreate(['user_id' => $captain->id], [
                 'owner_id' => $owner->id,
-                'port_id' => $boats->first()->port_id,
-                'boat_id' => $boats->first()->id,
+                'port_id' => $homeBoat->port_id,
+                'boat_id' => $homeBoat->id,
                 'name' => $captain->name,
                 'phone' => $captain->phone,
                 'national_id' => '1000000002',

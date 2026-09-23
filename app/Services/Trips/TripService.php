@@ -179,6 +179,7 @@ class TripService
 
             $this->log('إرسال مخرجات', $trip, $by, 'المصيد المعلن '.round($total, 2).' كجم');
             $this->notifier->catchSubmitted($trip, $by);
+            $this->notifier->countRequested($trip);
 
             return $trip;
         });
@@ -206,7 +207,11 @@ class TripService
     /**
      * اكتمال العد → بانتظار الاعتماد، ويُفتح مصيد الرحلة للبيع.
      *
-     * `$counted` أوزان العدّاد لكل صنف [species_id => ['weight_kg' =>, 'notes' =>]].
+     * `$counted` أوزان العدّاد لكل صنف
+     * [species_id => ['weight_kg' =>, 'notes' =>, 'verified' =>]]. صنف ليس في
+     * مخرجات الكابتن يُضاف سطرًا جديدًا منسوبًا إلى العدّاد ("إضافة صنف إن
+     * وجد" في شاشة العد)، وصنف أعلنه الكابتن ولم يُعدّ يبقى على وزنه.
+     *
      * حين يأتي العد من صفحة الإحصاء الميداني بوزن إجمالي فقط تُترك أوزان
      * الأصناف على ما أعلنه الكابتن ويُكتب الإجمالي كما قاسه الموظف.
      */
@@ -228,10 +233,13 @@ class TripService
                     'counted_kg' => $kg,
                     'quantity_kg' => $kg,
                     'counter_notes' => $entry['notes'] ?? $record->counter_notes,
-                    'verified' => true,
+                    // مربّع "فحص الكمية" في شاشة العد؛ العد بوزن إجمالي يعتمد السطور كلها.
+                    'verified' => $entry !== null ? (bool) ($entry['verified'] ?? true) : ($counted === null || (bool) $record->verified),
                     'corrected_by' => $entry !== null && $kg !== (float) $record->captain_kg ? $counter?->id : $record->corrected_by,
                 ]);
             }
+
+            $sum += $this->addCountedSpecies($trip, $counted ?? [], $counter);
 
             $actual = $totalKg ?? $sum;
             $trip->update([
@@ -251,10 +259,48 @@ class TripService
             // إعادة العد تصحيح لا حدث جديد — الإشعار عند أول اكتمال فقط.
             if ($firstCount) {
                 $this->notifier->countCompleted($trip);
+                $counter?->statisticsOfficer?->increment('trips_counted');
             }
 
             return $trip;
         });
+    }
+
+    /**
+     * أصناف عدّها العدّاد ولم يعلنها الكابتن: سطر جديد بوزن معدود بلا وزن
+     * كابتن، منسوب إلى من أضافه. يعيد مجموع أوزانها.
+     */
+    private function addCountedSpecies(Trip $trip, array $counted, ?User $counter): float
+    {
+        $declared = $trip->catchRecords->pluck('species_id')->all();
+        $added = 0.0;
+
+        foreach ($counted as $speciesId => $entry) {
+            if (in_array((int) $speciesId, $declared, true)) {
+                continue;
+            }
+
+            $kg = round((float) $entry['weight_kg'], 2);
+            $added += $kg;
+
+            CatchRecord::create([
+                'trip_id' => $trip->id,
+                'species_id' => (int) $speciesId,
+                'quantity_kg' => $kg,
+                'counted_kg' => $kg,
+                'counter_notes' => $entry['notes'] ?? null,
+                'verified' => (bool) ($entry['verified'] ?? true),
+                'recorded_at' => now()->toDateString(),
+                'added_by' => $counter?->id,
+            ]);
+        }
+
+        // السطور الجديدة تدخل العلاقة المحمّلة حتى يقرأها openForSale بعدها.
+        if ($added > 0) {
+            $trip->unsetRelation('catchRecords');
+        }
+
+        return $added;
     }
 
     /**

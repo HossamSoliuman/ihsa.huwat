@@ -70,7 +70,7 @@
                         <td>
                             <div style="display:flex;gap:.25rem;justify-content:flex-end">
                                 <button type="button" class="icon-action" title="تعديل"
-                                    onclick='openUserForm({!! json_encode($account->only(['id', 'name', 'phone', 'email', 'role_id', 'owner_id', 'active']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!})'>
+                                    onclick='openUserForm({!! json_encode($account->only(['id', 'name', 'phone', 'email', 'role_id', 'owner_id', 'active']) + ['port_id' => $account->statisticsOfficer?->port_id], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!})'>
                                     @include('partials.icon', ['name' => 'pencil'])
                                 </button>
                                 @unless ($account->is(auth()->user()))
@@ -124,6 +124,13 @@
                         @foreach ($owners as $owner)<option value="{{ $owner->id }}">{{ $owner->name }}</option>@endforeach
                     </select>
                 </label>
+                {{-- العدّاد وحده يُسأل عن ميناء: طابوره يُحسب عليه. --}}
+                <label class="field" id="u-port-field" hidden><span>ميناء العمل *</span>
+                    <select class="select" name="port_id" id="u-port">
+                        <option value="">— اختر الميناء —</option>
+                        @foreach ($ports as $p)<option value="{{ $p->id }}">{{ $p->name }}</option>@endforeach
+                    </select>
+                </label>
                 <label class="field"><span id="u-password-label">كلمة المرور *</span><input class="input" type="password" name="password" id="u-password" dir="ltr" minlength="8" autocomplete="new-password"></label>
             </div>
             <label class="auth-remember" style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;cursor:pointer">
@@ -150,6 +157,10 @@
         const needsOwner = ownerManaged.includes(key);
         document.getElementById('u-owner-field').hidden = !needsOwner;
         document.getElementById('u-owner').required = needsOwner;
+
+        const needsPort = key === 'counter';
+        document.getElementById('u-port-field').hidden = !needsPort;
+        document.getElementById('u-port').required = needsPort;
     }
 
     function openUserForm(user = null) {
@@ -163,6 +174,7 @@
         document.getElementById('u-email').value = user?.email ?? '';
         document.getElementById('u-role').value = user?.role_id ?? '';
         document.getElementById('u-owner').value = user?.owner_id ?? '';
+        document.getElementById('u-port').value = user?.port_id ?? '';
         document.getElementById('u-active').checked = user ? Boolean(user.active) : true;
         // كلمة المرور تُطلب عند الإنشاء وحده؛ في التعديل تُترك فارغة لتبقى كما هي.
         const password = document.getElementById('u-password');

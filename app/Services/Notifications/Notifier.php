@@ -4,8 +4,10 @@ namespace App\Services\Notifications;
 
 use App\Models\AppNotification;
 use App\Models\NotificationType;
+use App\Models\Role;
 use App\Models\Trip;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Throwable;
 
 /**
@@ -29,6 +31,8 @@ class Notifier
     public const CATCH_SUBMITTED = 'تم إرسال المخرجات';
 
     public const COUNT_COMPLETED = 'اكتمل العد';
+
+    public const COUNT_REQUESTED = 'رحلة بانتظار العد';
 
     public function __construct(private readonly PushSender $push) {}
 
@@ -102,6 +106,21 @@ class Notifier
     }
 
     /**
+     * الرحلة عادت بمصيدها: عدّادو ميناء العودة يُبلَّغون بها لتظهر في
+     * "رحلات بحاجة لموافقتك" — أوّلُهم استلامًا هو من يعدّها.
+     */
+    public function countRequested(Trip $trip): void
+    {
+        $kg = number_format((float) $trip->captain_input_kg, 1);
+        $port = $trip->returnPort?->name ?? $trip->departurePort?->name ?? 'الميناء';
+
+        foreach ($this->countersOf($trip) as $counter) {
+            $this->notify($counter, self::COUNT_REQUESTED, 'رحلة بانتظار العد',
+                "عادت الرحلة {$trip->trip_number} إلى {$port} بمصيد معلن {$kg} كجم — استلمها لبدء العد.", $trip);
+        }
+    }
+
+    /**
      * اكتمال العد يُنهي الرحلة عند الكابتن ويفتح البيع عند المالك.
      */
     public function countCompleted(Trip $trip): void
@@ -113,6 +132,27 @@ class Notifier
 
         $this->notify($trip->owner, self::COUNT_COMPLETED, 'اكتمل العد',
             "عُدّ مصيد الرحلة {$trip->trip_number} ({$kg} كجم) وصار جاهزًا للبيع.", $trip);
+    }
+
+    /**
+     * عدّادو ميناء عودة الرحلة المفعّلون — لا أحد إن لم يكن للميناء عدّاد
+     * بحساب تطبيق، فالرحلة تبقى في طابور الإحصاء الميداني كما كانت.
+     *
+     * @return Collection<int, User>
+     */
+    private function countersOf(Trip $trip): Collection
+    {
+        $portId = $trip->return_port_id ?? $trip->departure_port_id;
+
+        if ($portId === null) {
+            return collect();
+        }
+
+        return User::query()
+            ->where('active', true)
+            ->whereHas('appRole', fn ($q) => $q->where('key', Role::COUNTER))
+            ->whereHas('statisticsOfficer', fn ($q) => $q->where('port_id', $portId))
+            ->get();
     }
 
     /**
