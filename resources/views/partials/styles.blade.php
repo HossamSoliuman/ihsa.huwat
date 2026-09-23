@@ -488,7 +488,7 @@ html.dark .note-box svg { color: hsl(160 60% 62%); }
  * وتحتها لمسةُ حبرٍ بشفافية 4٪ تكفي لتمييز موضع الكتابة دون أن تُقرأ لونًا.
  */
 .input, .select { border: 1px solid hsl(var(--border)); background: hsl(var(--foreground) / .04); padding: .45rem .65rem; font-size: .82rem; font-family: inherit; color: inherit; outline: none; width: 100%; }
-.input:focus, .select:focus { border-color: hsl(var(--primary)); }
+.input:focus, .select:focus, .input:focus-visible, .select:focus-visible { border-color: hsl(var(--primary)); outline: none; }
 /* قائمة الخيارات المنسدلة يرسمها المتصفّح لا نحن، فتحتاج سطحًا مصمتًا. */
 .select option { background: hsl(var(--background)); color: hsl(var(--foreground)); }
 .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .45rem .85rem; font-size: .8rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; font-family: inherit; transition: background .15s, border-color .15s; }

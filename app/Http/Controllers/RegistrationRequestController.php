@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\RegistrationRequest;
 use App\Models\Role;
 use App\Models\User;
+use App\Rules\Recaptcha;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -38,7 +39,9 @@ class RegistrationRequestController extends Controller
             'boats_count' => ['nullable', 'integer', 'min:1', 'max:999'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'g-recaptcha-response' => Recaptcha::enabled() ? ['required', new Recaptcha('register')] : [],
         ], [
+            'g-recaptcha-response.required' => 'تعذّر التحقق من أنك لست روبوتًا، أعد المحاولة.',
             'role.required' => 'اختر نوع الحساب: مالك قوارب أو دلال.',
             'phone.regex' => 'رقم الجوال يجب أن يكون بصيغة 05XXXXXXXX.',
             'phone.unique' => 'هذا الجوال مسجّل لدينا أو له طلب قيد المراجعة.',
@@ -47,7 +50,7 @@ class RegistrationRequestController extends Controller
         if ($validator->fails()) {
             return redirect()->to($back)
                 ->withErrors($validator, 'register')
-                ->withInput($request->except('password', 'password_confirmation'));
+                ->withInput($request->except('password', 'password_confirmation', 'g-recaptcha-response'));
         }
 
         $data = $validator->validated();

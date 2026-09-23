@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /**
@@ -177,5 +178,40 @@ class RegistrationRequestTest extends TestCase
 
         $this->post(route('panel.registrations.approve', $request))->assertSessionHasErrors('review');
         $this->assertTrue($request->fresh()->isPending());
+    }
+
+    private function enableRecaptcha(array $google): void
+    {
+        config(['services.recaptcha' => ['site_key' => 'site-key', 'secret_key' => 'secret-key', 'min_score' => 0.5]]);
+        Http::fake(['www.google.com/recaptcha/api/siteverify' => Http::response($google)]);
+    }
+
+    public function test_with_recaptcha_on_the_form_loads_it_and_a_good_token_passes(): void
+    {
+        $this->enableRecaptcha(['success' => true, 'action' => 'register', 'score' => 0.9]);
+
+        $this->get('/')->assertSee('recaptcha/api.js?render=site-key', false);
+
+        $this->post(route('landing.register'), $this->payload(['g-recaptcha-response' => 'token']))
+            ->assertSessionHasNoErrors('g-recaptcha-response', null, 'register')
+            ->assertSessionHas('registered');
+
+        $this->assertSame(1, RegistrationRequest::count());
+        Http::assertSent(fn ($request) => $request['secret'] === 'secret-key' && $request['response'] === 'token');
+    }
+
+    public function test_with_recaptcha_on_a_missing_low_score_or_wrong_action_token_is_refused(): void
+    {
+        $this->enableRecaptcha(['success' => true, 'action' => 'register', 'score' => 0.1]);
+        $this->post(route('landing.register'), $this->payload())
+            ->assertSessionHasErrors('g-recaptcha-response', null, 'register');
+        $this->post(route('landing.register'), $this->payload(['g-recaptcha-response' => 'token']))
+            ->assertSessionHasErrors('g-recaptcha-response', null, 'register');
+
+        $this->enableRecaptcha(['success' => true, 'action' => 'login', 'score' => 0.9]);
+        $this->post(route('landing.register'), $this->payload(['g-recaptcha-response' => 'token']))
+            ->assertSessionHasErrors('g-recaptcha-response', null, 'register');
+
+        $this->assertSame(0, RegistrationRequest::count());
     }
 }

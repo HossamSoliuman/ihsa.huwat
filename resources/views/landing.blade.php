@@ -827,6 +827,7 @@
                 @else
                     <form class="card ld-form" id="ld-form" method="POST" action="{{ route('landing.register') }}#register" data-reveal>
                         @csrf
+                        <input type="hidden" name="g-recaptcha-response">
                         @if ($reg->any())
                             <div class="err" role="alert">
                                 @foreach ($reg->all() as $message)<div>{{ $message }}</div>@endforeach
@@ -870,6 +871,26 @@
                             </button>
                         </div>
                     </form>
+                    @if (\App\Rules\Recaptcha::enabled())
+                        {{-- reCAPTCHA v3: رمز جديد لحظة الإرسال (صلاحيته دقيقتان). --}}
+                        <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}" async defer></script>
+                        <script>
+                            document.getElementById('ld-form').addEventListener('submit', function (event) {
+                                const form = event.target;
+                                if (form.dataset.verified) return;
+                                event.preventDefault();
+                                const btn = form.querySelector('button[type="submit"]');
+                                btn.disabled = true;
+                                grecaptcha.ready(function () {
+                                    grecaptcha.execute(@js(config('services.recaptcha.site_key')), { action: 'register' }).then(function (token) {
+                                        form.elements['g-recaptcha-response'].value = token;
+                                        form.dataset.verified = '1';
+                                        form.submit();
+                                    }, function () { btn.disabled = false; });
+                                });
+                            });
+                        </script>
+                    @endif
                 @endif
             </div>
         </section>
