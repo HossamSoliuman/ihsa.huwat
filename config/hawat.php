@@ -222,6 +222,7 @@ return [
                 'items' => [
                     ['label' => 'الرئيسية', 'route' => 'panel.home', 'icon' => 'layout-dashboard'],
                     ['label' => 'حسابات التطبيق', 'route' => 'panel.users', 'icon' => 'user-cog'],
+                    ['label' => 'طلبات التسجيل', 'route' => 'panel.registrations', 'icon' => 'user-check'],
                 ],
             ],
             [

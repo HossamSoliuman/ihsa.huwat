@@ -48,11 +48,13 @@ use App\Http\Controllers\Panel\Owner\SaleController as OwnerSaleController;
 use App\Http\Controllers\Panel\Owner\TripController as OwnerTripController;
 use App\Http\Controllers\Panel\Owner\VendorController as OwnerVendorController;
 use App\Http\Controllers\Panel\ProfileController as PanelProfileController;
+use App\Http\Controllers\Panel\RegistrationRequestController as PanelRegistrationController;
 use App\Http\Controllers\Panel\UserController as PanelUserController;
 use App\Http\Controllers\PerformanceCompareController;
 use App\Http\Controllers\PortController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\RegionController;
+use App\Http\Controllers\RegistrationRequestController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SeaMapController;
 use App\Http\Controllers\SeasonLicenseController;
@@ -364,6 +366,11 @@ $adminPanel = function () use ($operationsConsole): void {
             Route::post('/users/{user}/toggle', [PanelUserController::class, 'toggle'])->name('panel.users.toggle');
             Route::delete('/users/{user}', [PanelUserController::class, 'destroy'])->name('panel.users.destroy');
 
+            // طلبات التسجيل من صفحة الهبوط (ملاك ودلالون) بانتظار الاعتماد.
+            Route::get('/registrations', [PanelRegistrationController::class, 'index'])->name('panel.registrations');
+            Route::post('/registrations/{registration}/approve', [PanelRegistrationController::class, 'approve'])->name('panel.registrations.approve');
+            Route::post('/registrations/{registration}/reject', [PanelRegistrationController::class, 'reject'])->name('panel.registrations.reject');
+
             $operationsConsole();
         });
 
@@ -459,6 +466,7 @@ $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdmi
      * البوابات تبقى متاحة على /sections لمن يعرف مسارها.
      */
     Route::view('/', 'landing')->name('landing');
+    Route::post('/register-request', [RegistrationRequestController::class, 'store'])->middleware('throttle:5,1')->name('landing.register');
 
     Route::view('/sections', 'portal')->name('portal');
 

@@ -14,7 +14,7 @@
         ['href' => '#about', 'label' => 'عن حوات'],
         ['href' => '#features', 'label' => 'المميزات'],
         ['href' => '#app', 'label' => 'التطبيق'],
-        ['href' => '#contact', 'label' => 'تواصل معنا'],
+        ['href' => '#register', 'label' => 'سجّل معنا'],
     ];
 
     // مراحل الرحلة الستّ كما وردت في التعريف بالمشروع.
@@ -365,7 +365,7 @@
         .ld-nums .lbl { font-size: .88rem; font-weight: 600; }
         .ld-flag { align-self: start; font-size: 10px; letter-spacing: .08em; padding: .25rem .6rem; color: var(--st-warn); border: 1px solid color-mix(in srgb, var(--st-warn) 45%, transparent); background: color-mix(in srgb, var(--st-warn) 10%, transparent); }
 
-        /* ---------- 13 تواصل معنا ---------- */
+        /* ---------- 13 انضم إلى حوات ---------- */
         .ld-contact { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: clamp(20px, 3vw, 44px); align-items: start; }
         .ld-contact-info { display: grid; gap: .7rem; margin-top: 1.2rem; max-width: 42ch; }
         .ld-contact-info .card { flex-direction: row; align-items: center; gap: .9rem; padding: 1rem 1.2rem; }
@@ -377,8 +377,30 @@
         .ld-form .field > span { font-size: .78rem; }
         .ld-form textarea.input { resize: vertical; min-height: 8rem; line-height: 1.7; }
         .ld-form .foot { display: flex; flex-wrap: wrap; gap: .9rem; align-items: center; justify-content: space-between; }
-        .ld-form .ok { display: none; padding: .8rem 1rem; font-size: .85rem; color: var(--st-good); border: 1px solid color-mix(in srgb, var(--st-good) 45%, transparent); background: color-mix(in srgb, var(--st-good) 10%, transparent); }
-        .ld-form.is-sent .ok { display: block; }
+        .ld-form .foot .hint { font-size: .78rem; color: hsl(var(--muted-foreground)); }
+        .ld-form .err { display: grid; gap: .25rem; padding: .8rem 1rem; font-size: .84rem; color: var(--st-critical); border: 1px solid color-mix(in srgb, var(--st-critical) 45%, transparent); background: color-mix(in srgb, var(--st-critical) 10%, transparent); }
+        .ld-reg-roles { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: .8rem; }
+        .ld-reg-roles legend { font-size: .78rem; margin-bottom: .5rem; padding: 0; }
+        .ld-reg-roles label { position: relative; cursor: pointer; }
+        .ld-reg-roles input { position: absolute; opacity: 0; pointer-events: none; }
+        .ld-reg-roles label > span { display: grid; grid-template-columns: auto 1fr; column-gap: .7rem; row-gap: .15rem; align-items: center; padding: .9rem 1rem; border: 1px solid var(--hair); background: hsl(var(--muted) / .35); transition: border-color .15s, background .15s; }
+        .ld-reg-roles label > span svg { grid-row: span 2; width: 22px; height: 22px; color: hsl(var(--muted-foreground)); }
+        .ld-reg-roles b { font-size: .95rem; }
+        .ld-reg-roles small { font-size: .74rem; color: hsl(var(--muted-foreground)); }
+        .ld-reg-roles input:checked + span { border-color: hsl(var(--primary)); background: hsl(var(--primary) / .12); }
+        .ld-reg-roles input:checked + span svg { color: hsl(var(--primary)); }
+        .ld-reg-roles input:focus-visible + span { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
+        /* عدد القوارب سؤال المالك وحده. */
+        .ld-form:has(input[name="role"][value="dalal"]:checked) .only-owner { visibility: hidden; }
+        .ld-reg-steps { list-style: none; margin: 1.2rem 0 0; padding: 0; display: grid; gap: .9rem; max-width: 42ch; }
+        .ld-reg-steps li { display: flex; gap: .9rem; align-items: flex-start; }
+        .ld-reg-steps .n { font-family: 'Chakra Petch', monospace; font-weight: 600; font-size: .85rem; color: hsl(var(--primary)); padding-top: .1rem; }
+        .ld-reg-steps b { display: block; font-size: .95rem; margin-bottom: .15rem; }
+        .ld-reg-steps li span:not(.n) { font-size: .84rem; line-height: 1.7; color: hsl(var(--muted-foreground)); }
+        .ld-reg-done { align-items: flex-start; gap: .9rem; }
+        .ld-reg-done h3 { margin: 0; font-size: 1.2rem; }
+        .ld-reg-done p { margin: 0; font-size: .9rem; line-height: 1.8; color: hsl(var(--muted-foreground)); }
+        .ld-reg-done .ico-box { color: var(--st-good); }
 
         /* ---------- التذييل ---------- */
         .ld-foot { border-top: 1px solid var(--hair); padding: clamp(28px, 3.5vw, 44px) clamp(18px, 4vw, 40px) 20px; }
@@ -423,7 +445,7 @@
                     <span class="ico-moon">@include('partials.icon', ['name' => 'moon'])</span>
                     <span class="ico-sun">@include('partials.icon', ['name' => 'sun'])</span>
                 </button>
-                <a class="ld-top-cta" href="#contact">طلب عرض تعريفي</a>
+                <a class="ld-top-cta" href="#register">انضم إلى حوات</a>
                 <button class="icon-btn ld-menu-btn" type="button" onclick="toggleMenu()" aria-label="القائمة" aria-expanded="false" aria-controls="ld-drawer">
                     @include('partials.icon', ['name' => 'menu'])
                 </button>
@@ -458,8 +480,8 @@
                         <span>وتحوّل بياناتها إلى تقارير وتحليلات تدعم القرار.</span>
                     </p>
                     <div class="ld-hero-cta" data-reveal>
-                        <a class="btn btn-primary btn-lg" href="#contact">
-                            طلب عرض تعريفي
+                        <a class="btn btn-primary btn-lg" href="#register">
+                            انضم إلى حوات
                             @include('partials.icon', ['name' => 'arrow-left'])
                         </a>
                         <a class="btn btn-outline btn-lg" href="#about">تعرّف على المنصة</a>
@@ -758,12 +780,25 @@
             </section>
         @endif
 
-        {{-- 13 تواصل معنا --}}
-        <section class="ld-section" id="contact" aria-labelledby="ct-h2">
+        {{--
+            13 انضم إلى حوات: مالك القوارب أو الدلال يطلب حسابه من هنا. الطلب
+            يُحفظ بانتظار المدير العام (/admin/registrations)، ولا يُنشأ الحساب
+            إلا عند الاعتماد — ثم يدخل صاحبه بجواله وكلمة المرور التي اختارها.
+        --}}
+        @php
+            $reg = $errors->getBag('register');
+            $regRole = old('role', 'owner');
+        @endphp
+        <section class="ld-section" id="register" aria-labelledby="ct-h2">
             <div class="ld-wrap ld-contact">
                 <div data-reveal>
-                    <div class="ld-eyebrow"><span class="n">13</span><span>تواصل معنا</span></div>
-                    <h2 class="ld-h2" id="ct-h2">هل لديك استفسار؟</h2>
+                    <div class="ld-eyebrow"><span class="n">13</span><span>انضم إلى حوات</span></div>
+                    <h2 class="ld-h2" id="ct-h2">سجّل مالكًا أو دلالًا</h2>
+                    <ol class="ld-reg-steps">
+                        <li><span class="n">01</span><div><b>أرسل طلبك</b><span>بياناتك ونوع حسابك وكلمة المرور التي ستدخل بها.</span></div></li>
+                        <li><span class="n">02</span><div><b>تراجعه إدارة حوات</b><span>نتحقّق من البيانات وقد نتواصل معك على جوالك.</span></div></li>
+                        <li><span class="n">03</span><div><b>ادخل التطبيق واللوحة</b><span>بعد الاعتماد تدخل برقم جوالك وكلمة المرور مباشرة.</span></div></li>
+                    </ol>
                     <div class="ld-contact-info">
                         <div class="card">
                             <span class="ico-box">@include('partials.icon', ['name' => 'mail'])</span>
@@ -782,25 +817,60 @@
                     </div>
                 </div>
 
-                {{-- لا معالج خلفيًّا بعد: الإرسال يفتح بريد الزائر برسالة جاهزة إلى بريد حوات. --}}
-                <form class="card ld-form" id="ld-form" data-reveal data-to="{{ $email }}" onsubmit="return sendForm(event)">
-                    <div class="row">
-                        <label class="field"><span>الاسم الأول *</span><input class="input" name="first" required></label>
-                        <label class="field"><span>اسم العائلة *</span><input class="input" name="last" required></label>
+                @if (session('registered'))
+                    <div class="card ld-form ld-reg-done" data-reveal role="status">
+                        <span class="ico-box">@include('partials.icon', ['name' => 'check-circle'])</span>
+                        <h3>وصل طلبك، {{ session('registered') }}</h3>
+                        <p>طلبك الآن بانتظار مراجعة إدارة حوات. بعد اعتماده تدخل التطبيق ولوحة الإدارة برقم جوالك وكلمة المرور التي اخترتها.</p>
+                        <a class="btn btn-outline" href="#top">العودة إلى الأعلى</a>
                     </div>
-                    <div class="row">
-                        <label class="field"><span>البريد الإلكتروني *</span><input class="input" name="email" type="email" required></label>
-                        <label class="field"><span>رقم الهاتف</span><input class="input dash" name="phone" type="tel" dir="ltr"></label>
-                    </div>
-                    <label class="field"><span>الرسالة *</span><textarea class="input" name="message" rows="5" required></textarea></label>
-                    <div class="foot">
-                        <button class="btn btn-primary btn-lg" type="submit">
-                            @include('partials.icon', ['name' => 'send'])
-                            إرسال الرسالة
-                        </button>
-                    </div>
-                    <div class="ok" role="status">شكراً لك، فُتحت رسالتك في تطبيق البريد لديك — أرسلها من هناك وسنتواصل معك.</div>
-                </form>
+                @else
+                    <form class="card ld-form" id="ld-form" method="POST" action="{{ route('landing.register') }}#register" data-reveal>
+                        @csrf
+                        @if ($reg->any())
+                            <div class="err" role="alert">
+                                @foreach ($reg->all() as $message)<div>{{ $message }}</div>@endforeach
+                            </div>
+                        @endif
+
+                        <fieldset class="ld-reg-roles">
+                            <legend>نوع الحساب *</legend>
+                            <label>
+                                <input type="radio" name="role" value="owner" @checked($regRole === 'owner')>
+                                <span>@include('partials.icon', ['name' => 'ship'])<b>مالك قوارب</b></span>
+                            </label>
+                            <label>
+                                <input type="radio" name="role" value="dalal" @checked($regRole === 'dalal')>
+                                <span>@include('partials.icon', ['name' => 'gavel'])<b>دلال</b></span>
+                            </label>
+                        </fieldset>
+
+                        <div class="row">
+                            <label class="field"><span>الاسم الكامل *</span><input class="input" name="name" value="{{ old('name') }}" required maxlength="255" autocomplete="name"></label>
+                            <label class="field"><span>رقم الجوال *</span><input class="input dash" name="phone" value="{{ old('phone') }}" type="tel" dir="ltr" placeholder="05XXXXXXXX" required autocomplete="tel"></label>
+                        </div>
+                        <div class="row">
+                            <label class="field"><span>البريد الإلكتروني</span><input class="input" name="email" value="{{ old('email') }}" type="email" dir="ltr" autocomplete="email"></label>
+                            <label class="field"><span>المدينة</span><input class="input" name="city" value="{{ old('city') }}" maxlength="120"></label>
+                        </div>
+                        <div class="row">
+                            <label class="field"><span>اسم المنشأة / النشاط</span><input class="input" name="business_name" value="{{ old('business_name') }}" maxlength="255" autocomplete="organization"></label>
+                            <label class="field only-owner"><span>عدد القوارب</span><input class="input" name="boats_count" value="{{ old('boats_count') }}" type="number" min="1" max="999" dir="ltr"></label>
+                        </div>
+                        <div class="row">
+                            <label class="field"><span>كلمة المرور *</span><input class="input" name="password" type="password" dir="ltr" minlength="8" required autocomplete="new-password"></label>
+                            <label class="field"><span>تأكيد كلمة المرور *</span><input class="input" name="password_confirmation" type="password" dir="ltr" minlength="8" required autocomplete="new-password"></label>
+                        </div>
+                        <label class="field"><span>ملاحظات</span><textarea class="input" name="notes" rows="3" maxlength="2000" placeholder="أي معلومة تساعدنا في مراجعة طلبك">{{ old('notes') }}</textarea></label>
+                        <div class="foot">
+                            <span class="hint">لا يُنشأ الحساب إلا بعد اعتماد الإدارة.</span>
+                            <button class="btn btn-primary btn-lg" type="submit">
+                                @include('partials.icon', ['name' => 'send'])
+                                إرسال طلب التسجيل
+                            </button>
+                        </div>
+                    </form>
+                @endif
             </div>
         </section>
     </main>
@@ -847,26 +917,6 @@
             const drawer = document.getElementById('ld-drawer');
             const state = drawer.classList.toggle('is-open', open);
             document.querySelector('.ld-menu-btn').setAttribute('aria-expanded', state);
-        }
-
-        // لا معالج خلفيًّا بعد: تُجمع الحقول في رسالة mailto تُفتح في بريد الزائر.
-        function sendForm(event) {
-            event.preventDefault();
-            const form = event.target;
-            const f = new FormData(form);
-            const name = (f.get('first') + ' ' + f.get('last')).trim();
-            const body = [
-                'الاسم: ' + name,
-                'البريد: ' + f.get('email'),
-                'الهاتف: ' + (f.get('phone') || '—'),
-                '',
-                f.get('message'),
-            ].join('\n');
-            window.location.href = 'mailto:' + form.dataset.to
-                + '?subject=' + encodeURIComponent('استفسار عن حوات — ' + name)
-                + '&body=' + encodeURIComponent(body);
-            form.classList.add('is-sent');
-            return false;
         }
 
         (function () {
