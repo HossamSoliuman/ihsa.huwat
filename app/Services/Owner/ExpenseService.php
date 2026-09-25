@@ -66,6 +66,11 @@ class ExpenseService
                 ]);
             }
 
+            // والمدفوع يتبع مصدره حين يُسدَّد من هناك.
+            if ($expense->payment_follows_source) {
+                unset($data['payment_status_id'], $data['paid_amount']);
+            }
+
             $this->fill($expense, $data);
 
             if (($removeAttachment || $attachment) && $expense->attachment_path) {
@@ -110,6 +115,10 @@ class ExpenseService
     public function recordPayment(User $by, Expense $expense, float $amount): Expense
     {
         $amount = round($amount, 2);
+
+        if ($expense->payment_follows_source) {
+            throw ValidationException::withMessages(['amount' => "سداد هذا المصروف من {$expense->source_label}."]);
+        }
 
         if ($amount <= 0 || $amount > $expense->remaining) {
             throw ValidationException::withMessages(['amount' => 'المبلغ يجب أن يكون أكبر من صفر ولا يتجاوز المتبقي ('.number_format($expense->remaining, 2).' ر.س).']);
@@ -166,6 +175,12 @@ class ExpenseService
         $wasNew = ! $expense->exists;
         $this->applyAmounts($expense, $posting['amount'], $expense->discount_pct, $expense->discount ?? 0, $expense->vat_rate ?? 0);
         $this->applyPayment($expense, null, null);
+
+        // مصدر يُسدَّد من عنده (مسير الرواتب): مدفوع السند يتبعه.
+        if (array_key_exists('paid_amount', $posting)) {
+            $expense->paid_amount = min(round((float) $posting['paid_amount'], 2), (float) $expense->total);
+            $expense->payment_status_id = $this->paymentStatusFor($expense->paid_amount, (float) $expense->total)->id;
+        }
         $expense->save();
 
         $this->log($wasNew ? 'ترحيل مصروف' : 'تحديث ترحيل مصروف', $by, $expense, "{$source->expenseSourceLabel()}: {$expense->description} بمبلغ {$posting['amount']}");

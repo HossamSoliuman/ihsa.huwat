@@ -45,19 +45,22 @@ use App\Http\Controllers\Panel\Dalal\StockController as DalalStockController;
 use App\Http\Controllers\Panel\HomeController as PanelHomeController;
 use App\Http\Controllers\Panel\LoginController as PanelLoginController;
 use App\Http\Controllers\Panel\NotificationController as PanelNotificationController;
+use App\Http\Controllers\Panel\Owner\AdvanceController as OwnerAdvanceController;
+use App\Http\Controllers\Panel\Owner\AssetController as OwnerAssetController;
 use App\Http\Controllers\Panel\Owner\BoatController as OwnerBoatController;
 use App\Http\Controllers\Panel\Owner\CaptainController as OwnerCaptainController;
 use App\Http\Controllers\Panel\Owner\ConsignmentController as OwnerConsignmentController;
 use App\Http\Controllers\Panel\Owner\CrewController as OwnerCrewController;
+use App\Http\Controllers\Panel\Owner\CrewPayController as OwnerCrewPayController;
 use App\Http\Controllers\Panel\Owner\CustomerController as OwnerCustomerController;
 use App\Http\Controllers\Panel\Owner\DalalController as OwnerDalalController;
-use App\Http\Controllers\Panel\Owner\AssetController as OwnerAssetController;
 use App\Http\Controllers\Panel\Owner\DocumentController as OwnerDocumentController;
+use App\Http\Controllers\Panel\Owner\EmployeeController as OwnerEmployeeController;
 use App\Http\Controllers\Panel\Owner\EquipmentController as OwnerEquipmentController;
 use App\Http\Controllers\Panel\Owner\ExpenseController as OwnerExpenseController;
 use App\Http\Controllers\Panel\Owner\InspectionController as OwnerInspectionController;
-use App\Http\Controllers\Panel\Owner\EmployeeController as OwnerEmployeeController;
 use App\Http\Controllers\Panel\Owner\MaintenanceController as OwnerMaintenanceController;
+use App\Http\Controllers\Panel\Owner\PayrollController as OwnerPayrollController;
 use App\Http\Controllers\Panel\Owner\SaleController as OwnerSaleController;
 use App\Http\Controllers\Panel\Owner\TripController as OwnerTripController;
 use App\Http\Controllers\Panel\Owner\VendorController as OwnerVendorController;
@@ -474,6 +477,25 @@ $adminPanel = function () use ($operationsConsole): void {
             Route::post('/documents', [OwnerDocumentController::class, 'store'])->name('documents.store');
             Route::put('/documents/{document}', [OwnerDocumentController::class, 'update'])->name('documents.update');
             Route::delete('/documents/{document}', [OwnerDocumentController::class, 'destroy'])->name('documents.destroy');
+
+            // مال الطاقم (O3): إعداد الأجور، السلف، مسيرات الرواتب لكل قارب وشهر.
+            Route::get('/crew-pay', [OwnerCrewPayController::class, 'index'])->name('crew-pay');
+            Route::put('/crew-pay/{fisher}', [OwnerCrewPayController::class, 'update'])->name('crew-pay.update');
+            Route::put('/crew-pay/boats/{boat}', [OwnerCrewPayController::class, 'boatShare'])->name('crew-pay.boat');
+            Route::get('/crew-pay/{fisher}/statement', [OwnerCrewPayController::class, 'statement'])->name('crew-pay.statement');
+
+            Route::get('/advances', [OwnerAdvanceController::class, 'index'])->name('advances');
+            Route::post('/advances', [OwnerAdvanceController::class, 'store'])->name('advances.store');
+            Route::delete('/advances/{advance}', [OwnerAdvanceController::class, 'destroy'])->name('advances.destroy');
+
+            Route::get('/payrolls', [OwnerPayrollController::class, 'index'])->name('payrolls');
+            Route::post('/payrolls', [OwnerPayrollController::class, 'store'])->name('payrolls.store');
+            Route::get('/payrolls/{payroll}', [OwnerPayrollController::class, 'show'])->name('payrolls.show');
+            Route::get('/payrolls/{payroll}/print', [OwnerPayrollController::class, 'print'])->name('payrolls.print');
+            Route::delete('/payrolls/{payroll}', [OwnerPayrollController::class, 'destroy'])->name('payrolls.destroy');
+            Route::post('/payrolls/{payroll}/pay-all', [OwnerPayrollController::class, 'payAll'])->name('payrolls.pay-all');
+            Route::put('/payrolls/{payroll}/lines/{line}', [OwnerPayrollController::class, 'updateLine'])->name('payrolls.lines.update');
+            Route::post('/payrolls/{payroll}/lines/{line}/pay', [OwnerPayrollController::class, 'payLine'])->name('payrolls.lines.pay');
         });
 
         /*

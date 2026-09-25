@@ -21,6 +21,7 @@ class ExpenseCategorySeeder extends Seeder
             ['غاز', 'Gas'],
             ['أدوات صيد', 'Fishing tools'],
             [ExpenseCategory::FISHING_EQUIPMENT, 'Fishing equipment'],
+            [ExpenseCategory::CREW_SALARIES, 'Fixed crew salaries'],
         ],
         ExpenseGroup::MAINTENANCE => [
             [ExpenseCategory::BOAT_MAINTENANCE, 'Boat maintenance'],

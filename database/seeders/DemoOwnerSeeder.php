@@ -21,13 +21,17 @@ use App\Models\GearType;
 use App\Models\MaintenanceType;
 use App\Models\PaymentMethod;
 use App\Models\PaymentStatus;
+use App\Models\Payroll;
+use App\Models\PayType;
 use App\Models\Role;
 use App\Models\StatisticsOfficer;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Services\Owner\CrewPayService;
 use App\Services\Owner\ExpenseService;
 use App\Services\Owner\FleetService;
+use App\Services\Owner\PayrollService;
 use App\Services\Sales\SaleService;
 use App\Services\Stock\StockLedger;
 use App\Services\Trips\TripService;
@@ -134,6 +138,54 @@ class DemoOwnerSeeder extends Seeder
         $this->seedDalal($owner, $homeBoat, $password);
         $this->seedExpenses($owner, $homeBoat);
         $this->seedFleetAssets($owner, $homeBoat);
+        $this->seedCrewMoney($owner, $homeBoat);
+    }
+
+    /**
+     * مال الطاقم التجريبي (O3): الكابتن بنسبة خاصة، بحّاران بالأسهم، وطبّاخ
+     * براتب ثابت؛ سلفة لبحّار، ومسير الشهر الجاري بسطر مسدَّد. مرة واحدة.
+     */
+    private function seedCrewMoney(User $owner, ?Boat $homeBoat): void
+    {
+        if ($homeBoat === null || Payroll::forOwner($owner)->exists()) {
+            return;
+        }
+
+        $share = PayType::named(PayType::SHARE)->id;
+        $fixed = PayType::named(PayType::FIXED)->id;
+
+        Fisher::forOwner($owner)->whereNotNull('user_id')->where('boat_id', $homeBoat->id)
+            ->update(['pay_type_id' => $share, 'custom_share_percent' => 20]);
+
+        $crew = [];
+        foreach ([['بحّار تجريبي أول', '1000000011', 'بحّار', $share, null, 1], ['بحّار تجريبي ثانٍ', '1000000012', 'بحّار', $share, null, 1], ['طبّاخ القارب', '1000000013', 'طبّاخ', $fixed, 1800, 1]] as [$name, $nationalId, $role, $type, $salary, $shares]) {
+            $crew[] = Fisher::updateOrCreate(['national_id' => $nationalId], [
+                'owner_id' => $owner->id,
+                'boat_id' => $homeBoat->id,
+                'port_id' => $homeBoat->port_id,
+                'name' => $name,
+                'fisher_role_id' => FisherRole::named($role)->id,
+                'status' => 'نشط',
+                'pay_type_id' => $type,
+                'fixed_salary' => $salary,
+                'profit_shares' => $shares,
+            ]);
+        }
+
+        app(CrewPayService::class)->recordAdvance($owner, $crew[0], [
+            'date' => now()->startOfMonth()->addDays(min(2, now()->day - 1))->toDateString(),
+            'amount' => 400,
+            'payment_method_id' => PaymentMethod::query()->ordered()->value('id'),
+            'notes' => 'سلفة قبل الرحلة',
+        ]);
+
+        $payrolls = app(PayrollService::class);
+        $payroll = $payrolls->generate($owner, $homeBoat, now()->year, now()->month);
+        $cook = $payroll->lines()->where('fisher_id', $crew[2]->id)->first();
+
+        if ($cook) {
+            $payrolls->payLine($cook, PaymentMethod::query()->ordered()->value('id'), $owner);
+        }
     }
 
     /**

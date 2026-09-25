@@ -90,6 +90,11 @@ class Boat extends BaseModel
         return $this->morphMany(FleetDocument::class, 'documentable');
     }
 
+    public function payrolls(): HasMany
+    {
+        return $this->hasMany(Payroll::class);
+    }
+
     public function scopeForOwner(Builder $query, User $owner): Builder
     {
         return $query->where('owner_id', $owner->id);

@@ -15,6 +15,9 @@ class ExpenseCategory extends LookupModel
     /** الفئة التي يُرحَّل إليها شراء معدات الصيد. */
     public const FISHING_EQUIPMENT = 'معدات صيد';
 
+    /** الفئة التي تُرحَّل إليها الرواتب الثابتة في مسير القارب. */
+    public const CREW_SALARIES = 'رواتب الطاقم الثابتة';
+
     protected $table = 'expense_categories';
 
     public function group(): BelongsTo

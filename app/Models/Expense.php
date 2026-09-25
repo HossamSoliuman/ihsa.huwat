@@ -98,6 +98,15 @@ class Expense extends BaseModel
         return $this->source instanceof Contracts\ExpenseSource ? $this->source->expenseSourceLabel() : null;
     }
 
+    /**
+     * سنده يُسدَّد من سجله المولِّد (مسير الرواتب) لا من صفحة المصروفات.
+     */
+    public function getPaymentFollowsSourceAttribute(): bool
+    {
+        return $this->source instanceof Contracts\ExpenseSource
+            && array_key_exists('paid_amount', $this->source->expensePosting() ?? []);
+    }
+
     public function getAttachmentUrlAttribute(): ?string
     {
         return $this->attachment_path ? Storage::disk('public')->url($this->attachment_path) : null;

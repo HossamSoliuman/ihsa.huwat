@@ -255,6 +255,9 @@ return [
                 'items' => [
                     ['label' => 'المصروفات', 'route' => 'panel.owner.expenses', 'icon' => 'receipt'],
                     ['label' => 'الأصول والإهلاك', 'route' => 'panel.owner.assets', 'icon' => 'archive'],
+                    ['label' => 'مسيرات الرواتب', 'route' => 'panel.owner.payrolls', 'icon' => 'calculator'],
+                    ['label' => 'سلف الطاقم', 'route' => 'panel.owner.advances', 'icon' => 'arrow-left-right'],
+                    ['label' => 'أجور الطاقم', 'route' => 'panel.owner.crew-pay', 'icon' => 'user-cog'],
                 ],
             ],
             [

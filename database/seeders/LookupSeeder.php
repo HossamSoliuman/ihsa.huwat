@@ -30,6 +30,7 @@ class LookupSeeder extends Seeder
             ExpenseCategorySeeder::class,
             AssetTypeSeeder::class,
             DocumentTypeSeeder::class,
+            PayTypeSeeder::class,
         ]);
     }
 }

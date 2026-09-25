@@ -107,7 +107,7 @@
                         <td><span class="badge {{ $row->is_paid ? 'badge-ok' : ($row->paid_amount > 0 ? 'badge-info' : 'badge-warn') }}">{{ $row->paymentStatus?->name ?? '—' }}</span></td>
                         <td>
                             <div style="display:flex;gap:.25rem;justify-content:flex-end">
-                                @if (! $row->is_paid)
+                                @if (! $row->is_paid && ! $row->payment_follows_source)
                                     <button type="button" class="icon-action" title="سداد" onclick='openPayment({!! json_encode(['id' => $row->id, 'number' => $row->expense_number, 'remaining' => $row->remaining], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!})'>@include('partials.icon', ['name' => 'coins'])</button>
                                 @endif
                                 @if ($row->attachment_url)

@@ -7,12 +7,15 @@ use App\Models\Boat;
 use App\Models\BoatInspection;
 use App\Models\BoatMaintenance;
 use App\Models\Consignment;
+use App\Models\CrewAdvance;
 use App\Models\Customer;
 use App\Models\Expense;
 use App\Models\Fisher;
 use App\Models\FishingEquipment;
 use App\Models\FleetDocument;
 use App\Models\OwnerEmployee;
+use App\Models\Payroll;
+use App\Models\PayrollLine;
 use App\Models\Role;
 use App\Models\Sale;
 use App\Models\Trip;
@@ -98,5 +101,28 @@ trait ResolvesOwnerRecords
     protected function ownedDocument(User $owner, int|string $id): FleetDocument
     {
         return FleetDocument::forOwner($owner)->findOrFail($id);
+    }
+
+    /**
+     * كابتن أو فرد طاقم — أي سجلّ صياد للمالك (أجره وسلفه وكشفه).
+     */
+    protected function ownedFisher(User $owner, int|string $id): Fisher
+    {
+        return Fisher::forOwner($owner)->findOrFail($id);
+    }
+
+    protected function ownedPayroll(User $owner, int|string $id): Payroll
+    {
+        return Payroll::forOwner($owner)->findOrFail($id);
+    }
+
+    protected function ownedPayrollLine(Payroll $payroll, int|string $id): PayrollLine
+    {
+        return $payroll->lines()->findOrFail($id);
+    }
+
+    protected function ownedAdvance(User $owner, int|string $id): CrewAdvance
+    {
+        return CrewAdvance::forOwner($owner)->findOrFail($id);
     }
 }

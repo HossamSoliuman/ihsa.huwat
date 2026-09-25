@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
@@ -20,6 +21,9 @@ class Fisher extends BaseModel
 
     protected $casts = [
         'license_expiry' => 'date',
+        'fixed_salary' => 'float',
+        'profit_shares' => 'float',
+        'custom_share_percent' => 'float',
     ];
 
     protected static function booted(): void
@@ -64,6 +68,26 @@ class Fisher extends BaseModel
     public function documents(): MorphMany
     {
         return $this->morphMany(FleetDocument::class, 'documentable');
+    }
+
+    public function payType(): BelongsTo
+    {
+        return $this->belongsTo(PayType::class);
+    }
+
+    public function advances(): HasMany
+    {
+        return $this->hasMany(CrewAdvance::class);
+    }
+
+    public function payrollLines(): HasMany
+    {
+        return $this->hasMany(PayrollLine::class);
+    }
+
+    public function getIsCaptainAttribute(): bool
+    {
+        return $this->user_id !== null;
     }
 
     public function scopeForOwner(Builder $query, User $owner): Builder
