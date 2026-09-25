@@ -19,18 +19,18 @@
 
     @if (session('status'))<div class="flash">{{ session('status') }}</div>@endif
 
-    <div style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end;margin-bottom:1.25rem">
-        <nav class="seg" aria-label="الفترة">
+    <div class="filter-bar" style="justify-content:space-between;margin-bottom:1.25rem">
+        <nav class="seg" aria-label="الفترة" style="align-self:flex-end">
             @foreach (\App\Services\Dalal\DalalDashboard::PERIODS as $key => $label)
                 @continue($key === 'custom')
-                <a href="{{ route('panel.home', ['period' => $key]) }}" class="{{ $period['key'] === $key ? 'is-active' : '' }}">{{ $label }}</a>
+                <a href="{{ route('panel.home', ['period' => $key]) }}" class="{{ $period['key'] === $key ? 'is-active' : '' }}" style="padding-block:.5rem">{{ $label }}</a>
             @endforeach
         </nav>
-        <form method="GET" action="{{ route('panel.home') }}" class="filter-bar" style="margin:0">
+        <form method="GET" action="{{ route('panel.home') }}" style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:.65rem">
             <input type="hidden" name="period" value="custom">
             <label class="field"><span>من</span><input class="input" type="date" name="from" value="{{ $period['key'] === 'custom' ? $period['from'] : '' }}"></label>
             <label class="field"><span>إلى</span><input class="input" type="date" name="to" value="{{ $period['key'] === 'custom' ? $period['to'] : '' }}"></label>
-            <button class="btn btn-outline">نطاق مخصص</button>
+            <button class="btn btn-outline">@include('partials.icon', ['name' => 'calendar']) نطاق مخصص</button>
         </form>
     </div>
 

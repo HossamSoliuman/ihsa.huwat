@@ -290,12 +290,24 @@ class DemoOwnerSeeder extends Seeder
         $trip = Trip::forOwner($owner)->where('sale_status', Trip::SALE_OPEN)->orderBy('id')->first();
         $line = $trip ? collect($ledger->availableLines($owner, $trip))->firstWhere(fn ($l) => $l['available_kg'] > 1) : null;
 
-        if ($line !== null) {
-            app(SaleService::class)->consign($owner, [
-                'trip_id' => $trip->id,
-                'dalal_id' => $dalal->id,
-                'items' => [['species_id' => $line['species_id'], 'weight_kg' => round($line['available_kg'] / 2, 2)]],
-            ]);
+        if ($line === null) {
+            return;
         }
+
+        $sent = round($line['available_kg'] / 2, 2);
+
+        app(SaleService::class)->consign($owner, [
+            'trip_id' => $trip->id,
+            'dalal_id' => $dalal->id,
+            'items' => [['species_id' => $line['species_id'], 'weight_kg' => $sent]],
+        ]);
+
+        // بيعة أولى بدفعة جزئية — لتمتلئ رئيسة الدلال (المبيعات والأرباح وغير
+        // المحصّل ومستحق الملاك) من أول دخول.
+        app(SaleService::class)->sellFromStock($dalal, [
+            'customer_id' => Customer::forAccount($dalal)->orderBy('id')->value('id'),
+            'paid_amount' => 500,
+            'items' => [['species_id' => $line['species_id'], 'weight_kg' => min(42, round($sent / 2, 2)), 'price_per_kg' => 36]],
+        ]);
     }
 }
