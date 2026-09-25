@@ -11,6 +11,7 @@ use App\Models\Trip;
 use App\Models\User;
 use App\Services\Captain\CaptainDashboard;
 use App\Services\Counter\CounterDashboard;
+use App\Services\Dalal\DalalDashboard;
 use App\Services\Owner\OwnerDashboard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -23,11 +24,12 @@ use Illuminate\View\View;
  *
  * المدير العام يرى حال الأسطول والرحلات والمصيد والمبيعات على مستوى النظام،
  * والمالك يرى مؤشراته ورحلاته النشطة، والكابتن رحلاته التي بانتظاره والنشطة،
+ * والعدّاد طابور ميناء عمله، والدلال مبيعاته ومخزونه وطلبات الملاك،
  * وبقية الأدوار ترى رئيسة بوابتها حين تُبنى؛ إلى ذلك الحين بطاقة تعريف بالحساب.
  */
 class HomeController extends Controller
 {
-    public function index(Request $request, OwnerDashboard $ownerDashboard, CaptainDashboard $captainDashboard, CounterDashboard $counterDashboard): View
+    public function index(Request $request, OwnerDashboard $ownerDashboard, CaptainDashboard $captainDashboard, CounterDashboard $counterDashboard, DalalDashboard $dalalDashboard): View
     {
         $user = $request->user();
 
@@ -45,6 +47,10 @@ class HomeController extends Controller
 
         if ($user->hasAppRole(Role::COUNTER)) {
             return view('panel.counter.home', ['user' => $user] + $counterDashboard->for($user));
+        }
+
+        if ($user->hasAppRole(Role::DALAL)) {
+            return view('panel.dalal.home', ['user' => $user] + $dalalDashboard->for($user, (string) $request->query('period', 'month'), $request->query('from'), $request->query('to')));
         }
 
         return view('panel.home.role', ['user' => $user]);

@@ -12,7 +12,7 @@
             </div>
         </div>
         <div class="actions">
-            <button type="button" class="btn btn-outline" onclick="window.print()">@include('partials.icon', ['name' => 'printer']) طباعة</button>
+            <a href="{{ $sale->invoiceUrl() }}" target="_blank" class="btn btn-outline">@include('partials.icon', ['name' => 'printer']) طباعة الفاتورة</a>
             <a href="{{ route('panel.owner.sales') }}" class="btn btn-outline">@include('partials.icon', ['name' => 'arrow-left-right']) المبيعات</a>
         </div>
     </div>

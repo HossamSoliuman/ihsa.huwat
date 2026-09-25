@@ -13,7 +13,7 @@ use Illuminate\View\View;
 
 /**
  * شاشة الإشعارات — لكل حساب تطبيق أيًّا كان دوره. فتح الإشعار يعلّمه مقروءًا
- * ويذهب إلى رحلته إن كان لها صفحة في بوابة هذا الدور.
+ * ويذهب إلى شاشته في بوابة هذا الدور (الرحلة، أو المخزون والطلبات للدلال).
  */
 class NotificationController extends Controller
 {
@@ -38,7 +38,7 @@ class NotificationController extends Controller
         $model = $this->ownNotification($request->user(), $notification);
         $model->markRead();
 
-        return redirect($this->tripUrl($request->user(), $model) ?? route('panel.notifications'));
+        return redirect($this->targetUrl($request->user(), $model) ?? route('panel.notifications'));
     }
 
     public function readAll(Request $request): RedirectResponse
@@ -49,12 +49,20 @@ class NotificationController extends Controller
     }
 
     /**
-     * صفحة الرحلة في بوابة الدور إن كانت له واحدة.
+     * الشاشة التي يفتحها الإشعار في بوابة الدور: شاشة `data.target` إن ذُكرت
+     * (مخزون الدلال، طلبات الملاك، الدلالون عند المالك)، وإلا صفحة الرحلة.
      */
-    private function tripUrl(User $user, AppNotification $notification): ?string
+    private function targetUrl(User $user, AppNotification $notification): ?string
     {
-        if ($notification->trip_id === null) {
-            return null;
+        $target = match ([$user->app_role_key, $notification->data['target'] ?? null]) {
+            [Role::DALAL, 'stock'] => route('panel.dalal.stock'),
+            [Role::DALAL, 'partnerships'] => route('panel.dalal.requests'),
+            [Role::OWNER, 'dalals'] => route('panel.owner.dalals'),
+            default => null,
+        };
+
+        if ($target !== null || $notification->trip_id === null) {
+            return $target;
         }
 
         return match ($user->app_role_key) {

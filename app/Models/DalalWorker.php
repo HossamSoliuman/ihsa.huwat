@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+/**
+ * سطر من عمالة دكة الدلال: النوع والجنسية والعدد.
+ */
+class DalalWorker extends BaseModel
+{
+    use HasFactory;
+
+    public function dalal(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'dalal_id');
+    }
+
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(DalalWorkerType::class, 'dalal_worker_type_id');
+    }
+
+    public function scopeForDalal(Builder $query, User $dalal): Builder
+    {
+        return $query->where('dalal_id', $dalal->id);
+    }
+}

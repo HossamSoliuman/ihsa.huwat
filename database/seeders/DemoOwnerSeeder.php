@@ -3,14 +3,19 @@
 namespace Database\Seeders;
 
 use App\Models\Boat;
+use App\Models\Consignment;
 use App\Models\Customer;
 use App\Models\CustomerType;
+use App\Models\DalalPartnership;
+use App\Models\DalalProfile;
 use App\Models\Fisher;
 use App\Models\FisherRole;
 use App\Models\Role;
 use App\Models\StatisticsOfficer;
 use App\Models\Trip;
 use App\Models\User;
+use App\Services\Sales\SaleService;
+use App\Services\Stock\StockLedger;
 use App\Services\Trips\TripService;
 use Illuminate\Database\Seeder;
 
@@ -18,7 +23,8 @@ use Illuminate\Database\Seeder;
  * يجهّز المالك التجريبي (0500000001) ليُختبر مسار الرحلة كاملًا من أول دخول:
  * قاربان من الأسطول المبذور يُنسبان إليه مع رحلاتهما، وكابتن يدخل التطبيق
  * بجواله 0500000002، وعدّاد على ميناء القارب الأول بجواله 0500000003،
- * وزبونان. لا يُنشئ شيئًا جديدًا في الأسطول.
+ * وزبونان، ودلال بجواله 0500000004 باتفاق مقبول ومخزون مرسَل إليه. لا
+ * يُنشئ شيئًا جديدًا في الأسطول.
  */
 class DemoOwnerSeeder extends Seeder
 {
@@ -109,6 +115,61 @@ class DemoOwnerSeeder extends Seeder
                 ['account_user_id' => $owner->id, 'name' => $name],
                 ['phone' => $phone, 'customer_type_id' => CustomerType::named('منتظم')->id],
             );
+        }
+
+        $this->seedDalal($owner, $homeBoat, $password);
+    }
+
+    /**
+     * الدلال التجريبي (0500000004): ملفه ودكته، واتفاق مقبول مع المالك (5% عمولة
+     * و2% أجور)، وعميلان، ونصف أول صنف في أول رحلة مفتوحة للبيع مرسَلًا إليه —
+     * فيجد مخزونًا يبيع منه من أول دخول. الإرسال مرة واحدة فقط.
+     */
+    private function seedDalal(User $owner, ?Boat $homeBoat, string $password): void
+    {
+        $dalal = User::firstOrCreate(
+            ['phone' => '0500000004'],
+            ['name' => 'دلال تجريبي', 'password' => $password, 'role_id' => Role::key(Role::DALAL)->id],
+        );
+
+        DalalProfile::updateOrCreate(['user_id' => $dalal->id], [
+            'port_id' => $homeBoat?->port_id,
+            'dakka_name' => 'دكة السوق المركزي',
+            'dakka_number' => 'D-104',
+            'company_name' => 'مؤسسة الدلال التجريبي للأسماك',
+            'cr_number' => '1010000004',
+            'vat_number' => '300000000000004',
+        ]);
+
+        DalalPartnership::updateOrCreate(['owner_id' => $owner->id, 'dalal_id' => $dalal->id], [
+            'commission_pct' => 5,
+            'wage_pct' => 2,
+            'message' => 'نرسل لك مصيد قواربنا للبيع في الدكة.',
+            'status' => DalalPartnership::ACCEPTED,
+            'responded_at' => now(),
+        ]);
+
+        foreach (['مطعم البحر الأحمر' => '0555000011', 'أسماك الواحة' => '0555000012'] as $name => $phone) {
+            Customer::firstOrCreate(
+                ['account_user_id' => $dalal->id, 'name' => $name],
+                ['phone' => $phone, 'customer_type_id' => CustomerType::named('منتظم')->id],
+            );
+        }
+
+        if (Consignment::forDalal($dalal)->exists()) {
+            return;
+        }
+
+        $ledger = app(StockLedger::class);
+        $trip = Trip::forOwner($owner)->where('sale_status', Trip::SALE_OPEN)->orderBy('id')->first();
+        $line = $trip ? collect($ledger->availableLines($owner, $trip))->firstWhere(fn ($l) => $l['available_kg'] > 1) : null;
+
+        if ($line !== null) {
+            app(SaleService::class)->consign($owner, [
+                'trip_id' => $trip->id,
+                'dalal_id' => $dalal->id,
+                'items' => [['species_id' => $line['species_id'], 'weight_kg' => round($line['available_kg'] / 2, 2)]],
+            ]);
         }
     }
 }

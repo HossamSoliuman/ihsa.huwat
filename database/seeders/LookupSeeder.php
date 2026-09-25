@@ -25,6 +25,7 @@ class LookupSeeder extends Seeder
             CustomerTypeSeeder::class,
             StockMovementTypeSeeder::class,
             NotificationTypeSeeder::class,
+            DalalWorkerTypeSeeder::class,
         ]);
     }
 }

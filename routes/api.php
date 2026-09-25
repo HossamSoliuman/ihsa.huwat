@@ -8,6 +8,14 @@ use App\Http\Controllers\Api\V1\Captain\DashboardController as CaptainDashboardC
 use App\Http\Controllers\Api\V1\Captain\TripController as CaptainTripController;
 use App\Http\Controllers\Api\V1\Counter\DashboardController as CounterDashboardController;
 use App\Http\Controllers\Api\V1\Counter\TripController as CounterTripController;
+use App\Http\Controllers\Api\V1\Dalal\CustomerController as DalalCustomerController;
+use App\Http\Controllers\Api\V1\Dalal\DashboardController as DalalDashboardController;
+use App\Http\Controllers\Api\V1\Dalal\OwnerController as DalalOwnerController;
+use App\Http\Controllers\Api\V1\Dalal\PartnershipController as DalalPartnershipController;
+use App\Http\Controllers\Api\V1\Dalal\ReportController as DalalReportController;
+use App\Http\Controllers\Api\V1\Dalal\SaleController as DalalSaleController;
+use App\Http\Controllers\Api\V1\Dalal\SettingsController as DalalSettingsController;
+use App\Http\Controllers\Api\V1\Dalal\StockController as DalalStockController;
 use App\Http\Controllers\Api\V1\LookupController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\Owner\BoatController as OwnerBoatController;
@@ -92,6 +100,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::apiResource('consignments', OwnerConsignmentController::class)->only(['index', 'store', 'show']);
 
             Route::get('dalals', [OwnerDalalController::class, 'index'])->name('dalals');
+            Route::post('dalals/{dalal}/partnership', [OwnerDalalController::class, 'partnership'])->name('dalals.partnership');
             Route::get('stock', [OwnerStockController::class, 'index'])->name('stock');
             Route::get('stock/movements', [OwnerStockController::class, 'movements'])->name('stock.movements');
         });
@@ -125,6 +134,36 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::get('trips/{trip}/report', [CounterTripController::class, 'report'])->name('trips.report');
             Route::post('trips/{trip}/receive', [CounterTripController::class, 'receive'])->name('trips.receive');
             Route::post('trips/{trip}/count', [CounterTripController::class, 'count'])->name('trips.count');
+        });
+
+        /*
+         * بوابة الدلال: المخزون مما أرسله الملاك، والبيع منه والفاتورة،
+         * والعملاء، وطلبات الملاك، والصيّادون المرتبطون ودفعاتهم، والتقارير،
+         * والإعدادات. سجلات دلال آخر 404.
+         */
+        Route::prefix('dalal')->name('dalal.')->middleware('api.role:dalal')->group(function (): void {
+            Route::get('dashboard', [DalalDashboardController::class, 'index'])->name('dashboard');
+            Route::get('stock', [DalalStockController::class, 'index'])->name('stock');
+
+            Route::apiResource('sales', DalalSaleController::class)->only(['index', 'store', 'show']);
+            Route::post('sales/{sale}/payments', [DalalSaleController::class, 'payment'])->name('sales.payments');
+
+            Route::apiResource('customers', DalalCustomerController::class)->parameters(['customers' => 'id']);
+
+            Route::get('partnerships', [DalalPartnershipController::class, 'index'])->name('partnerships.index');
+            Route::post('partnerships/{partnership}/accept', [DalalPartnershipController::class, 'accept'])->name('partnerships.accept');
+            Route::post('partnerships/{partnership}/reject', [DalalPartnershipController::class, 'reject'])->name('partnerships.reject');
+
+            Route::get('owners', [DalalOwnerController::class, 'index'])->name('owners');
+            Route::post('owners/{owner}/payouts', [DalalOwnerController::class, 'payout'])->name('owners.payouts');
+
+            Route::get('reports/{type}', [DalalReportController::class, 'show'])->name('reports.show');
+
+            Route::get('settings', [DalalSettingsController::class, 'show'])->name('settings');
+            Route::put('settings', [DalalSettingsController::class, 'update'])->name('settings.update');
+            Route::post('settings/logo', [DalalSettingsController::class, 'logo'])->name('settings.logo');
+            Route::delete('settings/logo', [DalalSettingsController::class, 'removeLogo'])->name('settings.logo.remove');
+            Route::put('settings/workers', [DalalSettingsController::class, 'workers'])->name('settings.workers');
         });
     });
 });

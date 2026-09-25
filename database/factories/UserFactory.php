@@ -66,6 +66,11 @@ class UserFactory extends Factory
         return $this->role(Role::OWNER);
     }
 
+    public function dalal(): static
+    {
+        return $this->role(Role::DALAL);
+    }
+
     /**
      * حساب تابع لمالك (كابتن، طاقم، موظف).
      */
