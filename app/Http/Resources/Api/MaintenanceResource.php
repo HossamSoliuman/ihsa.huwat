@@ -16,8 +16,16 @@ class MaintenanceResource extends JsonResource
             'date' => $this->date?->toDateString(),
             'technician' => $this->technician,
             'estimated_cost' => $this->estimated_cost !== null ? (float) $this->estimated_cost : null,
+            'actual_cost' => $this->actual_cost !== null ? (float) $this->actual_cost : null,
             'description' => $this->description,
             'status' => $this->status,
+            // المصروف المرحَّل حين تكتمل الصيانة بتكلفة.
+            'expense' => $this->when($this->relationLoaded('expense'), fn () => $this->expense ? [
+                'id' => $this->expense->id,
+                'expense_number' => $this->expense->expense_number,
+                'total' => (float) $this->expense->total,
+                'paid_amount' => (float) $this->expense->paid_amount,
+            ] : null),
         ];
     }
 }

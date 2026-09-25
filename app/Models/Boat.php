@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * القارب سجلّ الوزارة نفسه: يضيفه المالك من بوابته فيظهر في صفحة الميناء
@@ -77,6 +78,16 @@ class Boat extends BaseModel
     public function maintenances(): HasMany
     {
         return $this->hasMany(BoatMaintenance::class);
+    }
+
+    public function inspections(): HasMany
+    {
+        return $this->hasMany(BoatInspection::class);
+    }
+
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(FleetDocument::class, 'documentable');
     }
 
     public function scopeForOwner(Builder $query, User $owner): Builder

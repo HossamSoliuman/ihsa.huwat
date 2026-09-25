@@ -14,6 +14,12 @@ return [
     'logo' => 'https://media.base44.com/images/public/6a7a814ea23d8fee1b1c5058/2b4d90b35_logo-arabic-png.png',
 
     /*
+     * نسبة ضريبة القيمة المضافة المقترحة في نماذج المصروفات (السعودية 15%).
+     * تُحفظ النسبة على كل سند، فتغييرها هنا لا يمسّ ما سُجّل قبلها.
+     */
+    'vat_rate' => (float) env('HAWAT_VAT_RATE', 15),
+
+    /*
      * لوحة الوزارة مقسومة إلى خمس بوابات تتشارك النطاق الرئيسي والتخطيط نفسه:
      * "لوحة الحكومة" التنفيذية تحت البادئة /gov، و"قسم الإحصاء" تحت /stats،
      * و"قسم الإدارة الفرعية" تحت /subadmin، و"قسم الخدمات والتراخيص" تحت
@@ -245,10 +251,20 @@ return [
                 ],
             ],
             [
+                'title' => 'المالية',
+                'items' => [
+                    ['label' => 'المصروفات', 'route' => 'panel.owner.expenses', 'icon' => 'receipt'],
+                    ['label' => 'الأصول والإهلاك', 'route' => 'panel.owner.assets', 'icon' => 'archive'],
+                ],
+            ],
+            [
                 'title' => 'الأسطول',
                 'items' => [
                     ['label' => 'القوارب', 'route' => 'panel.owner.boats', 'icon' => 'ship'],
                     ['label' => 'الصيانة', 'route' => 'panel.owner.maintenance', 'icon' => 'hammer'],
+                    ['label' => 'الفحوصات', 'route' => 'panel.owner.inspections', 'icon' => 'clipboard-check'],
+                    ['label' => 'الوثائق', 'route' => 'panel.owner.documents', 'icon' => 'file-check'],
+                    ['label' => 'معدات الصيد', 'route' => 'panel.owner.equipment', 'icon' => 'anchor'],
                     ['label' => 'الكباتن', 'route' => 'panel.owner.captains', 'icon' => 'user-check'],
                     ['label' => 'الطاقم', 'route' => 'panel.owner.crew', 'icon' => 'users'],
                 ],

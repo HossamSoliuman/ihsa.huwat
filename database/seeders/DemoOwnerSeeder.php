@@ -2,18 +2,32 @@
 
 namespace Database\Seeders;
 
+use App\Models\Asset;
+use App\Models\AssetType;
 use App\Models\Boat;
+use App\Models\BoatMaintenance;
 use App\Models\Consignment;
 use App\Models\Customer;
 use App\Models\CustomerType;
 use App\Models\DalalPartnership;
 use App\Models\DalalProfile;
+use App\Models\DocumentType;
+use App\Models\Expense;
+use App\Models\ExpenseCategory;
 use App\Models\Fisher;
 use App\Models\FisherRole;
+use App\Models\FishingSeason;
+use App\Models\GearType;
+use App\Models\MaintenanceType;
+use App\Models\PaymentMethod;
+use App\Models\PaymentStatus;
 use App\Models\Role;
 use App\Models\StatisticsOfficer;
 use App\Models\Trip;
 use App\Models\User;
+use App\Models\Vendor;
+use App\Services\Owner\ExpenseService;
+use App\Services\Owner\FleetService;
 use App\Services\Sales\SaleService;
 use App\Services\Stock\StockLedger;
 use App\Services\Trips\TripService;
@@ -23,8 +37,8 @@ use Illuminate\Database\Seeder;
  * يجهّز المالك التجريبي (0500000001) ليُختبر مسار الرحلة كاملًا من أول دخول:
  * قاربان من الأسطول المبذور يُنسبان إليه مع رحلاتهما، وكابتن يدخل التطبيق
  * بجواله 0500000002، وعدّاد على ميناء القارب الأول بجواله 0500000003،
- * وزبونان، ودلال بجواله 0500000004 باتفاق مقبول ومخزون مرسَل إليه. لا
- * يُنشئ شيئًا جديدًا في الأسطول.
+ * وزبونان، ودلال بجواله 0500000004 باتفاق مقبول ومخزون مرسَل إليه، وبضعة
+ * مصروفات وأصول أسطول. لا يُنشئ قوارب جديدة.
  */
 class DemoOwnerSeeder extends Seeder
 {
@@ -118,6 +132,118 @@ class DemoOwnerSeeder extends Seeder
         }
 
         $this->seedDalal($owner, $homeBoat, $password);
+        $this->seedExpenses($owner, $homeBoat);
+        $this->seedFleetAssets($owner, $homeBoat);
+    }
+
+    /**
+     * أصول الأسطول التجريبية (O2): معدات بموسم، أصلان يُهلكان، فحص قديم يجعل
+     * موعد القارب قريبًا، ووثيقة منتهية وأخرى تنتهي قريبًا — فتظهر تنبيهات
+     * الرئيسة من أول دخول. مرة واحدة فقط.
+     */
+    private function seedFleetAssets(User $owner, ?Boat $homeBoat): void
+    {
+        if ($homeBoat === null || Asset::forOwner($owner)->exists()) {
+            return;
+        }
+
+        $fleet = app(FleetService::class);
+
+        $fleet->saveEquipment($owner, [
+            'name' => 'شبكة خيشومية 40 م',
+            'boat_id' => $homeBoat->id,
+            'gear_type_id' => GearType::query()->value('id'),
+            'quantity' => 4,
+            'unit_cost' => 250,
+            'purchase_date' => now()->subMonths(2)->toDateString(),
+            'season_ids' => FishingSeason::query()->limit(1)->pluck('id')->all(),
+        ]);
+
+        foreach ([['محرك رئيسي 200 حصان', 'محرك', 60000, 5000, 8, 20], ['جهاز ملاحة ورادار', 'أجهزة ملاحة واتصال', 9000, 0, 3, 7]] as [$name, $type, $cost, $salvage, $life, $monthsAgo]) {
+            $fleet->saveAsset($owner, [
+                'asset_type_id' => AssetType::named($type)->id,
+                'boat_id' => $homeBoat->id,
+                'name' => $name,
+                'purchase_date' => now()->subMonths($monthsAgo)->startOfMonth()->toDateString(),
+                'purchase_cost' => $cost,
+                'salvage_value' => $salvage,
+                'useful_life_years' => $life,
+                'status' => Asset::ACTIVE,
+            ]);
+        }
+
+        $fleet->saveInspection([
+            'boat_id' => $homeBoat->id,
+            'inspection_date' => now()->subYear()->addDays(20)->toDateString(),
+            'inspector' => 'حرس الحدود — ميناء القطيف',
+            'result' => 'مطابق',
+        ]);
+
+        $captainFisher = Fisher::forOwner($owner)->whereNotNull('user_id')->first();
+
+        $fleet->saveDocument($owner, [
+            'holder_type' => 'boat', 'holder_id' => $homeBoat->id,
+            'document_type_id' => DocumentType::named('تأمين القارب')->id,
+            'number' => 'INS-2025-7781', 'issue_date' => now()->subYear()->toDateString(), 'expiry_date' => now()->addDays(18)->toDateString(),
+        ]);
+
+        if ($captainFisher !== null) {
+            $fleet->saveDocument($owner, [
+                'holder_type' => 'crew', 'holder_id' => $captainFisher->id,
+                'document_type_id' => DocumentType::named('رخصة بحار')->id,
+                'number' => 'SM-55120', 'issue_date' => now()->subYears(2)->toDateString(), 'expiry_date' => now()->subDays(4)->toDateString(),
+            ]);
+        }
+    }
+
+    /**
+     * مصروفات تجريبية (O1): وقود وثلج ومؤونة لآخر رحلة للقارب الأول، ورسوم
+     * حكومية، وصيانة مكتملة تُرحَّل تلقائيًا. مرة واحدة فقط.
+     */
+    private function seedExpenses(User $owner, ?Boat $homeBoat): void
+    {
+        if ($homeBoat === null || Expense::forOwner($owner)->exists()) {
+            return;
+        }
+
+        $vendor = Vendor::firstOrCreate(['owner_id' => $owner->id, 'name' => 'محطة وقود الميناء'], ['phone' => '0555000010', 'status' => 'نشط']);
+        $trip = Trip::forOwner($owner)->where('boat_id', $homeBoat->id)->orderByDesc('id')->first();
+        $expenses = app(ExpenseService::class);
+        $paid = PaymentStatus::named(ExpenseService::PAID)->id;
+        $cash = PaymentMethod::query()->ordered()->value('id');
+
+        $rows = [
+            ['وقود', 1800, 15, $paid, $trip?->id, $vendor->id, 'تعبئة وقود قبل الرحلة'],
+            ['ثلج', 350, 15, $paid, $trip?->id, null, 'ثلج لحفظ المصيد'],
+            ['إعاشة (أكل)', 600, 0, null, $trip?->id, null, 'مؤونة الطاقم'],
+            ['رسوم تجديد', 1200, 0, null, null, null, 'تجديد رخصة القارب'],
+        ];
+
+        foreach ($rows as [$category, $amount, $vat, $status, $tripId, $vendorId, $description]) {
+            $expenses->create($owner, [
+                'expense_category_id' => ExpenseCategory::named($category)->id,
+                'date' => now()->subDays(random_int(1, 20))->toDateString(),
+                'description' => $description,
+                'subtotal' => $amount,
+                'vat_rate' => $vat,
+                'boat_id' => $homeBoat->id,
+                'trip_id' => $tripId,
+                'vendor_id' => $vendorId,
+                'payment_method_id' => $status ? $cash : null,
+                'payment_status_id' => $status,
+            ]);
+        }
+
+        $maintenance = BoatMaintenance::create([
+            'boat_id' => $homeBoat->id,
+            'maintenance_type_id' => MaintenanceType::query()->ordered()->value('id'),
+            'date' => now()->subDays(5)->toDateString(),
+            'technician' => 'ورشة الميناء',
+            'estimated_cost' => 2500,
+            'actual_cost' => 2300,
+            'status' => BoatMaintenance::COMPLETED,
+        ]);
+        $expenses->syncSource($maintenance, $owner);
     }
 
     /**

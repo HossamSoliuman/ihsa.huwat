@@ -26,6 +26,10 @@ class LookupSeeder extends Seeder
             StockMovementTypeSeeder::class,
             NotificationTypeSeeder::class,
             DalalWorkerTypeSeeder::class,
+            ExpenseGroupSeeder::class,
+            ExpenseCategorySeeder::class,
+            AssetTypeSeeder::class,
+            DocumentTypeSeeder::class,
         ]);
     }
 }

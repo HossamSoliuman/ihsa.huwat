@@ -51,6 +51,11 @@ use App\Http\Controllers\Panel\Owner\ConsignmentController as OwnerConsignmentCo
 use App\Http\Controllers\Panel\Owner\CrewController as OwnerCrewController;
 use App\Http\Controllers\Panel\Owner\CustomerController as OwnerCustomerController;
 use App\Http\Controllers\Panel\Owner\DalalController as OwnerDalalController;
+use App\Http\Controllers\Panel\Owner\AssetController as OwnerAssetController;
+use App\Http\Controllers\Panel\Owner\DocumentController as OwnerDocumentController;
+use App\Http\Controllers\Panel\Owner\EquipmentController as OwnerEquipmentController;
+use App\Http\Controllers\Panel\Owner\ExpenseController as OwnerExpenseController;
+use App\Http\Controllers\Panel\Owner\InspectionController as OwnerInspectionController;
 use App\Http\Controllers\Panel\Owner\EmployeeController as OwnerEmployeeController;
 use App\Http\Controllers\Panel\Owner\MaintenanceController as OwnerMaintenanceController;
 use App\Http\Controllers\Panel\Owner\SaleController as OwnerSaleController;
@@ -436,6 +441,39 @@ $adminPanel = function () use ($operationsConsole): void {
             // الدلالون: طلب التعامل بعمولة وأجور مقترحة، وحساب المالك عند كلٍّ منهم.
             Route::get('/dalals', [OwnerDalalController::class, 'index'])->name('dalals');
             Route::post('/dalals/{dalal}/partnership', [OwnerDalalController::class, 'request'])->name('dalals.partnership');
+
+            // المصروفات (O1): سندات بالخصم والضريبة وحالة الدفع، والصيانة المكتملة تُرحَّل إليها.
+            Route::get('/expenses', [OwnerExpenseController::class, 'index'])->name('expenses');
+            Route::get('/expenses/report', [OwnerExpenseController::class, 'report'])->name('expenses.report');
+            Route::post('/expenses', [OwnerExpenseController::class, 'store'])->name('expenses.store');
+            Route::put('/expenses/{expense}', [OwnerExpenseController::class, 'update'])->name('expenses.update');
+            Route::delete('/expenses/{expense}', [OwnerExpenseController::class, 'destroy'])->name('expenses.destroy');
+            Route::post('/expenses/{expense}/payment', [OwnerExpenseController::class, 'payment'])->name('expenses.payment');
+            Route::get('/expenses/{expense}/print', [OwnerExpenseController::class, 'print'])->name('expenses.print');
+
+            // أصول الأسطول (O2): المعدات، الأصول والإهلاك، الفحوصات، الوثائق وامتثال الطاقم.
+            Route::get('/equipment', [OwnerEquipmentController::class, 'index'])->name('equipment');
+            Route::post('/equipment', [OwnerEquipmentController::class, 'store'])->name('equipment.store');
+            Route::put('/equipment/{equipment}', [OwnerEquipmentController::class, 'update'])->name('equipment.update');
+            Route::delete('/equipment/{equipment}', [OwnerEquipmentController::class, 'destroy'])->name('equipment.destroy');
+
+            Route::get('/assets', [OwnerAssetController::class, 'index'])->name('assets');
+            Route::get('/assets/print', [OwnerAssetController::class, 'registerPrint'])->name('assets.print');
+            Route::get('/assets/depreciation', [OwnerAssetController::class, 'depreciation'])->name('assets.depreciation');
+            Route::get('/assets/depreciation/print', [OwnerAssetController::class, 'depreciationPrint'])->name('assets.depreciation.print');
+            Route::post('/assets', [OwnerAssetController::class, 'store'])->name('assets.store');
+            Route::put('/assets/{asset}', [OwnerAssetController::class, 'update'])->name('assets.update');
+            Route::delete('/assets/{asset}', [OwnerAssetController::class, 'destroy'])->name('assets.destroy');
+
+            Route::get('/inspections', [OwnerInspectionController::class, 'index'])->name('inspections');
+            Route::post('/inspections', [OwnerInspectionController::class, 'store'])->name('inspections.store');
+            Route::put('/inspections/{inspection}', [OwnerInspectionController::class, 'update'])->name('inspections.update');
+            Route::delete('/inspections/{inspection}', [OwnerInspectionController::class, 'destroy'])->name('inspections.destroy');
+
+            Route::get('/documents', [OwnerDocumentController::class, 'index'])->name('documents');
+            Route::post('/documents', [OwnerDocumentController::class, 'store'])->name('documents.store');
+            Route::put('/documents/{document}', [OwnerDocumentController::class, 'update'])->name('documents.update');
+            Route::delete('/documents/{document}', [OwnerDocumentController::class, 'destroy'])->name('documents.destroy');
         });
 
         /*

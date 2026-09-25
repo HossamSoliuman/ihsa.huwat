@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * الصياد سجلّ الوزارة (الهوية والرخصة والميناء). الكابتن له فوقه حساب دخول
@@ -58,6 +59,11 @@ class Fisher extends BaseModel
     public function idType(): BelongsTo
     {
         return $this->belongsTo(IdType::class);
+    }
+
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(FleetDocument::class, 'documentable');
     }
 
     public function scopeForOwner(Builder $query, User $owner): Builder

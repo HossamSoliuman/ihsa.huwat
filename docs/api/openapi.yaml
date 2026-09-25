@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Hawat Mobile API
-  version: 1.4.0
+  version: 1.4.1
   description: |
     Hawat mobile app API (com.os.hawat). All responses are JSON.
 
@@ -3732,6 +3732,10 @@ components:
         estimated_cost:
           type: number
           nullable: true
+        actual_cost:
+          type: number
+          nullable: true
+          description: التكلفة الفعلية — هي ما يُرحَّل مصروفًا عند الاكتمال (وإلا المتوقعة).
         description:
           type: string
           nullable: true
@@ -3741,6 +3745,19 @@ components:
           - معلقة
           - مكتملة
           - ملغاة
+        expense:
+          type: object
+          nullable: true
+          description: المصروف المرحَّل تلقائيًا حين تُحفظ الصيانة "مكتملة" بتكلفة.
+          properties:
+            id:
+              type: integer
+            expense_number:
+              type: string
+            total:
+              type: number
+            paid_amount:
+              type: number
     MaintenanceInput:
       type: object
       properties:
@@ -3756,6 +3773,9 @@ components:
           type: string
           nullable: true
         estimated_cost:
+          type: number
+          nullable: true
+        actual_cost:
           type: number
           nullable: true
         description:

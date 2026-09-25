@@ -27,6 +27,27 @@
         @include('partials.stat-card', ['label' => 'جاهزة للبيع', 'value' => number_format($kpis['trips_for_sale']), 'icon' => 'shopping-cart', 'tone' => 'warning'])
     </div>
 
+    @if ($fleetAlerts->isNotEmpty())
+        <div class="card" style="margin-bottom:1.25rem">
+            @include('partials.section-head', ['icon' => 'alert-triangle', 'title' => 'تنبيهات الأسطول', 'note' => $fleetAlerts->count().' تنبيه — وثائق وفحوص ورخص منتهية أو تنتهي خلال 30 يومًا'])
+            <div class="table-card" style="border:0">
+                <table class="data-table">
+                    <tbody>
+                        @foreach ($fleetAlerts->take(8) as $alert)
+                            <tr>
+                                <td style="font-weight:600">{{ $alert['title'] }}</td>
+                                <td>{{ $alert['subject'] }}</td>
+                                <td class="num">{{ $alert['date']->format('Y-m-d') }}</td>
+                                <td><span class="badge {{ $alert['severity'] === 'danger' ? 'badge-danger' : 'badge-warn' }}">{{ $alert['days'] < 0 ? 'انتهى منذ '.abs($alert['days']).' يوم' : ($alert['days'] === 0 ? 'ينتهي اليوم' : 'بعد '.$alert['days'].' يوم') }}</span></td>
+                                <td style="text-align:left"><a href="{{ $alert['url'] }}" style="font-size:.74rem">عرض</a></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
     <div class="grid-2" style="margin-bottom:1.25rem">
         <div class="card">
             @include('partials.section-head', ['icon' => 'line-chart', 'title' => 'اتجاه الإيرادات', 'note' => 'آخر ستة أشهر'])

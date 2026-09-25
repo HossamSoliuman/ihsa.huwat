@@ -8,7 +8,7 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'hammer'])</div>
             <div>
                 <h1>صيانة القوارب</h1>
-                <p>مواعيد الصيانة والفحص وتكلفتها المتوقعة لكل قارب</p>
+                <p>مواعيد الصيانة والفحص وتكلفتها لكل قارب — الصيانة المكتملة تُرحَّل تكلفتها إلى المصروفات</p>
             </div>
         </div>
         <div class="actions">
@@ -36,7 +36,7 @@
     <div class="table-card">
         <table class="data-table">
             <thead>
-                <tr><th>القارب</th><th>النوع</th><th>التاريخ</th><th>المسؤول الفني</th><th>التكلفة المتوقعة</th><th>الحالة</th><th></th></tr>
+                <tr><th>القارب</th><th>النوع</th><th>التاريخ</th><th>المسؤول الفني</th><th>التكلفة المتوقعة</th><th>التكلفة الفعلية</th><th>الحالة</th><th></th></tr>
             </thead>
             <tbody>
                 @forelse ($rows as $row)
@@ -46,10 +46,14 @@
                         <td class="num">{{ $row->date?->format('Y-m-d') }}</td>
                         <td>{{ $row->technician ?? '—' }}</td>
                         <td class="num">{{ $row->estimated_cost !== null ? number_format($row->estimated_cost, 2).' ر.س' : '—' }}</td>
+                        <td class="num">
+                            {{ $row->actual_cost !== null ? number_format($row->actual_cost, 2).' ر.س' : '—' }}
+                            @if ($row->expense)<div><a href="{{ route('panel.owner.expenses', ['search' => $row->expense->expense_number]) }}" style="font-size:.72rem">{{ $row->expense->expense_number }}</a></div>@endif
+                        </td>
                         <td><span class="badge {{ $row->status === 'مكتملة' ? 'badge-ok' : ($row->status === 'ملغاة' ? 'badge-danger' : 'badge-warn') }}">{{ $row->status }}</span></td>
                         <td>
                             <div style="display:flex;gap:.25rem;justify-content:flex-end">
-                                <button type="button" class="icon-action" title="تعديل" onclick='openDrawerForm(recordForm, {!! json_encode($row->only(['id', 'boat_id', 'maintenance_type_id', 'date', 'technician', 'estimated_cost', 'description', 'status']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!})'>@include('partials.icon', ['name' => 'pencil'])</button>
+                                <button type="button" class="icon-action" title="تعديل" onclick='openDrawerForm(recordForm, {!! json_encode($row->only(['id', 'boat_id', 'maintenance_type_id', 'date', 'technician', 'estimated_cost', 'actual_cost', 'description', 'status']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!})'>@include('partials.icon', ['name' => 'pencil'])</button>
                                 <form method="POST" action="{{ route('panel.owner.maintenance.destroy', $row) }}" onsubmit="return confirm('حذف سجل الصيانة؟')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="icon-action danger" title="حذف">@include('partials.icon', ['name' => 'trash'])</button>
@@ -58,7 +62,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" style="padding:2rem;text-align:center;color:hsl(var(--muted-foreground))">لا سجلات صيانة</td></tr>
+                    <tr><td colspan="8" style="padding:2rem;text-align:center;color:hsl(var(--muted-foreground))">لا سجلات صيانة</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -91,8 +95,10 @@
                 <label class="field"><span>التاريخ *</span><input class="input" name="date" type="date" dir="ltr" required></label>
                 <label class="field"><span>المسؤول الفني</span><input class="input" name="technician"></label>
                 <label class="field"><span>التكلفة المتوقعة</span><input class="input" name="estimated_cost" type="number" step="0.01" min="0" dir="ltr"></label>
+                <label class="field"><span>التكلفة الفعلية</span><input class="input" name="actual_cost" type="number" step="0.01" min="0" dir="ltr" placeholder="عند الاكتمال"></label>
                 <label class="field"><span>الحالة</span><select class="select" name="status"><option value="معلقة">معلقة</option><option value="مكتملة">مكتملة</option><option value="ملغاة">ملغاة</option></select></label>
                 <label class="field wide"><span>الوصف</span><textarea class="input" name="description" rows="2"></textarea></label>
+                <p class="field wide" style="font-size:.74rem;color:hsl(var(--muted-foreground))">عند حفظها "مكتملة" تُسجَّل تكلفتها (الفعلية، وإلا المتوقعة) مصروفًا في فئة "صيانة القوارب" غير مدفوع — يُسدَّد من صفحة المصروفات.</p>
             </div>
             <div style="display:flex;justify-content:flex-end;gap:.5rem;padding-top:.5rem">
                 <button type="button" class="btn btn-outline" onclick="toggleDrawer('recordDrawer', false)">إلغاء</button>

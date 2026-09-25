@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Owner\MaintenanceRequest;
 use App\Http\Resources\Api\MaintenanceResource;
 use App\Models\BoatMaintenance;
+use App\Services\Owner\ExpenseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -15,10 +16,12 @@ class MaintenanceController extends Controller
 {
     use ResolvesOwnerRecords;
 
+    public function __construct(private readonly ExpenseService $expenses) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $rows = BoatMaintenance::whereHas('boat', fn ($q) => $q->where('owner_id', $request->user()->id))
-            ->with(['boat', 'maintenanceType'])
+            ->with(['boat', 'maintenanceType', 'expense'])
             ->when($request->filled('boat_id'), fn ($q) => $q->where('boat_id', $request->query('boat_id')))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))
             ->orderByDesc('date')
@@ -30,21 +33,25 @@ class MaintenanceController extends Controller
     public function store(MaintenanceRequest $request): JsonResponse
     {
         $row = BoatMaintenance::create($request->validated() + ['status' => $request->input('status', 'معلقة')]);
+        $this->expenses->syncSource($row, $request->user());
 
-        return (new MaintenanceResource($row->load(['boat', 'maintenanceType'])))->response()->setStatusCode(201);
+        return (new MaintenanceResource($row->load(['boat', 'maintenanceType', 'expense'])))->response()->setStatusCode(201);
     }
 
     public function update(MaintenanceRequest $request, int $maintenance): MaintenanceResource
     {
         $row = $this->ownedMaintenance($request->user(), $maintenance);
         $row->update($request->validated());
+        $this->expenses->syncSource($row, $request->user());
 
-        return new MaintenanceResource($row->load(['boat', 'maintenanceType']));
+        return new MaintenanceResource($row->load(['boat', 'maintenanceType', 'expense']));
     }
 
     public function destroy(Request $request, int $maintenance): JsonResponse
     {
-        $this->ownedMaintenance($request->user(), $maintenance)->delete();
+        $row = $this->ownedMaintenance($request->user(), $maintenance);
+        $this->expenses->releaseSource($row, $request->user());
+        $row->delete();
 
         return response()->json(['message' => 'تم حذف سجل الصيانة.']);
     }

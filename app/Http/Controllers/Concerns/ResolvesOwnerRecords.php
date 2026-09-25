@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers\Concerns;
 
+use App\Models\Asset;
 use App\Models\Boat;
+use App\Models\BoatInspection;
 use App\Models\BoatMaintenance;
 use App\Models\Consignment;
 use App\Models\Customer;
+use App\Models\Expense;
 use App\Models\Fisher;
+use App\Models\FishingEquipment;
+use App\Models\FleetDocument;
 use App\Models\OwnerEmployee;
 use App\Models\Role;
 use App\Models\Sale;
@@ -68,5 +73,30 @@ trait ResolvesOwnerRecords
     protected function ownedConsignment(User $owner, int|string $id): Consignment
     {
         return Consignment::forOwner($owner)->findOrFail($id);
+    }
+
+    protected function ownedExpense(User $owner, int|string $id): Expense
+    {
+        return Expense::forOwner($owner)->findOrFail($id);
+    }
+
+    protected function ownedEquipment(User $owner, int|string $id): FishingEquipment
+    {
+        return FishingEquipment::forOwner($owner)->findOrFail($id);
+    }
+
+    protected function ownedAsset(User $owner, int|string $id): Asset
+    {
+        return Asset::forOwner($owner)->findOrFail($id);
+    }
+
+    protected function ownedInspection(User $owner, int|string $id): BoatInspection
+    {
+        return BoatInspection::forOwner($owner)->findOrFail($id);
+    }
+
+    protected function ownedDocument(User $owner, int|string $id): FleetDocument
+    {
+        return FleetDocument::forOwner($owner)->findOrFail($id);
     }
 }

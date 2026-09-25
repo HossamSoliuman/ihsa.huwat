@@ -15,6 +15,7 @@ class MaintenanceRequest extends OwnerRequest
             'date' => ['required', 'date'],
             'technician' => ['nullable', 'string', 'max:255'],
             'estimated_cost' => ['nullable', 'numeric', 'min:0'],
+            'actual_cost' => ['nullable', 'numeric', 'min:0'],
             'description' => ['nullable', 'string'],
             'status' => ['nullable', Rule::in(BoatMaintenance::STATUSES)],
         ];

@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\Captain\CaptainDashboard;
 use App\Services\Counter\CounterDashboard;
 use App\Services\Dalal\DalalDashboard;
+use App\Services\Owner\FleetAlerts;
 use App\Services\Owner\OwnerDashboard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -38,7 +39,7 @@ class HomeController extends Controller
         }
 
         if ($user->hasAppRole(Role::OWNER)) {
-            return view('panel.owner.home', ['user' => $user] + $ownerDashboard->for($user));
+            return view('panel.owner.home', ['user' => $user, 'fleetAlerts' => app(FleetAlerts::class)->for($user)] + $ownerDashboard->for($user));
         }
 
         if ($user->hasAppRole(Role::CAPTAIN)) {
