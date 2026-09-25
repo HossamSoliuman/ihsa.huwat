@@ -3,6 +3,25 @@
 المواصفة الكاملة: `docs/api/openapi.yaml` (تُعرض على `/api/docs`، وتُستورد في Postman من `/api/openapi.yaml`).
 كل ردّ في الاختبارات يُطابَق مع المواصفة (Spectator)، فما هنا هو ما يعمل فعلًا.
 
+## 1.4.0 — 2026-09-24 — المرحلة 4: بوابة الدلال
+
+### جديد
+- **الدلال** (`/dalal/*`، دور `dalal`، سجلات دلال آخر `404`): `GET /dalal/dashboard` (`?period=today|week|month|year|custom&from&to` — المؤشرات، الإيرادات والأرباح ستة أشهر، أكثر الأصناف مبيعًا، الطلبات المعلّقة، آخر المبيعات)، `GET /dalal/stock` (البطاقات، المخزون مجمّعًا حسب المالك بدفعاته، المتاح لكل صنف).
+- **البيع من المخزون**: `POST /dalal/sales` (`DalalSaleInput` — `trip_id` اختياري لكل سطر؛ بدونه يُصرف من الأقدم استلامًا أوّلًا وقد ينقسم على أكثر من رحلة ومالك)، `GET /dalal/sales` (`status`, `customer_id`, `from`, `to`, `min`, `max`, `search`)، `GET /dalal/sales/{sale}`، `POST /dalal/sales/{sale}/payments` (تحصيل المتبقي).
+- **العملاء**: `/dalal/customers` (CRUD، `region_id`, `governorate_id`, `search`).
+- **طلبات المالكين**: `GET /dalal/partnerships` (`?status=pending|accepted|rejected`)، `POST /dalal/partnerships/{id}/accept|reject` (`response_note`). ومن جهة المالك: `POST /owner/dalals/{dalal}/partnership` (`commission_pct`, `wage_pct`, `message`).
+- **الصيّادون المرتبطون**: `GET /dalal/owners` (حساب كل مالك: المستلم، في المخزون، المباع، العمولة والأجور، صافيه، المدفوع، المستحق)، `POST /dalal/owners/{owner}/payouts` (لا تتجاوز المستحق).
+- **التقارير**: `GET /dalal/reports/{sales|stock|payouts|financial}` ببنية واحدة (`Report`: أعمدة بصيغها، سطور، مجاميع).
+- **الإعدادات**: `GET|PUT /dalal/settings` (الملف التجاري والدكة والشركة)، `POST|DELETE /dalal/settings/logo`، `PUT /dalal/settings/workers` (عمالة الدكة كاملةً).
+- **الفاتورة المطبوعة**: `Sale.invoice_url` — رابط موقّع لصفحة A4 تُطبع أو تُحفظ PDF بلا رمز (لفواتير المالك والدلال).
+- **إشعارات جديدة**: مصيد جديد في مخزونك، طلب تعامل من مالك، تم قبول/رفض طلب التعامل، بيع من مصيدك، دفعة من الدلال.
+
+### تغيّر
+- `Sale` يحمل `commission_pct`, `commission_amount`, `wage_pct`, `wage_amount`, `invoice_url`؛ و`SaleItem` يحمل `species.name_sci` و`trip` و`owner` و`commission_amount`, `wage_amount`, `owner_net`.
+- `GET /owner/dalals`: كل دلال يحمل `partnership` (`PartnershipSummary` أو `null`).
+- `GET /lookups` يحمل `dalal_worker_types`.
+- `User.port` يشمل الدلال (من ملفه التجاري).
+
 ## 1.3.0 — 2026-09-22 — المرحلة 3: بوابة العدّاد
 
 ### جديد

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Hawat Mobile API
-  version: 1.3.0
+  version: 1.4.0
   description: |
     Hawat mobile app API (com.os.hawat). All responses are JSON.
 
@@ -14,6 +14,8 @@ info:
     - The owner portal lives under `/owner/*` and requires the `owner` role; every record is scoped to its owner (`404` otherwise).
     - The captain portal lives under `/captain/*` and requires the `captain` role; only trips assigned to the captain are visible (`404` otherwise).
     - The counter portal lives under `/counter/*` and requires the `counter` role; only trips that returned to the counter's port are visible (`404` otherwise).
+    - The dalal portal lives under `/dalal/*` and requires the `dalal` role; sales, customers, partnership requests and workers of another dalal are `404`.
+    - Printed invoices: every `Sale` carries `invoice_url`, a signed A4 page the app opens in the browser to print or save as PDF (no token needed).
     - Notifications (`/notifications`) are per account for every role; the app registers its device with `POST /auth/fcm-token` to receive pushes.
     - Paginated lists return `{ data: [...], links: {...}, meta: {...} }` with `?page=` and `?per_page=` (max 100).
     - Changelog: docs/api/CHANGELOG.md.
@@ -40,6 +42,12 @@ tags:
   description: بوابة الكابتن — الرئيسة والرحلات وسجل الصيد
 - name: counter
   description: بوابة العدّاد — طابور الميناء والعد والتقرير المفصّل
+- name: dalal
+  description: بوابة الدلال — الرئيسة والمخزون والتقارير والإعدادات
+- name: dalal-sales
+  description: الدلال — البيع من المخزون والعملاء
+- name: dalal-owners
+  description: الدلال — طلبات الملاك والصيّادون المرتبطون ودفعاتهم
 paths:
   /auth/login:
     post:
@@ -1065,10 +1073,49 @@ paths:
                         phone:
                           type: string
                           nullable: true
+                        partnership:
+                          $ref: '#/components/schemas/PartnershipSummary'
         '401':
           $ref: '#/components/responses/Unauthenticated'
         '403':
           $ref: '#/components/responses/Forbidden'
+  /owner/dalals/{dalal}/partnership:
+    parameters:
+    - name: dalal
+      in: path
+      required: true
+      description: معرّف حساب الدلال
+      schema:
+        type: integer
+    post:
+      tags:
+      - owner
+      summary: اقتراح عمولة لدلال — طلب تعامل
+      description: ينشئ الطلب، أو يعدّل طلبًا معلّقًا، أو يعيد طلبًا مرفوضًا. الطلب المقبول لا يُعاد (`422`). حين يقبله الدلال تُقتطع العمولة والأجور من كل بيع لمصيد المالك عنده.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartnershipInput'
+      responses:
+        '201':
+          description: الطلب
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Partnership'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
   /owner/boats:
     get:
       tags:
@@ -2460,6 +2507,787 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+  /dalal/dashboard:
+    get:
+      tags:
+      - dalal
+      summary: رئيسة الدلال — المؤشرات على فترة، الإيرادات والأرباح، أكثر الأصناف مبيعًا، الطلبات المعلّقة، آخر المبيعات
+      parameters:
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - today
+          - week
+          - month
+          - year
+          - custom
+          default: month
+      - name: from
+        in: query
+        description: مع period=custom
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        description: مع period=custom
+        schema:
+          type: string
+          format: date
+      responses:
+        '200':
+          description: الرئيسة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DalalDashboard'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /dalal/stock:
+    get:
+      tags:
+      - dalal
+      summary: المخزون — البطاقات، ثم مجمّعًا حسب المالك بدفعاته (رحلة × صنف)، ثم المتاح لكل صنف
+      responses:
+        '200':
+          description: المخزون
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DalalStock'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /dalal/sales:
+    get:
+      tags:
+      - dalal-sales
+      summary: مبيعات الدلال
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          default: 25
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - قيد التنفيذ
+          - مكتمل
+      - name: customer_id
+        in: query
+        schema:
+          type: integer
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: min
+        in: query
+        description: أقل قيمة
+        schema:
+          type: number
+      - name: max
+        in: query
+        description: أعلى قيمة
+        schema:
+          type: number
+      - name: search
+        in: query
+        description: رقم الفاتورة أو اسم الزبون
+        schema:
+          type: string
+      responses:
+        '200':
+          description: الفواتير
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Sale'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+      - dalal-sales
+      summary: إضافة عملية بيع من المخزون
+      description: |
+        سطر لكل صنف بوزنه وسعره. `trip_id` اختياري: بدونه يُصرف الوزن من دفعات الصنف الأقدم استلامًا أوّلًا وقد ينقسم على أكثر من رحلة ومالك (كل جزء سطر فاتورة بمالكه). لا يتجاوز مجموع السطور المتاح (`422` على `items.N.weight_kg`).
+        العمولة والأجور تُحسب لكل سطر من اتفاق مالكه المقبول (`/dalal/partnerships`) على صافي السطر بعد توزيع الخصم؛ بلا اتفاق = صفر. الفاتورة "مكتمل" حين تُدفع كاملة وإلا "قيد التنفيذ".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DalalSaleInput'
+      responses:
+        '201':
+          description: الفاتورة بسطورها
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Sale'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /dalal/sales/{sale}:
+    parameters:
+    - name: sale
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      tags:
+      - dalal-sales
+      summary: تفاصيل عملية البيع بسطورها (المالك والرحلة والعمولة والأجور وصافي المالك لكل سطر)
+      responses:
+        '200':
+          description: الفاتورة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Sale'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /dalal/sales/{sale}/payments:
+    parameters:
+    - name: sale
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      tags:
+      - dalal-sales
+      summary: تحصيل دفعة على فاتورة — لا تتجاوز المتبقي
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  minimum: 0.01
+              required:
+              - amount
+      responses:
+        '200':
+          description: الفاتورة بعد الدفعة
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Sale'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /dalal/customers:
+    get:
+      tags:
+      - dalal-sales
+      summary: عملاء الدلال
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          default: 25
+      - name: region_id
+        in: query
+        schema:
+          type: integer
+      - name: governorate_id
+        in: query
+        schema:
+          type: integer
+      - name: search
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: العملاء
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Customer'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+      - dalal-sales
+      summary: إضافة عميل
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerInput'
+      responses:
+        '201':
+          description: العميل
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Customer'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /dalal/customers/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      tags:
+      - dalal-sales
+      summary: العميل
+      responses:
+        '200':
+          description: العميل
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Customer'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+      - dalal-sales
+      summary: تعديل العميل
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerInput'
+      responses:
+        '200':
+          description: العميل
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Customer'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags:
+      - dalal-sales
+      summary: حذف العميل
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /dalal/partnerships:
+    get:
+      tags:
+      - dalal-owners
+      summary: طلبات المالكين
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          default: 25
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - accepted
+          - rejected
+      responses:
+        '200':
+          description: الطلبات
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Partnership'
+                - $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /dalal/partnerships/{partnership}/accept:
+    parameters:
+    - name: partnership
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      tags:
+      - dalal-owners
+      summary: قبول طلب مالك — يُبلَّغ المالك
+      responses:
+        '200':
+          description: الطلب
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Partnership'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /dalal/partnerships/{partnership}/reject:
+    parameters:
+    - name: partnership
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      tags:
+      - dalal-owners
+      summary: رفض طلب مالك بسبب اختياري — يُبلَّغ المالك ويستطيع إعادة الطلب
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                response_note:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: الطلب
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Partnership'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /dalal/owners:
+    get:
+      tags:
+      - dalal-owners
+      summary: الصيّادون المرتبطون — من أرسل مصيدًا أو قُبل طلبه، بحساب كلٍّ منهم
+      parameters:
+      - name: search
+        in: query
+        schema:
+          type: string
+      - name: region_id
+        in: query
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: الملاك
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LinkedOwner'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /dalal/owners/{owner}/payouts:
+    parameters:
+    - name: owner
+      in: path
+      required: true
+      description: معرّف حساب المالك — مالك غير مرتبط `404`
+      schema:
+        type: integer
+    post:
+      tags:
+      - dalal-owners
+      summary: دفعة لمالك من صافي مبيعات مصيده — لا تتجاوز المستحق
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  minimum: 0.01
+                payment_method_id:
+                  type: integer
+                  nullable: true
+                paid_at:
+                  type: string
+                  format: date
+                  nullable: true
+                notes:
+                  type: string
+                  nullable: true
+              required:
+              - amount
+      responses:
+        '201':
+          description: الدفعة والمستحق بعدها
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      owner:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          name:
+                            type: string
+                      amount:
+                        type: number
+                      paid_at:
+                        type: string
+                        format: date-time
+                      due:
+                        type: number
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /dalal/reports/{type}:
+    parameters:
+    - name: type
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+        - sales
+        - stock
+        - payouts
+        - financial
+    get:
+      tags:
+      - dalal
+      summary: تقرير — المبيعات / المخزون المستلم / مدفوعات الصيادين / المالي
+      description: "بنية واحدة لكل التقارير — أعمدة (`format` = text / date / money / kg / int) وسطور بمفاتيح الأعمدة ومجاميع الأعمدة الرقمية. الفلاتر التي لا تخصّ التقرير تُتجاهل."
+      parameters:
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: status
+        in: query
+        schema:
+          type: string
+      - name: payment_status_id
+        in: query
+        schema:
+          type: integer
+      - name: species_id
+        in: query
+        schema:
+          type: integer
+      - name: owner_id
+        in: query
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: التقرير
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Report'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /dalal/settings:
+    get:
+      tags:
+      - dalal
+      summary: الإعدادات — الملف التجاري والدكة والشركة والشعار والعمالة
+      responses:
+        '200':
+          description: الإعدادات
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DalalSettings'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    put:
+      tags:
+      - dalal
+      summary: حفظ الإعدادات — يُحدَّث ما أُرسل من الحقول فقط
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DalalSettingsInput'
+      responses:
+        '200':
+          description: الإعدادات
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DalalSettings'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /dalal/settings/logo:
+    post:
+      tags:
+      - dalal
+      summary: رفع شعار الشركة (يُطبع على الفواتير)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                logo:
+                  type: string
+                  format: binary
+                  description: jpg / png / webp حتى 2MB
+              required:
+              - logo
+      responses:
+        '200':
+          description: الإعدادات
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DalalSettings'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags:
+      - dalal
+      summary: حذف الشعار
+      responses:
+        '200':
+          description: الإعدادات
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DalalSettings'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /dalal/settings/workers:
+    put:
+      tags:
+      - dalal
+      summary: عمالة الدكة — القائمة كاملةً تستبدل ما قبلها
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                workers:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      dalal_worker_type_id:
+                        type: integer
+                        description: من lookups.dalal_worker_types
+                      nationality:
+                        type: string
+                        nullable: true
+                      count:
+                        type: integer
+                        minimum: 1
+                      notes:
+                        type: string
+                        nullable: true
+                    required:
+                    - dalal_worker_type_id
+                    - count
+              required:
+              - workers
+      responses:
+        '200':
+          description: الإعدادات
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DalalSettings'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
 components:
   securitySchemes:
     bearerAuth:
@@ -2640,6 +3468,10 @@ components:
           items:
             $ref: '#/components/schemas/Lookup'
         customer_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lookup'
+        dalal_worker_types:
           type: array
           items:
             $ref: '#/components/schemas/Lookup'
@@ -3587,12 +4419,40 @@ components:
               type: integer
             name:
               type: string
+            name_sci:
+              type: string
+              nullable: true
+        trip:
+          type: object
+          nullable: true
+          description: رحلة المصيد — في تفاصيل الفاتورة
+          properties:
+            id:
+              type: integer
+            trip_number:
+              type: string
+        owner:
+          type: object
+          nullable: true
+          description: مالك المصيد — في تفاصيل الفاتورة
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
         weight_kg:
           type: number
         price_per_kg:
           type: number
         total:
           type: number
+        commission_amount:
+          type: number
+        wage_amount:
+          type: number
+        owner_net:
+          type: number
+          description: صافي المالك من السطر بعد الخصم والعمولة والأجور
     Sale:
       type: object
       properties:
@@ -3648,6 +4508,15 @@ components:
           type: number
         remaining:
           type: number
+        commission_pct:
+          type: number
+          description: نسبة العمولة حين يكون مصيد الفاتورة لمالك واحد، وإلا 0 (النِّسب في السطور)
+        commission_amount:
+          type: number
+        wage_pct:
+          type: number
+        wage_amount:
+          type: number
         owner_net:
           type: number
         items_count:
@@ -3658,6 +4527,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SaleItem'
+        invoice_url:
+          type: string
+          description: رابط موقّع للفاتورة المطبوعة (A4) — يُفتح بلا رمز
         sold_at:
           type: string
           nullable: true
@@ -4203,6 +5075,518 @@ components:
                 type: number
               counted_kg:
                 type: number
+    Partnership:
+      type: object
+      properties:
+        id:
+          type: integer
+        owner:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            phone:
+              type: string
+              nullable: true
+            email:
+              type: string
+              nullable: true
+        dalal:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            phone:
+              type: string
+              nullable: true
+        commission_pct:
+          type: number
+        wage_pct:
+          type: number
+        message:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+          - pending
+          - accepted
+          - rejected
+        status_label:
+          type: string
+          example: قيد الانتظار
+        response_note:
+          type: string
+          nullable: true
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    PartnershipSummary:
+      type: object
+      nullable: true
+      description: طلب التعامل مع هذا الدلال إن أُرسل — null إن لم يُرسل
+      properties:
+        id:
+          type: integer
+        commission_pct:
+          type: number
+        wage_pct:
+          type: number
+        message:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+          - pending
+          - accepted
+          - rejected
+        status_label:
+          type: string
+        response_note:
+          type: string
+          nullable: true
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+    PartnershipInput:
+      type: object
+      properties:
+        commission_pct:
+          type: number
+          minimum: 0
+          maximum: 100
+        wage_pct:
+          type: number
+          minimum: 0
+          maximum: 100
+          nullable: true
+        message:
+          type: string
+          nullable: true
+      required:
+      - commission_pct
+    StockLot:
+      type: object
+      description: دفعة مخزون — ما بقي عند الدلال من صنف في رحلة
+      properties:
+        trip_id:
+          type: integer
+          nullable: true
+        trip_number:
+          type: string
+          nullable: true
+        owner_id:
+          type: integer
+          nullable: true
+        owner:
+          type: string
+          nullable: true
+        boat:
+          type: string
+          nullable: true
+        species_id:
+          type: integer
+        species:
+          type: string
+          nullable: true
+        name_sci:
+          type: string
+          nullable: true
+        available_kg:
+          type: number
+        received_at:
+          type: string
+          nullable: true
+    DalalStock:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            species_count:
+              type: integer
+            total_kg:
+              type: number
+            owners_count:
+              type: integer
+            trips_count:
+              type: integer
+            consignments_count:
+              type: integer
+        owners:
+          type: array
+          items:
+            type: object
+            properties:
+              owner_id:
+                type: integer
+                nullable: true
+              owner:
+                type: string
+              species_count:
+                type: integer
+              total_kg:
+                type: number
+              lots:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockLot'
+        species:
+          type: array
+          items:
+            type: object
+            properties:
+              species_id:
+                type: integer
+              species:
+                type: string
+                nullable: true
+              name_sci:
+                type: string
+                nullable: true
+              available_kg:
+                type: number
+    DalalSaleInput:
+      type: object
+      properties:
+        customer_id:
+          type: integer
+          nullable: true
+        payment_method_id:
+          type: integer
+          nullable: true
+        discount:
+          type: number
+          nullable: true
+        paid_amount:
+          type: number
+          nullable: true
+          description: الافتراضي = الإجمالي (مدفوع بالكامل)
+        notes:
+          type: string
+          nullable: true
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            properties:
+              species_id:
+                type: integer
+              trip_id:
+                type: integer
+                nullable: true
+                description: دفعة بعينها — بدونه الأقدم أوّلًا
+              weight_kg:
+                type: number
+                minimum: 0.01
+              price_per_kg:
+                type: number
+                minimum: 0.01
+            required:
+            - species_id
+            - weight_kg
+            - price_per_kg
+      required:
+      - items
+    LinkedOwner:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        boats_count:
+          type: integer
+        port:
+          type: string
+          nullable: true
+        governorate:
+          type: string
+          nullable: true
+        region:
+          type: string
+          nullable: true
+        region_id:
+          type: integer
+          nullable: true
+        partnership:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            status:
+              type: string
+            status_label:
+              type: string
+            commission_pct:
+              type: number
+            wage_pct:
+              type: number
+        consignments_count:
+          type: integer
+        received_kg:
+          type: number
+        in_stock_kg:
+          type: number
+        sold_kg:
+          type: number
+        sales_total:
+          type: number
+        deductions:
+          type: number
+          description: العمولة + الأجور
+        owner_net:
+          type: number
+        paid:
+          type: number
+        due:
+          type: number
+    Report:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        filters:
+          type: object
+          additionalProperties: true
+        columns:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              label:
+                type: string
+              format:
+                type: string
+                enum:
+                - text
+                - date
+                - money
+                - kg
+                - int
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        totals:
+          type: object
+          additionalProperties:
+            type: number
+    DalalDashboard:
+      type: object
+      properties:
+        period:
+          type: object
+          properties:
+            key:
+              type: string
+            label:
+              type: string
+            from:
+              type: string
+              format: date
+            to:
+              type: string
+              format: date
+        kpis:
+          type: object
+          properties:
+            received_kg:
+              type: number
+            sales_total:
+              type: number
+            sales_count:
+              type: integer
+            net_profit:
+              type: number
+              description: العمولة + الأجور
+            commission:
+              type: number
+            wages:
+              type: number
+            sold_kg:
+              type: number
+            avg_price_per_kg:
+              type: number
+              nullable: true
+            active_customers:
+              type: integer
+            unpaid:
+              type: number
+            in_stock_kg:
+              type: number
+            due_to_owners:
+              type: number
+            customers:
+              type: integer
+        revenue_by_month:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: string
+              label:
+                type: string
+              total:
+                type: number
+              profit:
+                type: number
+        top_species:
+          type: array
+          items:
+            type: object
+            properties:
+              species:
+                type: string
+              weight_kg:
+                type: number
+              total:
+                type: number
+        pending_requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Partnership'
+        recent_sales:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sale'
+    DalalSettings:
+      type: object
+      properties:
+        id_number:
+          type: string
+          nullable: true
+        region:
+          $ref: '#/components/schemas/NamedRef'
+        governorate:
+          $ref: '#/components/schemas/NamedRef'
+        port:
+          $ref: '#/components/schemas/NamedRef'
+        dakka_name:
+          type: string
+          nullable: true
+          description: الدكة المنسوب إليها
+        dakka_number:
+          type: string
+          nullable: true
+        company_name:
+          type: string
+          nullable: true
+        cr_number:
+          type: string
+          nullable: true
+          description: السجل التجاري
+        vat_number:
+          type: string
+          nullable: true
+          description: الرقم الضريبي
+        company_email:
+          type: string
+          nullable: true
+        company_phone:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        website:
+          type: string
+          nullable: true
+        logo_url:
+          type: string
+          nullable: true
+        workers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              type:
+                $ref: '#/components/schemas/NamedRef'
+              nationality:
+                type: string
+                nullable: true
+              count:
+                type: integer
+              notes:
+                type: string
+                nullable: true
+    DalalSettingsInput:
+      type: object
+      properties:
+        id_number:
+          type: string
+          nullable: true
+        region_id:
+          type: integer
+          nullable: true
+        governorate_id:
+          type: integer
+          nullable: true
+        port_id:
+          type: integer
+          nullable: true
+        dakka_name:
+          type: string
+          nullable: true
+        dakka_number:
+          type: string
+          nullable: true
+        company_name:
+          type: string
+          nullable: true
+        cr_number:
+          type: string
+          nullable: true
+        vat_number:
+          type: string
+          nullable: true
+        company_email:
+          type: string
+          nullable: true
+        company_phone:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        website:
+          type: string
+          nullable: true
+    NamedRef:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
     Pagination:
       type: object
       properties:

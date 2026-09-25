@@ -3,8 +3,12 @@
 namespace App\Services\Notifications;
 
 use App\Models\AppNotification;
+use App\Models\Consignment;
+use App\Models\DalalPartnership;
+use App\Models\DalalPayout;
 use App\Models\NotificationType;
 use App\Models\Role;
+use App\Models\Sale;
 use App\Models\Trip;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -33,6 +37,18 @@ class Notifier
     public const COUNT_COMPLETED = 'اكتمل العد';
 
     public const COUNT_REQUESTED = 'رحلة بانتظار العد';
+
+    public const STOCK_RECEIVED = 'مصيد جديد في مخزونك';
+
+    public const PARTNERSHIP_REQUESTED = 'طلب تعامل من مالك';
+
+    public const PARTNERSHIP_ACCEPTED = 'تم قبول طلب التعامل';
+
+    public const PARTNERSHIP_REJECTED = 'تم رفض طلب التعامل';
+
+    public const DALAL_SOLD = 'بيع من مصيدك';
+
+    public const PAYOUT_RECEIVED = 'دفعة من الدلال';
 
     public function __construct(private readonly PushSender $push) {}
 
@@ -132,6 +148,59 @@ class Notifier
 
         $this->notify($trip->owner, self::COUNT_COMPLETED, 'اكتمل العد',
             "عُدّ مصيد الرحلة {$trip->trip_number} ({$kg} كجم) وصار جاهزًا للبيع.", $trip);
+    }
+
+    /*
+     * إشعارات الدلال والمالك حول المخزون المرسل وبيعه وتسويته. `data.target`
+     * يحدّد الشاشة التي يفتحها الإشعار حين لا رحلة له في بوابة الدور.
+     */
+
+    public function stockReceived(Consignment $consignment): void
+    {
+        $this->notify($consignment->dalal, self::STOCK_RECEIVED, 'مصيد جديد في مخزونك',
+            "أرسل {$consignment->owner?->name} ".number_format((float) $consignment->total_kg, 1)." كجم من الرحلة {$consignment->trip?->trip_number} ({$consignment->consignment_number}).",
+            $consignment->trip, ['target' => 'stock', 'consignment_id' => $consignment->id]);
+    }
+
+    public function partnershipRequested(DalalPartnership $partnership): void
+    {
+        $this->notify($partnership->dalal, self::PARTNERSHIP_REQUESTED, 'طلب تعامل من مالك',
+            "{$partnership->owner?->name} يطلب التعامل معك بعمولة {$this->pct($partnership->commission_pct)}% وأجور {$this->pct($partnership->wage_pct)}%.",
+            null, ['target' => 'partnerships', 'partnership_id' => $partnership->id]);
+    }
+
+    public function partnershipAnswered(DalalPartnership $partnership): void
+    {
+        $accepted = $partnership->status === DalalPartnership::ACCEPTED;
+
+        $this->notify($partnership->owner, $accepted ? self::PARTNERSHIP_ACCEPTED : self::PARTNERSHIP_REJECTED,
+            $accepted ? 'تم قبول طلب التعامل' : 'تم رفض طلب التعامل',
+            $accepted
+                ? "قبل {$partnership->dalal?->name} التعامل معك بعمولة {$this->pct($partnership->commission_pct)}% وأجور {$this->pct($partnership->wage_pct)}%."
+                : "رفض {$partnership->dalal?->name} طلب التعامل".($partnership->response_note ? ": {$partnership->response_note}" : '.'),
+            null, ['target' => 'dalals', 'partnership_id' => $partnership->id]);
+    }
+
+    /**
+     * الدلال باع من مصيد المالك: يُبلَّغ بالوزن وصافيه بعد العمولة والأجور.
+     */
+    public function dalalSold(Sale $sale, User $owner, float $kg, float $net): void
+    {
+        $this->notify($owner, self::DALAL_SOLD, 'بيع من مصيدك',
+            "باع {$sale->seller?->name} ".number_format($kg, 1).' كجم من مصيدك بالفاتورة '.$sale->invoice_number.' — صافيك '.number_format($net, 2).' ر.س.',
+            null, ['target' => 'dalals', 'sale_id' => $sale->id]);
+    }
+
+    public function payoutRecorded(DalalPayout $payout): void
+    {
+        $this->notify($payout->owner, self::PAYOUT_RECEIVED, 'دفعة من الدلال',
+            "سجّل {$payout->dalal?->name} دفعة لك بمبلغ ".number_format((float) $payout->amount, 2).' ر.س.',
+            null, ['target' => 'dalals', 'payout_id' => $payout->id]);
+    }
+
+    private function pct(mixed $value): string
+    {
+        return rtrim(rtrim(number_format((float) $value, 2), '0'), '.');
     }
 
     /**

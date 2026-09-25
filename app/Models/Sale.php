@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\URL;
 
 /**
  * فاتورة بيع: البائع مالك (يبيع مصيد رحلته) أو دلال (يبيع من مخزونه).
@@ -67,6 +68,14 @@ class Sale extends BaseModel
     public function getRemainingAttribute(): float
     {
         return round((float) $this->total - (float) $this->paid_amount, 2);
+    }
+
+    /**
+     * رابط الفاتورة المطبوعة — موقّع فيُفتح من التطبيق ويُشارك بلا دخول.
+     */
+    public function invoiceUrl(): string
+    {
+        return URL::signedRoute('invoices.show', ['sale' => $this->id]);
     }
 
     /**

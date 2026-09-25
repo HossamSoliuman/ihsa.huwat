@@ -26,6 +26,7 @@ use App\Http\Controllers\FishingSiteController;
 use App\Http\Controllers\FoodSecurityController;
 use App\Http\Controllers\GovernorateController;
 use App\Http\Controllers\IntegrationSettingController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MarketController;
 use App\Http\Controllers\MonthlyReportsController;
 use App\Http\Controllers\MyWorkspaceController;
@@ -34,6 +35,13 @@ use App\Http\Controllers\OrgStructureController;
 use App\Http\Controllers\Panel\Captain\CatchLogController as CaptainCatchLogController;
 use App\Http\Controllers\Panel\Captain\TripController as CaptainTripController;
 use App\Http\Controllers\Panel\Counter\TripController as CounterTripController;
+use App\Http\Controllers\Panel\Dalal\CustomerController as DalalCustomerController;
+use App\Http\Controllers\Panel\Dalal\OwnerController as DalalOwnerController;
+use App\Http\Controllers\Panel\Dalal\PartnershipController as DalalPartnershipController;
+use App\Http\Controllers\Panel\Dalal\ReportController as DalalReportController;
+use App\Http\Controllers\Panel\Dalal\SaleController as DalalSaleController;
+use App\Http\Controllers\Panel\Dalal\SettingsController as DalalSettingsController;
+use App\Http\Controllers\Panel\Dalal\StockController as DalalStockController;
 use App\Http\Controllers\Panel\HomeController as PanelHomeController;
 use App\Http\Controllers\Panel\LoginController as PanelLoginController;
 use App\Http\Controllers\Panel\NotificationController as PanelNotificationController;
@@ -42,6 +50,7 @@ use App\Http\Controllers\Panel\Owner\CaptainController as OwnerCaptainController
 use App\Http\Controllers\Panel\Owner\ConsignmentController as OwnerConsignmentController;
 use App\Http\Controllers\Panel\Owner\CrewController as OwnerCrewController;
 use App\Http\Controllers\Panel\Owner\CustomerController as OwnerCustomerController;
+use App\Http\Controllers\Panel\Owner\DalalController as OwnerDalalController;
 use App\Http\Controllers\Panel\Owner\EmployeeController as OwnerEmployeeController;
 use App\Http\Controllers\Panel\Owner\MaintenanceController as OwnerMaintenanceController;
 use App\Http\Controllers\Panel\Owner\SaleController as OwnerSaleController;
@@ -423,6 +432,10 @@ $adminPanel = function () use ($operationsConsole): void {
             Route::get('/consignments/create', [OwnerConsignmentController::class, 'create'])->name('consignments.create');
             Route::post('/consignments', [OwnerConsignmentController::class, 'store'])->name('consignments.store');
             Route::get('/consignments/{consignment}', [OwnerConsignmentController::class, 'show'])->name('consignments.show');
+
+            // الدلالون: طلب التعامل بعمولة وأجور مقترحة، وحساب المالك عند كلٍّ منهم.
+            Route::get('/dalals', [OwnerDalalController::class, 'index'])->name('dalals');
+            Route::post('/dalals/{dalal}/partnership', [OwnerDalalController::class, 'request'])->name('dalals.partnership');
         });
 
         /*
@@ -452,6 +465,43 @@ $adminPanel = function () use ($operationsConsole): void {
             Route::post('/trips/{trip}/receive', [CounterTripController::class, 'receive'])->name('trips.receive');
             Route::post('/trips/{trip}/count', [CounterTripController::class, 'count'])->name('trips.count');
         });
+
+        /*
+         * بوابة الدلال: مخزونه مما أرسله الملاك، والبيع منه بالسطور والفاتورة،
+         * وعملاؤه، وطلبات الملاك، والصيّادون المرتبطون ودفعاتهم، والتقارير،
+         * والإعدادات. كل سجل مقيّد به — انظر ResolvesDalalRecords.
+         */
+        Route::prefix('dalal')->name('panel.dalal.')->middleware('panel:dalal')->group(function (): void {
+            Route::get('/stock', [DalalStockController::class, 'index'])->name('stock');
+
+            Route::get('/sales', [DalalSaleController::class, 'index'])->name('sales');
+            Route::get('/sales/create', [DalalSaleController::class, 'create'])->name('sales.create');
+            Route::post('/sales', [DalalSaleController::class, 'store'])->name('sales.store');
+            Route::get('/sales/{sale}', [DalalSaleController::class, 'show'])->name('sales.show');
+            Route::post('/sales/{sale}/payment', [DalalSaleController::class, 'payment'])->name('sales.payment');
+
+            Route::get('/customers', [DalalCustomerController::class, 'index'])->name('customers');
+            Route::post('/customers', [DalalCustomerController::class, 'store'])->name('customers.store');
+            Route::put('/customers/{id}', [DalalCustomerController::class, 'update'])->name('customers.update');
+            Route::delete('/customers/{id}', [DalalCustomerController::class, 'destroy'])->name('customers.destroy');
+
+            Route::get('/requests', [DalalPartnershipController::class, 'index'])->name('requests');
+            Route::post('/requests/{partnership}/accept', [DalalPartnershipController::class, 'accept'])->name('requests.accept');
+            Route::post('/requests/{partnership}/reject', [DalalPartnershipController::class, 'reject'])->name('requests.reject');
+
+            Route::get('/owners', [DalalOwnerController::class, 'index'])->name('owners');
+            Route::post('/owners/{owner}/payouts', [DalalOwnerController::class, 'payout'])->name('owners.payout');
+
+            Route::get('/reports', [DalalReportController::class, 'index'])->name('reports');
+            Route::get('/reports/{type}', [DalalReportController::class, 'show'])->name('reports.show');
+
+            Route::get('/settings', [DalalSettingsController::class, 'index'])->name('settings');
+            Route::put('/settings', [DalalSettingsController::class, 'update'])->name('settings.update');
+            Route::post('/settings/logo', [DalalSettingsController::class, 'logo'])->name('settings.logo');
+            Route::delete('/settings/logo', [DalalSettingsController::class, 'removeLogo'])->name('settings.logo.remove');
+            Route::post('/settings/workers', [DalalSettingsController::class, 'storeWorker'])->name('settings.workers.store');
+            Route::delete('/settings/workers/{worker}', [DalalSettingsController::class, 'destroyWorker'])->name('settings.workers.destroy');
+        });
     });
 };
 
@@ -469,6 +519,9 @@ $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdmi
     Route::post('/register-request', [RegistrationRequestController::class, 'store'])->middleware('throttle:5,1')->name('landing.register');
 
     Route::view('/sections', 'portal')->name('portal');
+
+    // الفاتورة المطبوعة برابط موقّع — يفتحها التطبيق ويشاركها بلا دخول (Sale::invoiceUrl).
+    Route::get('/invoices/{sale}', [InvoiceController::class, 'show'])->middleware('signed')->name('invoices.show');
 
     Route::prefix('gov')->name('gov.')->group($govDashboard);
 

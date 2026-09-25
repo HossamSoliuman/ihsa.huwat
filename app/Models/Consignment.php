@@ -61,6 +61,11 @@ class Consignment extends BaseModel
         return $query->where('owner_id', $owner->id);
     }
 
+    public function scopeForDalal(Builder $query, User $dalal): Builder
+    {
+        return $query->where('dalal_id', $dalal->id);
+    }
+
     public static function nextNumber(): string
     {
         $prefix = 'CN-'.now()->year.'-';

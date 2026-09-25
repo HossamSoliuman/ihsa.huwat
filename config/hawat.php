@@ -241,6 +241,7 @@ return [
                     ['label' => 'الرحلات', 'route' => 'panel.owner.trips', 'icon' => 'route'],
                     ['label' => 'المبيعات', 'route' => 'panel.owner.sales', 'icon' => 'coins'],
                     ['label' => 'الإرسال للدلال', 'route' => 'panel.owner.consignments', 'icon' => 'send'],
+                    ['label' => 'الدلالون', 'route' => 'panel.owner.dalals', 'icon' => 'handshake'],
                 ],
             ],
             [
@@ -316,6 +317,23 @@ return [
                 'title' => 'الدلال',
                 'items' => [
                     ['label' => 'الرئيسية', 'route' => 'panel.home', 'icon' => 'layout-dashboard'],
+                    ['label' => 'المخزون', 'route' => 'panel.dalal.stock', 'icon' => 'archive'],
+                    ['label' => 'المبيعات', 'route' => 'panel.dalal.sales', 'icon' => 'coins'],
+                    ['label' => 'العملاء', 'route' => 'panel.dalal.customers', 'icon' => 'user-check'],
+                ],
+            ],
+            [
+                'title' => 'الملاك',
+                'items' => [
+                    ['label' => 'طلبات المالكين', 'route' => 'panel.dalal.requests', 'icon' => 'handshake'],
+                    ['label' => 'الصيّادون المرتبطون', 'route' => 'panel.dalal.owners', 'icon' => 'users'],
+                    ['label' => 'التقارير', 'route' => 'panel.dalal.reports', 'icon' => 'file-chart'],
+                ],
+            ],
+            [
+                'title' => 'الحساب',
+                'items' => [
+                    ['label' => 'الإعدادات', 'route' => 'panel.dalal.settings', 'icon' => 'settings'],
                     ['label' => 'الإشعارات', 'route' => 'panel.notifications', 'icon' => 'bell'],
                     ['label' => 'الملف الشخصي', 'route' => 'panel.profile', 'icon' => 'user'],
                 ],

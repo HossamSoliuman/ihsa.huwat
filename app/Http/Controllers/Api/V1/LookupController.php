@@ -9,6 +9,7 @@ use App\Http\Resources\Api\SpeciesResource;
 use App\Models\BoatCategory;
 use App\Models\BoatType;
 use App\Models\CustomerType;
+use App\Models\DalalWorkerType;
 use App\Models\FisherRole;
 use App\Models\GearType;
 use App\Models\IdType;
@@ -43,6 +44,7 @@ class LookupController extends Controller
             'payment_methods' => LookupResource::collection(PaymentMethod::options()),
             'payment_statuses' => LookupResource::collection(PaymentStatus::options()),
             'customer_types' => LookupResource::collection(CustomerType::options()),
+            'dalal_worker_types' => LookupResource::collection(DalalWorkerType::options()),
         ]]);
     }
 }

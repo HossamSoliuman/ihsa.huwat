@@ -175,12 +175,38 @@ class User extends Authenticatable
     }
 
     /**
-     * ميناء الحساب: من سجلّ الصياد للكابتن، ومن سجلّ موظف الإحصاء للعدّاد.
-     * يُعرض في الملف الشخصي ويُحسب عليه طابور العدّاد.
+     * ملف الدلال التجاري (الدكة والسجل التجاري والشعار) — انظر DalalProfile::forUser.
+     */
+    public function dalalProfile(): HasOne
+    {
+        return $this->hasOne(DalalProfile::class);
+    }
+
+    public function dalalWorkers(): HasMany
+    {
+        return $this->hasMany(DalalWorker::class, 'dalal_id');
+    }
+
+    /**
+     * طلبات التعامل: ما أرسله المالك إلى الدلالين، وما وصل الدلال من الملاك.
+     */
+    public function ownerPartnerships(): HasMany
+    {
+        return $this->hasMany(DalalPartnership::class, 'owner_id');
+    }
+
+    public function dalalPartnerships(): HasMany
+    {
+        return $this->hasMany(DalalPartnership::class, 'dalal_id');
+    }
+
+    /**
+     * ميناء الحساب: من سجلّ الصياد للكابتن، ومن سجلّ موظف الإحصاء للعدّاد،
+     * ومن ملف الدلال للدلال. يُعرض في الملف الشخصي ويُحسب عليه طابور العدّاد.
      */
     public function getPortAttribute(): ?Port
     {
-        return $this->fisher?->port ?? $this->statisticsOfficer?->port;
+        return $this->fisher?->port ?? $this->statisticsOfficer?->port ?? $this->dalalProfile?->port;
     }
 
     /**

@@ -20,6 +20,12 @@ class NotificationTypeSeeder extends Seeder
         ['تم إرسال المخرجات', 'Catch submitted', 'fish'],
         ['اكتمل العد', 'Count completed', 'clipboard'],
         ['رحلة بانتظار العد', 'Trip awaiting count', 'clipboard-check'],
+        ['مصيد جديد في مخزونك', 'New stock received', 'archive'],
+        ['طلب تعامل من مالك', 'Owner partnership request', 'handshake'],
+        ['تم قبول طلب التعامل', 'Partnership accepted', 'check-check'],
+        ['تم رفض طلب التعامل', 'Partnership rejected', 'x-circle'],
+        ['بيع من مصيدك', 'Your catch was sold', 'coins'],
+        ['دفعة من الدلال', 'Payout from dalal', 'calculator'],
     ];
 
     public function run(): void

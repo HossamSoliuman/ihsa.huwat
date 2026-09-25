@@ -22,10 +22,16 @@ class SaleResource extends JsonResource
             'total' => (float) $this->total,
             'paid_amount' => (float) $this->paid_amount,
             'remaining' => $this->remaining,
+            // ما يُقتطع في بيع الدلال لصالحه (العمولة) ولعمالته (الأجور) — صفر في بيع المالك.
+            'commission_pct' => (float) $this->commission_pct,
+            'commission_amount' => (float) $this->commission_amount,
+            'wage_pct' => (float) $this->wage_pct,
+            'wage_amount' => (float) $this->wage_amount,
             'owner_net' => (float) $this->owner_net,
             'items_count' => $this->whenCounted('items'),
             'total_kg' => $this->when(isset($this->items_sum_weight_kg), fn () => (float) $this->items_sum_weight_kg),
             'items' => SaleItemResource::collection($this->whenLoaded('items')),
+            'invoice_url' => $this->invoiceUrl(),
             'sold_at' => $this->sold_at?->toIso8601String(),
             'notes' => $this->notes,
         ];
