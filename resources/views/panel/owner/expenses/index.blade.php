@@ -89,9 +89,11 @@
             </thead>
             <tbody>
                 @forelse ($rows as $row)
+                    @php $locked = isset($closedMonths[$row->date?->format('Y-m')]); @endphp
                     <tr>
                         <td>
                             <span class="num" style="font-weight:700">{{ $row->expense_number }}</span>
+                            @if ($locked)<span class="badge" style="margin-inline-start:.25rem" title="شهره مُغلق — السداد وحده متاح">@include('partials.icon', ['name' => 'lock']) مُغلق</span>@endif
                             @if ($row->is_automatic)<span class="badge badge-info" style="margin-inline-start:.25rem">{{ $row->source_label ?? 'تلقائي' }}</span>@endif
                             @if ($row->description)<div style="font-size:.72rem;color:hsl(var(--muted-foreground))">{{ $row->description }}</div>@endif
                         </td>
@@ -114,11 +116,13 @@
                                     <a href="{{ $row->attachment_url }}" target="_blank" class="icon-action" title="المرفق">@include('partials.icon', ['name' => 'file-check'])</a>
                                 @endif
                                 <a href="{{ route('panel.owner.expenses.print', $row->id) }}" target="_blank" class="icon-action" title="طباعة السند">@include('partials.icon', ['name' => 'printer'])</a>
+                                @unless ($locked)
                                 <button type="button" class="icon-action" title="تعديل" onclick='openDrawerForm(recordForm, {!! json_encode($row->only(['id', 'expense_category_id', 'date', 'description', 'subtotal', 'discount', 'discount_pct', 'vat_rate', 'boat_id', 'trip_id', 'vendor_id', 'payment_method_id', 'payment_status_id', 'paid_amount', 'notes']) + ['is_automatic' => $row->is_automatic, 'source_label' => $row->source_label, 'has_attachment' => (bool) $row->attachment_path], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!})'>@include('partials.icon', ['name' => 'pencil'])</button>
                                 <form method="POST" action="{{ route('panel.owner.expenses.destroy', $row->id) }}" onsubmit="return confirm('حذف المصروف {{ $row->expense_number }}؟')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="icon-action danger" title="حذف">@include('partials.icon', ['name' => 'trash'])</button>
                                 </form>
+                                @endunless
                             </div>
                         </td>
                     </tr>

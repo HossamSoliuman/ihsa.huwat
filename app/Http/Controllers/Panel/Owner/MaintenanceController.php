@@ -12,6 +12,7 @@ use App\Models\MaintenanceType;
 use App\Services\Owner\ExpenseService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class MaintenanceController extends Controller
@@ -41,8 +42,12 @@ class MaintenanceController extends Controller
 
     public function store(MaintenanceRequest $request): RedirectResponse
     {
-        $row = BoatMaintenance::create($request->validated() + ['status' => $request->input('status', 'معلقة')]);
-        $expense = $this->expenses->syncSource($row, $request->user());
+        // الترحيل قد يُرفض (شهر مُغلق) — فلا تبقى الصيانة بلا سندها.
+        [$row, $expense] = DB::transaction(function () use ($request) {
+            $row = BoatMaintenance::create($request->validated() + ['status' => $request->input('status', 'معلقة')]);
+
+            return [$row, $this->expenses->syncSource($row, $request->user())];
+        });
 
         return redirect()->route('panel.owner.maintenance')->with('status', 'تمت إضافة سجل الصيانة.'.$this->postedNote($expense));
     }
@@ -50,8 +55,11 @@ class MaintenanceController extends Controller
     public function update(MaintenanceRequest $request, int $maintenance): RedirectResponse
     {
         $row = $this->ownedMaintenance($request->user(), $maintenance);
-        $row->update($request->validated());
-        $expense = $this->expenses->syncSource($row, $request->user());
+        $expense = DB::transaction(function () use ($request, $row) {
+            $row->update($request->validated());
+
+            return $this->expenses->syncSource($row, $request->user());
+        });
 
         return redirect()->route('panel.owner.maintenance')->with('status', 'تم تحديث سجل الصيانة.'.$this->postedNote($expense));
     }
@@ -59,8 +67,10 @@ class MaintenanceController extends Controller
     public function destroy(Request $request, int $maintenance): RedirectResponse
     {
         $row = $this->ownedMaintenance($request->user(), $maintenance);
-        $this->expenses->releaseSource($row, $request->user());
-        $row->delete();
+        DB::transaction(function () use ($request, $row) {
+            $this->expenses->releaseSource($row, $request->user());
+            $row->delete();
+        });
 
         return redirect()->route('panel.owner.maintenance')->with('status', 'تم حذف سجل الصيانة.');
     }

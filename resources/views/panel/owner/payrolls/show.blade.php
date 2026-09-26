@@ -15,7 +15,7 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'calculator'])</div>
             <div>
                 <h1>مسير {{ $payroll->boat_name }} — {{ $payroll->period_label }}</h1>
-                <p><span class="num">{{ $payroll->payroll_number }}</span> · {{ $payroll->paymentStatus?->name }} · {{ $unpaid->isEmpty() ? 'مُسدَّد ومجمَّد' : 'يُعاد حسابه عند كل فتح حتى يُسدَّد' }}</p>
+                <p><span class="num">{{ $payroll->payroll_number }}</span> · {{ $payroll->paymentStatus?->name }} · {{ $closed ? 'الشهر مُغلق — الأرقام مجمَّدة والسداد متاح' : ($unpaid->isEmpty() ? 'مُسدَّد ومجمَّد' : 'يُعاد حسابه عند كل فتح حتى يُسدَّد') }}</p>
             </div>
         </div>
         <div class="actions">
@@ -24,7 +24,9 @@
             @if ($unpaid->isNotEmpty())
                 <button type="button" class="btn btn-primary" onclick="openPay(null)">@include('partials.icon', ['name' => 'check-check']) سداد الكل</button>
             @endif
-            @if (! $payroll->has_payments)
+            @if ($closed)
+                <a href="{{ route('panel.owner.month-closings') }}" class="btn btn-outline">@include('partials.icon', ['name' => 'lock']) الشهر مُغلق</a>
+            @elseif (! $payroll->has_payments)
                 <form method="POST" action="{{ route('panel.owner.payrolls.destroy', $payroll->id) }}" onsubmit="return confirm('حذف المسير {{ $payroll->payroll_number }}؟')">
                     @csrf @method('DELETE')
                     <button class="btn btn-outline">@include('partials.icon', ['name' => 'trash']) حذف</button>
@@ -97,7 +99,9 @@
                                     <a href="{{ route('panel.owner.crew-pay.statement', $line->fisher_id) }}" target="_blank" class="icon-action" title="كشف الحساب">@include('partials.icon', ['name' => 'file-text'])</a>
                                 @endif
                                 @unless ($line->is_paid)
+                                    @unless ($closed)
                                     <button type="button" class="icon-action" title="زيادة / خصم" onclick='openLine({!! json_encode($line->only(['id', 'member_name', 'bonus', 'deduction', 'notes', 'base_amount']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!})'>@include('partials.icon', ['name' => 'pencil'])</button>
+                                    @endunless
                                     <button type="button" class="icon-action" title="سداد" onclick='openPay({!! json_encode($line->only(['id', 'member_name', 'net']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!})'>@include('partials.icon', ['name' => 'coins'])</button>
                                 @endunless
                             </div>

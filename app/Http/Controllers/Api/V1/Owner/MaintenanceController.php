@@ -11,6 +11,7 @@ use App\Services\Owner\ExpenseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 
 class MaintenanceController extends Controller
 {
@@ -32,8 +33,13 @@ class MaintenanceController extends Controller
 
     public function store(MaintenanceRequest $request): JsonResponse
     {
-        $row = BoatMaintenance::create($request->validated() + ['status' => $request->input('status', 'معلقة')]);
-        $this->expenses->syncSource($row, $request->user());
+        // الترحيل قد يُرفض (شهر مُغلق) — فلا تبقى الصيانة بلا سندها.
+        $row = DB::transaction(function () use ($request) {
+            $row = BoatMaintenance::create($request->validated() + ['status' => $request->input('status', 'معلقة')]);
+            $this->expenses->syncSource($row, $request->user());
+
+            return $row;
+        });
 
         return (new MaintenanceResource($row->load(['boat', 'maintenanceType', 'expense'])))->response()->setStatusCode(201);
     }
@@ -41,8 +47,10 @@ class MaintenanceController extends Controller
     public function update(MaintenanceRequest $request, int $maintenance): MaintenanceResource
     {
         $row = $this->ownedMaintenance($request->user(), $maintenance);
-        $row->update($request->validated());
-        $this->expenses->syncSource($row, $request->user());
+        DB::transaction(function () use ($request, $row) {
+            $row->update($request->validated());
+            $this->expenses->syncSource($row, $request->user());
+        });
 
         return new MaintenanceResource($row->load(['boat', 'maintenanceType', 'expense']));
     }
@@ -50,8 +58,10 @@ class MaintenanceController extends Controller
     public function destroy(Request $request, int $maintenance): JsonResponse
     {
         $row = $this->ownedMaintenance($request->user(), $maintenance);
-        $this->expenses->releaseSource($row, $request->user());
-        $row->delete();
+        DB::transaction(function () use ($request, $row) {
+            $this->expenses->releaseSource($row, $request->user());
+            $row->delete();
+        });
 
         return response()->json(['message' => 'تم حذف سجل الصيانة.']);
     }

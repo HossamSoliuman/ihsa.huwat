@@ -74,6 +74,7 @@ class PayrollController extends Controller
         return view('panel.owner.payrolls.show', [
             'payroll' => $record->load(['lines.payType', 'lines.paymentMethod', 'lines.fisher', 'paymentStatus', 'expense']),
             'methods' => PaymentMethod::options(),
+            'closed' => $this->payrolls->isClosed($record),
         ]);
     }
 

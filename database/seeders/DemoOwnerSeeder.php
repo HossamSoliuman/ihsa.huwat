@@ -19,6 +19,7 @@ use App\Models\FisherRole;
 use App\Models\FishingSeason;
 use App\Models\GearType;
 use App\Models\MaintenanceType;
+use App\Models\MonthClosing;
 use App\Models\PaymentMethod;
 use App\Models\PaymentStatus;
 use App\Models\Payroll;
@@ -31,6 +32,7 @@ use App\Models\Vendor;
 use App\Services\Owner\CrewPayService;
 use App\Services\Owner\ExpenseService;
 use App\Services\Owner\FleetService;
+use App\Services\Owner\MonthClosingService;
 use App\Services\Owner\PayrollService;
 use App\Services\Sales\SaleService;
 use App\Services\Stock\StockLedger;
@@ -139,6 +141,21 @@ class DemoOwnerSeeder extends Seeder
         $this->seedExpenses($owner, $homeBoat);
         $this->seedFleetAssets($owner, $homeBoat);
         $this->seedCrewMoney($owner, $homeBoat);
+        $this->seedMonthClosing($owner, $homeBoat);
+    }
+
+    /**
+     * إغلاق الشهر التجريبي (O4): يُغلق الشهر الماضي فيُنشأ مسيره ويُقفل، وما
+     * أجّله من إهلاك الأصول يدخل مسير الشهر الجاري. مرة واحدة.
+     */
+    private function seedMonthClosing(User $owner, ?Boat $homeBoat): void
+    {
+        if ($homeBoat === null || MonthClosing::forOwner($owner)->exists()) {
+            return;
+        }
+
+        $previous = now()->startOfMonth()->subMonth();
+        app(MonthClosingService::class)->close($owner, $previous->year, $previous->month, 'إغلاق تجريبي');
     }
 
     /**

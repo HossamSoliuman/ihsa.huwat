@@ -258,6 +258,7 @@ return [
                     ['label' => 'مسيرات الرواتب', 'route' => 'panel.owner.payrolls', 'icon' => 'calculator'],
                     ['label' => 'سلف الطاقم', 'route' => 'panel.owner.advances', 'icon' => 'arrow-left-right'],
                     ['label' => 'أجور الطاقم', 'route' => 'panel.owner.crew-pay', 'icon' => 'user-cog'],
+                    ['label' => 'إغلاق الشهر', 'route' => 'panel.owner.month-closings', 'icon' => 'lock'],
                 ],
             ],
             [

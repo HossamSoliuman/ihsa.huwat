@@ -60,6 +60,7 @@ use App\Http\Controllers\Panel\Owner\EquipmentController as OwnerEquipmentContro
 use App\Http\Controllers\Panel\Owner\ExpenseController as OwnerExpenseController;
 use App\Http\Controllers\Panel\Owner\InspectionController as OwnerInspectionController;
 use App\Http\Controllers\Panel\Owner\MaintenanceController as OwnerMaintenanceController;
+use App\Http\Controllers\Panel\Owner\MonthClosingController as OwnerMonthClosingController;
 use App\Http\Controllers\Panel\Owner\PayrollController as OwnerPayrollController;
 use App\Http\Controllers\Panel\Owner\SaleController as OwnerSaleController;
 use App\Http\Controllers\Panel\Owner\TripController as OwnerTripController;
@@ -496,6 +497,14 @@ $adminPanel = function () use ($operationsConsole): void {
             Route::post('/payrolls/{payroll}/pay-all', [OwnerPayrollController::class, 'payAll'])->name('payrolls.pay-all');
             Route::put('/payrolls/{payroll}/lines/{line}', [OwnerPayrollController::class, 'updateLine'])->name('payrolls.lines.update');
             Route::post('/payrolls/{payroll}/lines/{line}/pay', [OwnerPayrollController::class, 'payLine'])->name('payrolls.lines.pay');
+
+            // إغلاق الشهر (O4): معاينة ثم إغلاق يثبّت الأرقام ويقفل الشهر، وإعادة فتح آخر شهر.
+            Route::get('/month-closings', [OwnerMonthClosingController::class, 'index'])->name('month-closings');
+            Route::get('/month-closings/preview', [OwnerMonthClosingController::class, 'preview'])->name('month-closings.preview');
+            Route::post('/month-closings', [OwnerMonthClosingController::class, 'store'])->name('month-closings.store');
+            Route::get('/month-closings/{closing}', [OwnerMonthClosingController::class, 'show'])->name('month-closings.show');
+            Route::get('/month-closings/{closing}/print', [OwnerMonthClosingController::class, 'print'])->name('month-closings.print');
+            Route::delete('/month-closings/{closing}', [OwnerMonthClosingController::class, 'reopen'])->name('month-closings.reopen');
         });
 
         /*

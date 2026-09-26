@@ -14,6 +14,7 @@ use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Services\Owner\ExpenseService;
+use App\Services\Owner\MonthLock;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -48,6 +49,7 @@ class ExpenseController extends Controller
                 ->paginate(25)->withQueryString(),
             'totals' => $totals,
             'byGroup' => $byGroup,
+            'closedMonths' => app(MonthLock::class)->closedKeys($owner->id),
         ] + $this->formOptions($owner));
     }
 

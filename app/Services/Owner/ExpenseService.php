@@ -21,6 +21,9 @@ use Illuminate\Validation\ValidationException;
  *
  * الإجمالي = (المبلغ − الخصم) + ضريبة القيمة المضافة على الصافي، وحالة
  * الدفع تُشتق دائمًا من المدفوع مقابل الإجمالي فلا تتعارضان.
+ *
+ * مصروف الشهر المُغلق لا يُضاف ولا يُعدَّل ولا يُحذف ({@see MonthLock})، وسداده
+ * مفتوح — لا يغيّر ربح الشهر.
  */
 class ExpenseService
 {
@@ -30,8 +33,12 @@ class ExpenseService
 
     public const PARTIAL = 'مدفوع جزئيًا';
 
+    public function __construct(private readonly MonthLock $lock) {}
+
     public function create(User $owner, array $data, ?UploadedFile $attachment = null): Expense
     {
+        $this->lock->ensureOpen($owner->id, $data['date'] ?? null);
+
         return DB::transaction(function () use ($owner, $data, $attachment) {
             $expense = new Expense([
                 'expense_number' => Expense::nextNumber(),
@@ -55,6 +62,9 @@ class ExpenseService
 
     public function update(User $by, Expense $expense, array $data, ?UploadedFile $attachment = null, bool $removeAttachment = false): Expense
     {
+        $this->lock->ensureOpen($expense->owner_id, $expense->date);
+        $this->lock->ensureOpen($expense->owner_id, $data['date'] ?? null);
+
         return DB::transaction(function () use ($by, $expense, $data, $attachment, $removeAttachment) {
             // المصروف المرحَّل يتبع سجله: المبلغ والقارب والتاريخ تُعدَّل من هناك.
             if ($expense->is_automatic) {
@@ -97,6 +107,8 @@ class ExpenseService
         if ($source instanceof ExpenseSource && $source->expensePosting() !== null) {
             throw ValidationException::withMessages(['expense' => "هذا المصروف مرحَّل من {$source->expenseSourceLabel()} — عدّله أو احذفه من هناك."]);
         }
+
+        $this->lock->ensureOpen($expense->owner_id, $expense->date, 'expense');
 
         DB::transaction(function () use ($by, $expense) {
             if ($expense->attachment_path) {
@@ -148,6 +160,7 @@ class ExpenseService
 
         if ($posting === null) {
             if ($expense && $expense->paid_amount <= 0) {
+                $this->lock->ensureOpen($expense->owner_id, $expense->date);
                 $expense->delete();
                 $this->log('إلغاء ترحيل', $by, $expense, "حُذف المصروف لأن {$source->expenseSourceLabel()} لم يعد يُرحَّل");
 
@@ -155,6 +168,16 @@ class ExpenseService
             }
 
             return $expense;
+        }
+
+        // ما يمسّ ربح الشهر (المبلغ أو التاريخ أو القارب) مقفل في الشهر المُغلق؛
+        // تحديث المدفوع وحده (سداد مسير) مسموح.
+        if ($expense === null
+            || round((float) $expense->subtotal, 2) !== round((float) $posting['amount'], 2)
+            || $expense->date?->toDateString() !== $posting['date']
+            || (int) $expense->boat_id !== (int) $posting['boat_id']) {
+            $this->lock->ensureOpen($posting['owner_id'], $expense?->date);
+            $this->lock->ensureOpen($posting['owner_id'], $posting['date']);
         }
 
         $expense ??= new Expense([
@@ -200,6 +223,7 @@ class ExpenseService
         }
 
         if ($expense->paid_amount <= 0) {
+            $this->lock->ensureOpen($expense->owner_id, $expense->date);
             $expense->delete();
             $this->log('إلغاء ترحيل', $by, $expense, "حُذف المصروف مع {$source->expenseSourceLabel()}");
 

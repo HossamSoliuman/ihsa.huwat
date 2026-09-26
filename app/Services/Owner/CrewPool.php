@@ -16,12 +16,14 @@ use Carbon\CarbonImmutable;
  *   الإيراد   = صافي المالك من بيعه المباشر لمصيد القارب + صافيه من بيع
  *               الدلال لمصيد القارب (بعد العمولة والأجور)
  *   المصروفات = سندات القارب في الشهر (ومنها الرواتب الثابتة المرحَّلة)
- *   الإهلاك   = قسط أصول القارب للشهر (+ المؤجَّل من أشهر سابقة)، ولا يُحمَّل
+ *   الإهلاك   = قسط أصول القارب للشهر (+ المؤجَّل من الشهر السابق)، ولا يُحمَّل
  *               منه إلا ما يغطيه الربح — الباقي يؤجَّل فلا يصنع الإهلاك خسارة
  *   الصافي    = الإيراد − المصروفات − الإهلاك المحمَّل
  *   المالك    = الصافي × نسبته، والطاقم الباقي ولا يقل عن صفر (الخسارة على المالك)
  *
- * المؤجَّل من الأشهر السابقة يأتي من إغلاق الشهر (O4)؛ حتى ذلك صفر.
+ * المؤجَّل الداخل من الشهر السابق يأتي من إغلاقه ({@see MonthLock::broughtForward}).
+ * و`$pendingExpenses` رواتب ثابتة ستُرحَّل ولم تُرحَّل بعد (معاينة إغلاق
+ * شهر لقارب بلا مسير) فتُحسب كما ستكون.
  */
 class CrewPool
 {
@@ -30,7 +32,7 @@ class CrewPool
     /**
      * @return array{revenue: float, expenses: float, depreciation: float, depreciation_charged: float, depreciation_deferred: float, net_profit: float, owner_share_percent: float, owner_share: float, crew_pool: float}
      */
-    public function forBoatMonth(User $owner, int $boatId, int $year, int $month, float $ownerPercent, float $broughtForward = 0.0): array
+    public function forBoatMonth(User $owner, int $boatId, int $year, int $month, float $ownerPercent, float $broughtForward = 0.0, float $pendingExpenses = 0.0): array
     {
         $from = CarbonImmutable::create($year, $month, 1)->startOfDay();
         $to = $from->endOfMonth();
@@ -40,7 +42,7 @@ class CrewPool
             ->where('boat_id', $boatId)
             ->whereDate('date', '>=', $from->toDateString())
             ->whereDate('date', '<=', $to->toDateString())
-            ->sum('total'), 2);
+            ->sum('total') + $pendingExpenses, 2);
 
         $own = $this->depreciation->forMonth($owner, $year, $month, $boatId)['total'];
         $considered = round($own + $broughtForward, 2);

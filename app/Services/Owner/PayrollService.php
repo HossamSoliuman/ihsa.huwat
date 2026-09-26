@@ -26,12 +26,15 @@ use Illuminate\Validation\ValidationException;
  *   من مستحقه — الباقي ينتقل للمسير التالي.
  * - السطر غير المسدَّد يُعاد حسابه كلما فُتح المسير (بيع أو مصروف أو سلفة
  *   أُضيفت بعده)، والمسدَّد يُجمَّد.
+ * - مسير الشهر المُغلق (O4) مجمَّد الأرقام كله: لا إعادة حساب ولا تعديل ولا
+ *   حذف — يبقى سداده وخصم السلف من سطوره غير المسدَّدة.
  */
 class PayrollService
 {
     public function __construct(
         private readonly CrewPool $pool,
         private readonly ExpenseService $expenses,
+        private readonly MonthLock $lock,
     ) {}
 
     public function generate(User $owner, Boat $boat, int $year, int $month): Payroll
@@ -39,6 +42,8 @@ class PayrollService
         if (CarbonImmutable::create($year, $month, 1)->isAfter(now()->startOfMonth())) {
             throw ValidationException::withMessages(['period' => 'لا يُنشأ مسير لشهر لم يبدأ بعد.']);
         }
+
+        $this->lock->ensureOpen($owner->id, CarbonImmutable::create($year, $month, 1), 'period');
 
         if (Payroll::forOwner($owner)->where('boat_id', $boat->id)->where('year', $year)->where('month', $month)->exists()) {
             throw ValidationException::withMessages(['period' => "مسير {$boat->name} لهذا الشهر موجود."]);
@@ -77,7 +82,7 @@ class PayrollService
     {
         $payroll->unsetRelation('lines');
 
-        if ($payroll->boat_id === null || $payroll->is_fully_paid) {
+        if ($payroll->boat_id === null || $payroll->is_fully_paid || $this->isClosed($payroll)) {
             return $payroll;
         }
 
@@ -98,7 +103,8 @@ class PayrollService
                 $payroll->owner_share_percent = (float) ($payroll->boat?->owner_share_percent ?? $payroll->owner_share_percent);
             }
 
-            $figures = $this->pool->forBoatMonth($owner, $payroll->boat_id, $payroll->year, $payroll->month, (float) $payroll->owner_share_percent);
+            $broughtForward = $this->lock->broughtForward($owner->id, $payroll->boat_id, $payroll->year, $payroll->month);
+            $figures = $this->pool->forBoatMonth($owner, $payroll->boat_id, $payroll->year, $payroll->month, (float) $payroll->owner_share_percent, $broughtForward);
             $payroll->fill($figures)->save();
 
             $shareLines = $lines->filter(fn (PayrollLine $line) => $line->payType->isShare());
@@ -128,6 +134,8 @@ class PayrollService
         if ($line->is_paid) {
             throw ValidationException::withMessages(['line' => 'سُدِّد هذا السطر — لا يُعدَّل.']);
         }
+
+        $this->lock->ensureOpen($line->payroll->owner_id, $line->payroll->period_start, 'line');
 
         $bonus = round((float) ($data['bonus'] ?? 0), 2);
         $deduction = round((float) ($data['deduction'] ?? 0), 2);
@@ -198,6 +206,8 @@ class PayrollService
         if ($payroll->has_payments) {
             throw ValidationException::withMessages(['payroll' => 'سُدِّد جزء من هذا المسير — لا يُحذف.']);
         }
+
+        $this->lock->ensureOpen($payroll->owner_id, $payroll->period_start, 'payroll');
 
         DB::transaction(function () use ($payroll, $by) {
             $fisherIds = $payroll->lines()->pluck('fisher_id')->filter();
@@ -281,6 +291,11 @@ class PayrollService
 
             $line ? $line->update($settings) : $payroll->lines()->create(['fisher_id' => $fisher->id] + $settings);
         }
+    }
+
+    public function isClosed(Payroll $payroll): bool
+    {
+        return $this->lock->isClosed($payroll->owner_id, $payroll->year, $payroll->month);
     }
 
     private function syncStatus(Payroll $payroll): void

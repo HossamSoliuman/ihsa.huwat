@@ -13,6 +13,7 @@ use App\Models\Expense;
 use App\Models\Fisher;
 use App\Models\FishingEquipment;
 use App\Models\FleetDocument;
+use App\Models\MonthClosing;
 use App\Models\OwnerEmployee;
 use App\Models\Payroll;
 use App\Models\PayrollLine;
@@ -124,5 +125,10 @@ trait ResolvesOwnerRecords
     protected function ownedAdvance(User $owner, int|string $id): CrewAdvance
     {
         return CrewAdvance::forOwner($owner)->findOrFail($id);
+    }
+
+    protected function ownedMonthClosing(User $owner, int|string $id): MonthClosing
+    {
+        return MonthClosing::forOwner($owner)->findOrFail($id);
     }
 }
