@@ -414,6 +414,8 @@ html.dark .badge-ok { color: hsl(160 60% 62%); border-color: hsl(160 60% 62% / .
 html.dark .badge-warn { color: hsl(38 90% 66%); border-color: hsl(38 90% 66% / .4); background: hsl(38 90% 45% / .14); }
 html.dark .badge-danger { color: hsl(352 85% 70%); border-color: hsl(352 85% 70% / .4); background: hsl(352 80% 50% / .14); }
 html.dark .badge-info { color: hsl(199 85% 70%); border-color: hsl(199 85% 70% / .4); background: hsl(199 85% 50% / .14); }
+/* رقاقة محايدة — لِما لا حالة له: "معطل"، "بُعد"، "فارغ"، مصدر الترحيل. */
+.badge-muted { color: hsl(var(--muted-foreground)); border-color: hsl(var(--border)); background: hsl(var(--muted) / .6); }
 
 .note-box { display: flex; align-items: flex-start; gap: .7rem; border: 1px solid hsl(160 55% 40% / .4); background: hsl(160 55% 40% / .07); padding: .9rem 1rem; margin-top: 1.1rem; }
 .note-box svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; color: #0f7a5a; }
@@ -510,6 +512,16 @@ html.dark .note-box svg { color: hsl(160 60% 62%); }
 .data-table th { background: hsl(var(--muted) / .8); padding: .55rem .7rem; text-align: right; font-size: .7rem; font-weight: 700; letter-spacing: .02em; color: hsl(var(--muted-foreground)); white-space: nowrap; border-bottom: 1px solid hsl(var(--border)); }
 .data-table td { padding: .55rem .7rem; border-top: 1px solid hsl(var(--border) / .6); vertical-align: middle; }
 .data-table tbody tr:hover { background: hsl(var(--primary) / .04); }
+/* التاريخ ورقم السند والرحلة لا يُكسر عند الشرطة فينقلب نصفه إلى سطرٍ ثانٍ. */
+.data-table .num { white-space: nowrap; }
+/* سطر الخانة الأول بما يلحقه من رقاقة أو أيقونة، وسطرها الثاني الخافت تحته. */
+.cell-line { display: flex; align-items: center; gap: .35rem; white-space: nowrap; }
+.cell-icon { display: inline-flex; color: hsl(var(--muted-foreground)); }
+.cell-icon svg { width: 13px; height: 13px; }
+.cell-sub { display: block; margin-top: .1rem; font-size: .72rem; font-weight: 400; color: hsl(var(--muted-foreground)); }
+a.cell-sub:hover { color: hsl(var(--primary)); }
+/* نصٌّ حرّ الطول يُقصّ في سطرٍ واحد، والكامل في title. */
+.cell-sub.clip { max-width: 20rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .cards-grid { display: grid; gap: var(--gap); grid-template-columns: 1fr; }
 @media (min-width: 640px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }

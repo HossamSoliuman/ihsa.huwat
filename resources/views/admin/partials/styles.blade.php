@@ -73,9 +73,6 @@ html.dark .notice svg { color: hsl(38 90% 66%); }
 .inline-form { display: inline; }
 .cell-actions .icon-action { display: inline-grid; place-items: center; vertical-align: middle; margin-inline-start: .15rem; }
 
-/* رقاقة محايدة — لِما لا حالة له: "معطل"، "بُعد"، "فارغ". */
-.badge-muted { color: hsl(var(--muted-foreground)); border-color: hsl(var(--border)); background: hsl(var(--muted) / .6); }
-
 .pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; font-size: .74rem; color: hsl(var(--muted-foreground)); }
 .pager nav { display: flex; gap: .3rem; }
 .pager nav a, .pager nav span { border: 1px solid hsl(var(--border)); padding: .25rem .7rem; }

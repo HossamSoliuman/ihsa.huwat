@@ -85,36 +85,36 @@
     <div class="table-card">
         <table class="data-table">
             <thead>
-                <tr><th>السند</th><th>التاريخ</th><th>الفئة</th><th>القارب / الرحلة</th><th>المورد</th><th>الإجمالي</th><th>المدفوع</th><th>الحالة</th><th></th></tr>
+                <tr><th>السند</th><th>التاريخ</th><th>الفئة</th><th>القارب / الرحلة</th><th>المورد</th><th>الإجمالي</th><th>الحالة</th><th></th></tr>
             </thead>
             <tbody>
                 @forelse ($rows as $row)
                     @php $locked = isset($closedMonths[$row->date?->format('Y-m')]); @endphp
                     <tr>
                         <td>
-                            <span class="num" style="font-weight:700">{{ $row->expense_number }}</span>
-                            @if ($locked)<span class="badge" style="margin-inline-start:.25rem" title="شهره مُغلق — السداد وحده متاح">@include('partials.icon', ['name' => 'lock']) مُغلق</span>@endif
-                            @if ($row->is_automatic)<span class="badge badge-info" style="margin-inline-start:.25rem">{{ $row->source_label ?? 'تلقائي' }}</span>@endif
-                            @if ($row->description)<div style="font-size:.72rem;color:hsl(var(--muted-foreground))">{{ $row->description }}</div>@endif
+                            <div class="cell-line">
+                                <span class="num" style="font-weight:700">{{ $row->expense_number }}</span>
+                                @if ($locked)<span class="cell-icon" title="شهره مُغلق — السداد وحده متاح">@include('partials.icon', ['name' => 'lock'])</span>@endif
+                                @if ($row->is_automatic)<span class="badge badge-muted">{{ $row->source_label ?? 'تلقائي' }}</span>@endif
+                            </div>
+                            {{-- الرمز اللاتيني داخل الوصف (PAY-2026-0001) يُعزل حتى لا يقلب القوسين حوله. --}}
+                            @if ($row->description)<div class="cell-sub clip" title="{{ $row->description }}">{!! preg_replace('/[A-Z]+(?:-\d+)+/', '<bdi dir="ltr">$0</bdi>', e($row->description)) !!}</div>@endif
                         </td>
                         <td class="num">{{ $row->date?->format('Y-m-d') }}</td>
-                        <td>{{ $row->category?->name }}<div style="font-size:.72rem;color:hsl(var(--muted-foreground))">{{ $row->category?->group?->name }}</div></td>
-                        <td>
+                        <td style="white-space:nowrap" title="{{ $row->category?->group?->name }}">{{ $row->category?->name }}</td>
+                        <td style="white-space:nowrap">
                             {{ $row->boat?->name ?? '—' }}
-                            @if ($row->trip)<div><a href="{{ route('panel.owner.trips.show', $row->trip) }}" class="num" style="font-size:.72rem">{{ $row->trip->trip_number }}</a></div>@endif
+                            @if ($row->trip)<a href="{{ route('panel.owner.trips.show', $row->trip) }}" class="cell-sub num">{{ $row->trip->trip_number }}</a>@endif
                         </td>
                         <td>{{ $row->vendor?->name ?? '—' }}</td>
-                        <td class="num" style="font-weight:700">{{ number_format($row->total, 2) }}@if ($row->vat_amount > 0)<div style="font-size:.7rem;font-weight:400;color:hsl(var(--muted-foreground))">ض {{ number_format($row->vat_amount, 2) }}</div>@endif</td>
-                        <td class="num">{{ number_format($row->paid_amount, 2) }}</td>
-                        <td><span class="badge {{ $row->is_paid ? 'badge-ok' : ($row->paid_amount > 0 ? 'badge-info' : 'badge-warn') }}">{{ $row->paymentStatus?->name ?? '—' }}</span></td>
+                        <td class="num" style="font-weight:700" @if ($row->vat_amount > 0) title="شامل ضريبة {{ number_format($row->vat_amount, 2) }}" @endif>{{ number_format($row->total, 2) }}</td>
+                        <td style="white-space:nowrap">
+                            <span class="badge {{ $row->is_paid ? 'badge-ok' : ($row->paid_amount > 0 ? 'badge-info' : 'badge-warn') }}">{{ $row->paymentStatus?->name ?? '—' }}</span>
+                            @if (! $row->is_paid && $row->paid_amount > 0)<div class="cell-sub">المتبقي <span class="num">{{ number_format($row->remaining, 2) }}</span></div>@endif
+                        </td>
                         <td>
-                            <div style="display:flex;gap:.25rem;justify-content:flex-end">
-                                @if (! $row->is_paid && ! $row->payment_follows_source)
-                                    <button type="button" class="icon-action" title="سداد" onclick='openPayment({!! json_encode(['id' => $row->id, 'number' => $row->expense_number, 'remaining' => $row->remaining], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!})'>@include('partials.icon', ['name' => 'coins'])</button>
-                                @endif
-                                @if ($row->attachment_url)
-                                    <a href="{{ $row->attachment_url }}" target="_blank" class="icon-action" title="المرفق">@include('partials.icon', ['name' => 'file-check'])</a>
-                                @endif
+                            {{-- الثابت أوّلًا والمشروط آخرًا، فتبقى كل أيقونة في موضعها من صفٍّ إلى صف. --}}
+                            <div style="display:flex;gap:.25rem">
                                 <a href="{{ route('panel.owner.expenses.print', $row->id) }}" target="_blank" class="icon-action" title="طباعة السند">@include('partials.icon', ['name' => 'printer'])</a>
                                 @unless ($locked)
                                 <button type="button" class="icon-action" title="تعديل" onclick='openDrawerForm(recordForm, {!! json_encode($row->only(['id', 'expense_category_id', 'date', 'description', 'subtotal', 'discount', 'discount_pct', 'vat_rate', 'boat_id', 'trip_id', 'vendor_id', 'payment_method_id', 'payment_status_id', 'paid_amount', 'notes']) + ['is_automatic' => $row->is_automatic, 'source_label' => $row->source_label, 'has_attachment' => (bool) $row->attachment_path], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!})'>@include('partials.icon', ['name' => 'pencil'])</button>
@@ -123,11 +123,17 @@
                                     <button type="submit" class="icon-action danger" title="حذف">@include('partials.icon', ['name' => 'trash'])</button>
                                 </form>
                                 @endunless
+                                @if (! $row->is_paid && ! $row->payment_follows_source)
+                                    <button type="button" class="icon-action" title="سداد" onclick='openPayment({!! json_encode(['id' => $row->id, 'number' => $row->expense_number, 'remaining' => $row->remaining], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!})'>@include('partials.icon', ['name' => 'coins'])</button>
+                                @endif
+                                @if ($row->attachment_url)
+                                    <a href="{{ $row->attachment_url }}" target="_blank" class="icon-action" title="المرفق">@include('partials.icon', ['name' => 'file-check'])</a>
+                                @endif
                             </div>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="9" style="padding:2rem;text-align:center;color:hsl(var(--muted-foreground))">لا مصروفات</td></tr>
+                    <tr><td colspan="8" style="padding:2rem;text-align:center;color:hsl(var(--muted-foreground))">لا مصروفات</td></tr>
                 @endforelse
             </tbody>
         </table>
