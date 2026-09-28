@@ -60,6 +60,14 @@ class Sale extends BaseModel
         return $this->morphMany(StockMovement::class, 'reference');
     }
 
+    /**
+     * مراجعات الملاك لبيع الدلال — واحدة لكل مالك في الفاتورة.
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(DalalInvoiceReview::class);
+    }
+
     public function scopeForSeller(Builder $query, User $seller): Builder
     {
         return $query->where('seller_id', $seller->id);

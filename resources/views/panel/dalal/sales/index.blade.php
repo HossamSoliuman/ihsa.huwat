@@ -55,7 +55,10 @@
                 @forelse ($sales as $sale)
                     <tr>
                         <td><a href="{{ route('panel.dalal.sales.show', $sale) }}" class="num" style="font-weight:700">{{ $sale->invoice_number }}</a></td>
-                        <td><span class="badge {{ $sale->status === \App\Models\Sale::COMPLETED ? 'badge-ok' : 'badge-warn' }}">{{ $sale->status }}</span></td>
+                        <td>
+                            <span class="badge {{ $sale->status === \App\Models\Sale::COMPLETED ? 'badge-ok' : 'badge-warn' }}">{{ $sale->status }}</span>
+                            @if ($sale->rejected_reviews_count)<a href="{{ route('panel.dalal.sales.show', $sale) }}" class="badge badge-danger" title="رفض مالك سطوره — افتح الفاتورة للردّ">رفض مالك</a>@endif
+                        </td>
                         <td>{{ $sale->customer?->name ?? '—' }}</td>
                         <td>{{ $sale->paymentMethod?->name ?? '—' }}</td>
                         <td class="num">{{ number_format($sale->items_sum_weight_kg ?? 0, 1) }} كجم</td>

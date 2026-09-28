@@ -3,6 +3,16 @@
 المواصفة الكاملة: `docs/api/openapi.yaml` (تُعرض على `/api/docs`، وتُستورد في Postman من `/api/openapi.yaml`).
 كل ردّ في الاختبارات يُطابَق مع المواصفة (Spectator)، فما هنا هو ما يعمل فعلًا.
 
+## 1.4.2 — 2026-09-28 — O5: تسوية المالك مع الدلال
+
+التسوية نفسها في الويب فقط (`/admin/owner/dalal-invoices|dalal-accounts|dalal-stock|dalal-performance`، والردّ على الرفض في `/admin/dalal/sales/{sale}`)؛ لا مسار ولا مخطط تغيّر. ما يصل التطبيق:
+
+### جديد
+- **إشعارات جديدة** (`GET /notifications`): للدلال "قبل المالك فاتورتك" و"رفض المالك فاتورتك" (`payload.target = "sale"`, `payload.sale_id`, `payload.review_id`) و"سجّل المالك استلام دفعة" (`payload.target = "owners"`, `payload.payout_id`)؛ وللمالك "رد الدلال على فاتورة مرفوضة" (`payload.target = "dalal_invoice"`, `payload.sale_id`). قيم `target` غير المعروفة للتطبيق تفتح شاشة الإشعارات كما قبل.
+
+### تغيّر
+- `GET /dalal/owners` → `paid` و`due` يشملان ما سجّله المالك من استلام (دفعة بـ`user_id` = المالك)، فالمستحق عند الطرفين رقم واحد.
+
 ## 1.4.1 — 2026-09-25 — O1: مصروفات المالك
 
 المصروفات نفسها في الويب فقط (`/admin/owner/expenses`)؛ ما يمسّ الواجهة:

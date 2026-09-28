@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Panel\Dalal;
 
 use App\Http\Controllers\Concerns\ResolvesDalalRecords;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Dalal\InvoiceReplyRequest;
 use App\Http\Requests\Dalal\PaymentRequest;
 use App\Http\Requests\Dalal\SaleRequest;
 use App\Models\Customer;
@@ -11,6 +12,7 @@ use App\Models\PaymentMethod;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Services\Dalal\DalalStock;
+use App\Services\Dalal\InvoiceReviewService;
 use App\Services\Sales\SaleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,7 +20,8 @@ use Illuminate\View\View;
 
 /**
  * مبيعات الدلال من مخزونه: القائمة بفلاترها وبطاقاتها، وإضافة عملية بيع
- * بالسطور، وتفاصيل الفاتورة وتحصيل المتبقي منها.
+ * بالسطور، وتفاصيل الفاتورة وتحصيل المتبقي منها، ومراجعة الملاك لها والردّ
+ * على المرفوضة.
  */
 class SaleController extends Controller
 {
@@ -43,6 +46,7 @@ class SaleController extends Controller
 
         return view('panel.dalal.sales.index', [
             'sales' => (clone $query)->with(['customer', 'paymentMethod', 'paymentStatus'])->withSum('items', 'weight_kg')
+                ->withCount(['reviews as rejected_reviews_count' => fn ($q) => $q->rejected()])
                 ->orderByDesc('sold_at')->paginate(25)->withQueryString(),
             'totals' => [
                 'count' => (clone $query)->count(),
@@ -76,8 +80,19 @@ class SaleController extends Controller
     public function show(Request $request, int $sale): View
     {
         return view('panel.dalal.sales.show', [
-            'sale' => $this->dalalSale($request->user(), $sale)->load(['customer', 'paymentMethod', 'paymentStatus', 'items.species', 'items.trip', 'items.owner']),
+            'sale' => $this->dalalSale($request->user(), $sale)->load(['customer', 'paymentMethod', 'paymentStatus', 'items.species', 'items.trip', 'items.owner', 'reviews.owner']),
         ]);
+    }
+
+    /**
+     * الردّ على رفض مالك لسطوره في الفاتورة — تعود إلى مراجعته.
+     */
+    public function reply(InvoiceReplyRequest $request, int $sale, int $review, InvoiceReviewService $reviews): RedirectResponse
+    {
+        $model = $this->dalalSale($request->user(), $sale);
+        $reviews->reply($request->user(), $this->dalalInvoiceReview($request->user(), $model, $review), $request->validated('reply'));
+
+        return redirect()->route('panel.dalal.sales.show', $model)->with('status', 'أُرسل ردّك إلى المالك وعادت الفاتورة إلى مراجعته.');
     }
 
     public function payment(PaymentRequest $request, int $sale): RedirectResponse

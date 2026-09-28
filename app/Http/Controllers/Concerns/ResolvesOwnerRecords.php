@@ -9,6 +9,8 @@ use App\Models\BoatMaintenance;
 use App\Models\Consignment;
 use App\Models\CrewAdvance;
 use App\Models\Customer;
+use App\Models\DalalInvoiceReview;
+use App\Models\DalalPayout;
 use App\Models\Expense;
 use App\Models\Fisher;
 use App\Models\FishingEquipment;
@@ -130,5 +132,18 @@ trait ResolvesOwnerRecords
     protected function ownedMonthClosing(User $owner, int|string $id): MonthClosing
     {
         return MonthClosing::forOwner($owner)->findOrFail($id);
+    }
+
+    /**
+     * فاتورة دلال فيها مصيد هذا المالك — بمعرّف البيع. بيعٌ لا سطر له فيه 404.
+     */
+    protected function ownedDalalInvoice(User $owner, int|string $saleId): DalalInvoiceReview
+    {
+        return DalalInvoiceReview::forOwner($owner)->where('sale_id', $saleId)->with('sale', 'dalal')->firstOrFail();
+    }
+
+    protected function ownedDalalPayout(User $owner, User $dalal, int|string $id): DalalPayout
+    {
+        return DalalPayout::forOwner($owner)->forDalal($dalal)->findOrFail($id);
     }
 }

@@ -53,7 +53,11 @@ use App\Http\Controllers\Panel\Owner\ConsignmentController as OwnerConsignmentCo
 use App\Http\Controllers\Panel\Owner\CrewController as OwnerCrewController;
 use App\Http\Controllers\Panel\Owner\CrewPayController as OwnerCrewPayController;
 use App\Http\Controllers\Panel\Owner\CustomerController as OwnerCustomerController;
+use App\Http\Controllers\Panel\Owner\DalalAccountController as OwnerDalalAccountController;
 use App\Http\Controllers\Panel\Owner\DalalController as OwnerDalalController;
+use App\Http\Controllers\Panel\Owner\DalalInvoiceController as OwnerDalalInvoiceController;
+use App\Http\Controllers\Panel\Owner\DalalPerformanceController as OwnerDalalPerformanceController;
+use App\Http\Controllers\Panel\Owner\DalalStockController as OwnerDalalStockController;
 use App\Http\Controllers\Panel\Owner\DocumentController as OwnerDocumentController;
 use App\Http\Controllers\Panel\Owner\EmployeeController as OwnerEmployeeController;
 use App\Http\Controllers\Panel\Owner\EquipmentController as OwnerEquipmentController;
@@ -446,6 +450,25 @@ $adminPanel = function () use ($operationsConsole): void {
             Route::get('/dalals', [OwnerDalalController::class, 'index'])->name('dalals');
             Route::post('/dalals/{dalal}/partnership', [OwnerDalalController::class, 'request'])->name('dalals.partnership');
 
+            // تسوية الدلالين (O5): فواتيرهم بمراجعتها، الحسابات والكشوف والاستلام، مخزونهم، أداؤهم.
+            Route::get('/dalal-invoices', [OwnerDalalInvoiceController::class, 'index'])->name('dalal-invoices');
+            Route::post('/dalal-invoices/accept-all', [OwnerDalalInvoiceController::class, 'acceptAll'])->name('dalal-invoices.accept-all');
+            Route::get('/dalal-invoices/{sale}', [OwnerDalalInvoiceController::class, 'show'])->name('dalal-invoices.show');
+            Route::get('/dalal-invoices/{sale}/print', [OwnerDalalInvoiceController::class, 'print'])->name('dalal-invoices.print');
+            Route::post('/dalal-invoices/{sale}/accept', [OwnerDalalInvoiceController::class, 'accept'])->name('dalal-invoices.accept');
+            Route::post('/dalal-invoices/{sale}/reject', [OwnerDalalInvoiceController::class, 'reject'])->name('dalal-invoices.reject');
+
+            Route::get('/dalal-accounts', [OwnerDalalAccountController::class, 'index'])->name('dalal-accounts');
+            Route::get('/dalal-accounts/{dalal}', [OwnerDalalAccountController::class, 'show'])->name('dalal-accounts.show');
+            Route::get('/dalal-accounts/{dalal}/print', [OwnerDalalAccountController::class, 'print'])->name('dalal-accounts.print');
+            Route::post('/dalal-accounts/{dalal}/receipts', [OwnerDalalAccountController::class, 'receipt'])->name('dalal-accounts.receipts.store');
+            Route::delete('/dalal-accounts/{dalal}/receipts/{payout}', [OwnerDalalAccountController::class, 'destroyReceipt'])->name('dalal-accounts.receipts.destroy');
+
+            Route::get('/dalal-stock', [OwnerDalalStockController::class, 'index'])->name('dalal-stock');
+            Route::get('/dalal-stock/trips/{trip}', [OwnerDalalStockController::class, 'trip'])->name('dalal-stock.trip');
+
+            Route::get('/dalal-performance', [OwnerDalalPerformanceController::class, 'index'])->name('dalal-performance');
+
             // المصروفات (O1): سندات بالخصم والضريبة وحالة الدفع، والصيانة المكتملة تُرحَّل إليها.
             Route::get('/expenses', [OwnerExpenseController::class, 'index'])->name('expenses');
             Route::get('/expenses/report', [OwnerExpenseController::class, 'report'])->name('expenses.report');
@@ -548,6 +571,7 @@ $adminPanel = function () use ($operationsConsole): void {
             Route::post('/sales', [DalalSaleController::class, 'store'])->name('sales.store');
             Route::get('/sales/{sale}', [DalalSaleController::class, 'show'])->name('sales.show');
             Route::post('/sales/{sale}/payment', [DalalSaleController::class, 'payment'])->name('sales.payment');
+            Route::post('/sales/{sale}/reviews/{review}/reply', [DalalSaleController::class, 'reply'])->name('sales.reviews.reply');
 
             Route::get('/customers', [DalalCustomerController::class, 'index'])->name('customers');
             Route::post('/customers', [DalalCustomerController::class, 'store'])->name('customers.store');

@@ -10,6 +10,7 @@ use App\Models\Consignment;
 use App\Models\Customer;
 use App\Models\CustomerType;
 use App\Models\DalalPartnership;
+use App\Models\DalalPayout;
 use App\Models\DalalProfile;
 use App\Models\DocumentType;
 use App\Models\Expense;
@@ -29,6 +30,7 @@ use App\Models\StatisticsOfficer;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Services\Dalal\DalalAccounts;
 use App\Services\Owner\CrewPayService;
 use App\Services\Owner\ExpenseService;
 use App\Services\Owner\FleetService;
@@ -138,10 +140,38 @@ class DemoOwnerSeeder extends Seeder
         }
 
         $this->seedDalal($owner, $homeBoat, $password);
+        $this->seedDalalSettlement($owner);
         $this->seedExpenses($owner, $homeBoat);
         $this->seedFleetAssets($owner, $homeBoat);
         $this->seedCrewMoney($owner, $homeBoat);
         $this->seedMonthClosing($owner, $homeBoat);
+    }
+
+    /**
+     * تسوية الدلال التجريبية (O5): الدلال التجريبي يدفع للمالك 60% من مستحقه
+     * بحوالة، فتظهر فاتورته "مسدَّدة جزئيًا" والرصيد الباقي في حساباته، وتبقى
+     * قيد مراجعة المالك ليجرّب القبول والرفض. مرة واحدة.
+     */
+    private function seedDalalSettlement(User $owner): void
+    {
+        $dalal = User::where('phone', '0500000004')->first();
+
+        if ($dalal === null || DalalPayout::forDalal($dalal)->where('owner_id', $owner->id)->exists()) {
+            return;
+        }
+
+        $accounts = app(DalalAccounts::class);
+        $due = $accounts->dueTo($dalal, $owner);
+
+        if ($due < 1) {
+            return;
+        }
+
+        $accounts->recordPayout($dalal, $owner, [
+            'amount' => round($due * 0.6, 2),
+            'payment_method_id' => PaymentMethod::named('تحويل بنكي')->id,
+            'notes' => 'دفعة تجريبية من مبيعات الدكة',
+        ]);
     }
 
     /**

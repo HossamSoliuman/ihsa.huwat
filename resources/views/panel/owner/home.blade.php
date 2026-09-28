@@ -27,6 +27,23 @@
         @include('partials.stat-card', ['label' => 'جاهزة للبيع', 'value' => number_format($kpis['trips_for_sale']), 'icon' => 'shopping-cart', 'tone' => 'warning'])
     </div>
 
+    @if ($dalalSettlement['pending'] > 0 || $dalalSettlement['rejected'] > 0 || $dalalSettlement['balance'] > 0)
+        <div class="card" style="margin-bottom:1.25rem">
+            @include('partials.section-head', ['icon' => 'handshake', 'title' => 'تسوية الدلالين', 'note' => 'فواتير بيع مصيدك عند الدلالين وما لك عندهم'])
+            <div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center">
+                @if ($dalalSettlement['pending'] > 0)
+                    <a href="{{ route('panel.owner.dalal-invoices', ['status' => 'pending']) }}" class="badge badge-warn" style="font-size:.78rem;padding:.35rem .6rem">{{ number_format($dalalSettlement['pending']) }} فاتورة بانتظار مراجعتك</a>
+                @endif
+                @if ($dalalSettlement['rejected'] > 0)
+                    <a href="{{ route('panel.owner.dalal-invoices', ['status' => 'rejected']) }}" class="badge badge-danger" style="font-size:.78rem;padding:.35rem .6rem">{{ number_format($dalalSettlement['rejected']) }} فاتورة رفضتها بانتظار ردّ الدلال</a>
+                @endif
+                @if ($dalalSettlement['balance'] > 0)
+                    <a href="{{ route('panel.owner.dalal-accounts') }}" class="badge badge-info" style="font-size:.78rem;padding:.35rem .6rem">المستحق لك عند الدلالين <span class="num">{{ number_format($dalalSettlement['balance'], 2) }}</span> ر.س</a>
+                @endif
+            </div>
+        </div>
+    @endif
+
     @if ($fleetAlerts->isNotEmpty())
         <div class="card" style="margin-bottom:1.25rem">
             @include('partials.section-head', ['icon' => 'alert-triangle', 'title' => 'تنبيهات الأسطول', 'note' => $fleetAlerts->count().' تنبيه — وثائق وفحوص ورخص منتهية أو تنتهي خلال 30 يومًا'])

@@ -4,6 +4,7 @@ namespace App\Services\Owner;
 
 use App\Models\AuditLog;
 use App\Models\Boat;
+use App\Models\DalalInvoiceReview;
 use App\Models\Expense;
 use App\Models\Fisher;
 use App\Models\MonthClosing;
@@ -384,6 +385,16 @@ class MonthClosingService
 
         if ($unpaid > 0) {
             $warnings[] = 'مصروفات الشهر غير المسدَّدة '.number_format($unpaid, 2).' ر.س — سدادها يبقى متاحًا بعد الإغلاق.';
+        }
+
+        // فواتير الدلال تدخل إيراد الشهر بصافيها قُبلت أو لم تُقبل؛ التحذير ليراجعها قبل تثبيت الأرقام.
+        $unreviewed = DalalInvoiceReview::forOwner($owner)
+            ->whereIn('status', [DalalInvoiceReview::PENDING, DalalInvoiceReview::REJECTED])
+            ->whereHas('sale', fn ($q) => $q->whereBetween('sold_at', [$from, $to]))
+            ->selectRaw('status, COUNT(*) AS n')->groupBy('status')->pluck('n', 'status');
+
+        if ($unreviewed->sum() > 0) {
+            $warnings[] = 'فواتير دلالين في الشهر لم تُقبل بعد: '.(int) ($unreviewed[DalalInvoiceReview::PENDING] ?? 0).' قيد المراجعة و'.(int) ($unreviewed[DalalInvoiceReview::REJECTED] ?? 0).' مرفوضة — صافيها داخل في الإيراد كما سجّله الدلال.';
         }
 
         return $warnings;

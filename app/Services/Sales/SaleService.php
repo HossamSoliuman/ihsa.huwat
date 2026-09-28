@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Consignment;
 use App\Models\ConsignmentItem;
 use App\Models\Customer;
+use App\Models\DalalInvoiceReview;
 use App\Models\PaymentStatus;
 use App\Models\Role;
 use App\Models\Sale;
@@ -210,6 +211,8 @@ class SaleService
             $sale->setRelation('seller', $dalal);
             foreach (collect($lines)->groupBy('owner_id') as $ownerId => $ownerLines) {
                 if ($owner = User::find($ownerId)) {
+                    // سطور كل مالك في الفاتورة "فاتورة دلال" عنده بانتظار مراجعته.
+                    DalalInvoiceReview::create(['sale_id' => $sale->id, 'owner_id' => $owner->id, 'dalal_id' => $dalal->id, 'status' => DalalInvoiceReview::PENDING]);
                     $this->notifier->dalalSold($sale, $owner, (float) $ownerLines->sum('weight_kg'), (float) $ownerLines->sum('owner_net'));
                 }
             }

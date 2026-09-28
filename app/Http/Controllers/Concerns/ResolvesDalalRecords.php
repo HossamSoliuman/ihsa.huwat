@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Concerns;
 
 use App\Models\Customer;
+use App\Models\DalalInvoiceReview;
 use App\Models\DalalPartnership;
 use App\Models\DalalWorker;
 use App\Models\Sale;
@@ -27,6 +28,14 @@ trait ResolvesDalalRecords
     protected function dalalPartnership(User $dalal, int|string $id): DalalPartnership
     {
         return DalalPartnership::forDalal($dalal)->findOrFail($id);
+    }
+
+    /**
+     * مراجعة مالك لفاتورة من فواتير هذا الدلال.
+     */
+    protected function dalalInvoiceReview(User $dalal, Sale $sale, int|string $id): DalalInvoiceReview
+    {
+        return DalalInvoiceReview::forDalal($dalal)->where('sale_id', $sale->id)->findOrFail($id);
     }
 
     protected function dalalWorker(User $dalal, int|string $id): DalalWorker

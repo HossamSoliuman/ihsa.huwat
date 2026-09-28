@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Concerns\ResolvesCaptainRecords;
 use App\Http\Controllers\Controller;
 use App\Models\AppNotification;
+use App\Models\DalalPayout;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -54,10 +55,21 @@ class NotificationController extends Controller
      */
     private function targetUrl(User $user, AppNotification $notification): ?string
     {
-        $target = match ([$user->app_role_key, $notification->data['target'] ?? null]) {
+        $data = $notification->data ?? [];
+        $payout = isset($data['payout_id']) ? DalalPayout::find($data['payout_id']) : null;
+
+        $target = match ([$user->app_role_key, $data['target'] ?? null]) {
             [Role::DALAL, 'stock'] => route('panel.dalal.stock'),
             [Role::DALAL, 'partnerships'] => route('panel.dalal.requests'),
-            [Role::OWNER, 'dalals'] => route('panel.owner.dalals'),
+            [Role::DALAL, 'owners'] => route('panel.dalal.owners'),
+            [Role::DALAL, 'sale'] => route('panel.dalal.sales.show', $data['sale_id']),
+            [Role::OWNER, 'dalal_invoice'] => route('panel.owner.dalal-invoices.show', $data['sale_id']),
+            // بيع من مصيده يفتح فاتورته، ودفعة الدلال تفتح كشف حسابه عنده.
+            [Role::OWNER, 'dalals'] => match (true) {
+                isset($data['sale_id']) => route('panel.owner.dalal-invoices.show', $data['sale_id']),
+                $payout !== null => route('panel.owner.dalal-accounts.show', $payout->dalal_id),
+                default => route('panel.owner.dalals'),
+            },
             default => null,
         };
 

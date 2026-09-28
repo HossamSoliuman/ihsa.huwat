@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Hawat Mobile API
-  version: 1.4.1
+  version: 1.4.2
   description: |
     Hawat mobile app API (com.os.hawat). All responses are JSON.
 

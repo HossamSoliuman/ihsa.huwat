@@ -26,6 +26,10 @@ class NotificationTypeSeeder extends Seeder
         ['تم رفض طلب التعامل', 'Partnership rejected', 'x-circle'],
         ['بيع من مصيدك', 'Your catch was sold', 'coins'],
         ['دفعة من الدلال', 'Payout from dalal', 'calculator'],
+        ['قبل المالك فاتورتك', 'Invoice accepted by owner', 'check-check'],
+        ['رفض المالك فاتورتك', 'Invoice rejected by owner', 'x-circle'],
+        ['رد الدلال على فاتورة مرفوضة', 'Dalal replied to a rejected invoice', 'file-text'],
+        ['سجّل المالك استلام دفعة', 'Owner recorded a receipt', 'calculator'],
     ];
 
     public function run(): void

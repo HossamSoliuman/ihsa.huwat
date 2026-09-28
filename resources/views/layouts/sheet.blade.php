@@ -32,6 +32,8 @@
         tbody td { padding: 6px; border-bottom: 1px solid #e2e8f0; font-size: 11px; vertical-align: top; }
         tfoot td { padding: 7px 6px; font-weight: 800; background: #f1f5f9; font-size: 11.5px; }
         .num { font-family: 'Chakra Petch', sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        /* رقم بشرطات بعد نص عربي (التاريخ: 2026-09-24) يُقرأ أرقامًا عربية فتنقلب مقاطعه؛ العزل يُبقيه كما كُتب. */
+        span.num, bdi.num { unicode-bidi: isolate; }
         .muted { color: #64748b; font-size: 10px; }
         .totals { margin-inline-start: auto; width: 300px; background: #f1f5f9; padding: 10px 14px; }
         .totals div { display: flex; justify-content: space-between; padding: 2px 0; }

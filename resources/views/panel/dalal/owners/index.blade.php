@@ -86,7 +86,7 @@
                             <td class="num">{{ $payout->paid_at?->format('Y-m-d') }}</td>
                             <td>{{ $payout->owner?->name }}</td>
                             <td>{{ $payout->paymentMethod?->name ?? '—' }}</td>
-                            <td style="font-size:.76rem">{{ $payout->notes ?? '—' }}</td>
+                            <td style="font-size:.76rem">{{ $payout->notes ?? '—' }}@if ($payout->recordedByOwner())<div><span class="badge badge-info">سجّله المالك استلامًا</span>{{ $payout->reference ? ' — '.$payout->reference : '' }}</div>@endif</td>
                             <td class="num" style="text-align:left">{{ number_format($payout->amount, 2) }}</td>
                         </tr>
                     @empty

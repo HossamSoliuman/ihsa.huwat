@@ -246,8 +246,17 @@ return [
                     ['label' => 'الرئيسية', 'route' => 'panel.home', 'icon' => 'layout-dashboard'],
                     ['label' => 'الرحلات', 'route' => 'panel.owner.trips', 'icon' => 'route'],
                     ['label' => 'المبيعات', 'route' => 'panel.owner.sales', 'icon' => 'coins'],
-                    ['label' => 'الإرسال للدلال', 'route' => 'panel.owner.consignments', 'icon' => 'send'],
+                ],
+            ],
+            [
+                'title' => 'الدلالون',
+                'items' => [
                     ['label' => 'الدلالون', 'route' => 'panel.owner.dalals', 'icon' => 'handshake'],
+                    ['label' => 'الإرسال للدلال', 'route' => 'panel.owner.consignments', 'icon' => 'send'],
+                    ['label' => 'فواتير الدلالين', 'route' => 'panel.owner.dalal-invoices', 'icon' => 'file-text'],
+                    ['label' => 'حسابات الدلالين', 'route' => 'panel.owner.dalal-accounts', 'icon' => 'calculator'],
+                    ['label' => 'مخزون الدلالين', 'route' => 'panel.owner.dalal-stock', 'icon' => 'archive'],
+                    ['label' => 'أداء الدلالين', 'route' => 'panel.owner.dalal-performance', 'icon' => 'bar-chart'],
                 ],
             ],
             [

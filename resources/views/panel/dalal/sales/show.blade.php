@@ -60,6 +60,36 @@
         </div>
     </div>
 
+    @if ($sale->reviews->isNotEmpty())
+        <div class="card" style="margin-bottom:1.25rem">
+            @include('partials.section-head', ['icon' => 'check-circle', 'title' => 'مراجعة الملاك', 'note' => 'كل مالك يراجع سطور مصيده في الفاتورة — ردّك على الرفض يعيدها إلى مراجعته'])
+            <div class="table-card" style="border:0">
+                <table class="data-table">
+                    <thead><tr><th>المالك</th><th>الحالة</th><th>سبب الرفض</th><th>ردّك</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach ($sale->reviews as $review)
+                            <tr>
+                                <td style="font-weight:600">{{ $review->owner?->name }}</td>
+                                <td><span class="badge {{ $review->status_badge }}">{{ $review->status_label }}</span>@if ($review->reviewed_at)<div class="num" style="font-size:.7rem;color:hsl(var(--muted-foreground))">{{ $review->reviewed_at->format('Y-m-d H:i') }}</div>@endif</td>
+                                <td style="font-size:.8rem">{{ $review->reason ?? '—' }}</td>
+                                <td style="font-size:.8rem">{{ $review->dalal_reply ?? '—' }}</td>
+                                <td>
+                                    @if ($review->isRejected())
+                                        <form method="POST" action="{{ route('panel.dalal.sales.reviews.reply', [$sale, $review->id]) }}" style="display:flex;gap:.4rem;align-items:flex-end">
+                                            @csrf
+                                            <label class="field" style="min-width:220px"><span>الردّ على {{ $review->owner?->name }}</span><input class="input" name="reply" maxlength="500" required placeholder="وضّح أو اذكر ما سُوّي"></label>
+                                            <button class="btn btn-primary">@include('partials.icon', ['name' => 'send']) إرسال</button>
+                                        </form>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
     <div class="table-card">
         <table class="data-table">
             <thead><tr><th>#</th><th>الصنف</th><th>المالك</th><th>الرحلة</th><th>الوزن (كجم)</th><th>سعر الكيلو</th><th>مجموع الأسعار</th><th>العمولة والأجور</th><th style="text-align:left">صافي المالك</th></tr></thead>

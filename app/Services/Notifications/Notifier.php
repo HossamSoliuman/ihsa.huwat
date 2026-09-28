@@ -4,6 +4,7 @@ namespace App\Services\Notifications;
 
 use App\Models\AppNotification;
 use App\Models\Consignment;
+use App\Models\DalalInvoiceReview;
 use App\Models\DalalPartnership;
 use App\Models\DalalPayout;
 use App\Models\NotificationType;
@@ -49,6 +50,14 @@ class Notifier
     public const DALAL_SOLD = 'بيع من مصيدك';
 
     public const PAYOUT_RECEIVED = 'دفعة من الدلال';
+
+    public const INVOICE_ACCEPTED = 'قبل المالك فاتورتك';
+
+    public const INVOICE_REJECTED = 'رفض المالك فاتورتك';
+
+    public const INVOICE_REPLIED = 'رد الدلال على فاتورة مرفوضة';
+
+    public const RECEIPT_RECORDED = 'سجّل المالك استلام دفعة';
 
     public function __construct(private readonly PushSender $push) {}
 
@@ -196,6 +205,42 @@ class Notifier
         $this->notify($payout->owner, self::PAYOUT_RECEIVED, 'دفعة من الدلال',
             "سجّل {$payout->dalal?->name} دفعة لك بمبلغ ".number_format((float) $payout->amount, 2).' ر.س.',
             null, ['target' => 'dalals', 'payout_id' => $payout->id]);
+    }
+
+    /**
+     * المالك راجع سطور مصيده في فاتورة الدلال: قبلها أو رفضها بسبب.
+     */
+    public function invoiceReviewed(DalalInvoiceReview $review): void
+    {
+        $number = $review->sale?->invoice_number;
+        $accepted = $review->isAccepted();
+
+        $this->notify($review->dalal, $accepted ? self::INVOICE_ACCEPTED : self::INVOICE_REJECTED,
+            $accepted ? 'قبل المالك فاتورتك' : 'رفض المالك فاتورتك',
+            $accepted
+                ? "قبل {$review->owner?->name} الفاتورة {$number}."
+                : "رفض {$review->owner?->name} الفاتورة {$number}: {$review->reason}",
+            null, ['target' => 'sale', 'sale_id' => $review->sale_id, 'review_id' => $review->id]);
+    }
+
+    /**
+     * الدلال ردّ على فاتورة رفضها المالك فعادت إلى مراجعته.
+     */
+    public function invoiceReplied(DalalInvoiceReview $review): void
+    {
+        $this->notify($review->owner, self::INVOICE_REPLIED, 'رد الدلال على فاتورة مرفوضة',
+            "ردّ {$review->dalal?->name} على رفضك الفاتورة {$review->sale?->invoice_number}: {$review->dalal_reply}",
+            null, ['target' => 'dalal_invoice', 'sale_id' => $review->sale_id, 'review_id' => $review->id]);
+    }
+
+    /**
+     * المالك سجّل أنه استلم دفعة من الدلال — تظهر في حسابه عند الدلال.
+     */
+    public function receiptRecorded(DalalPayout $payout): void
+    {
+        $this->notify($payout->dalal, self::RECEIPT_RECORDED, 'سجّل المالك استلام دفعة',
+            "سجّل {$payout->owner?->name} أنه استلم منك ".number_format((float) $payout->amount, 2).' ر.س.',
+            null, ['target' => 'owners', 'payout_id' => $payout->id]);
     }
 
     private function pct(mixed $value): string

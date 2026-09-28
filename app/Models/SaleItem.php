@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -32,5 +33,17 @@ class SaleItem extends BaseModel
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * سطور مصيد المالك التي باعها دلال (البائع غيره) مضمومًا إليها `sales` —
+     * أساس فواتير الدلال وحساباته وأدائه عند المالك (O5).
+     */
+    public function scopeSoldByDalalFor(Builder $query, User $owner): Builder
+    {
+        return $query
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->where('sale_items.owner_id', $owner->id)
+            ->where('sales.seller_id', '!=', $owner->id);
     }
 }
