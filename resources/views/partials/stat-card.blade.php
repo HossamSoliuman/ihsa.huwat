@@ -7,5 +7,6 @@
         <p class="label">{{ $label }}</p>
         <div class="kpi-icon {{ $tone ?? 'primary' }}">@include('partials.icon', ['name' => $icon])</div>
     </div>
-    <p class="value">{{ $value }}@if (!empty($unit))<span class="unit">{{ $unit }}</span>@endif</p>
+    {{-- القيمة معزولة LTR: رقم سالب بعد نص عربي يُعرض "123-" بدونها. --}}
+    <p class="value"><bdi dir="ltr">{{ $value }}</bdi>@if (!empty($unit))<span class="unit">{{ $unit }}</span>@endif</p>
 </div>

@@ -268,6 +268,7 @@ return [
                     ['label' => 'سلف الطاقم', 'route' => 'panel.owner.advances', 'icon' => 'arrow-left-right'],
                     ['label' => 'أجور الطاقم', 'route' => 'panel.owner.crew-pay', 'icon' => 'user-cog'],
                     ['label' => 'إغلاق الشهر', 'route' => 'panel.owner.month-closings', 'icon' => 'lock'],
+                    ['label' => 'التقارير', 'route' => 'panel.owner.reports', 'icon' => 'file-chart'],
                 ],
             ],
             [

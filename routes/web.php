@@ -66,6 +66,7 @@ use App\Http\Controllers\Panel\Owner\InspectionController as OwnerInspectionCont
 use App\Http\Controllers\Panel\Owner\MaintenanceController as OwnerMaintenanceController;
 use App\Http\Controllers\Panel\Owner\MonthClosingController as OwnerMonthClosingController;
 use App\Http\Controllers\Panel\Owner\PayrollController as OwnerPayrollController;
+use App\Http\Controllers\Panel\Owner\ReportController as OwnerReportController;
 use App\Http\Controllers\Panel\Owner\SaleController as OwnerSaleController;
 use App\Http\Controllers\Panel\Owner\TripController as OwnerTripController;
 use App\Http\Controllers\Panel\Owner\VendorController as OwnerVendorController;
@@ -91,6 +92,7 @@ use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\SustainabilityController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\UserAccessController;
+use App\Services\Owner\OwnerReports;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -528,6 +530,13 @@ $adminPanel = function () use ($operationsConsole): void {
             Route::get('/month-closings/{closing}', [OwnerMonthClosingController::class, 'show'])->name('month-closings.show');
             Route::get('/month-closings/{closing}/print', [OwnerMonthClosingController::class, 'print'])->name('month-closings.print');
             Route::delete('/month-closings/{closing}', [OwnerMonthClosingController::class, 'reopen'])->name('month-closings.reopen');
+
+            // التقارير (O6): المركز، وكل تقرير ويب + طباعة A4 + Excel من بنية واحدة.
+            Route::get('/reports', [OwnerReportController::class, 'index'])->name('reports');
+            Route::get('/reports/{report}/{mode?}', [OwnerReportController::class, 'show'])
+                ->whereIn('report', array_keys(OwnerReports::REPORTS))
+                ->whereIn('mode', ['print', 'export'])
+                ->name('reports.show');
         });
 
         /*

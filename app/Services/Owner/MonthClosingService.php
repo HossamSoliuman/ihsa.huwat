@@ -86,11 +86,12 @@ class MonthClosingService
 
     /**
      * أرقام الشهر كما ستُغلق (لا يُحفظ شيء سوى تحديث المسيرات المفتوحة، كما
-     * تفعل صفحة المسير عند فتحها).
+     * تفعل صفحة المسير عند فتحها). التقارير تمرّر `$refreshPayrolls = false`
+     * فتقرأ الشهر ولا تكتب شيئًا.
      *
      * @return array{year: int, month: int, label: string, boats: array<int, array<string, mixed>>, general: array{expenses: float, depreciation: float, assets: array<int, array<string, mixed>>}, totals: array<string, float>, warnings: array<int, string>}
      */
-    public function preview(User $owner, int $year, int $month): array
+    public function preview(User $owner, int $year, int $month, bool $refreshPayrolls = true): array
     {
         $from = CarbonImmutable::create($year, $month, 1)->startOfDay();
         $to = $from->endOfMonth();
@@ -102,7 +103,7 @@ class MonthClosingService
         $warnings = [];
 
         foreach (Boat::forOwner($owner)->orderBy('name')->get() as $boat) {
-            $row = $this->boatRow($owner, $boat, $year, $month, $assets->get($boat->id, collect())->values()->all(), $warnings);
+            $row = $this->boatRow($owner, $boat, $year, $month, $assets->get($boat->id, collect())->values()->all(), $warnings, $refreshPayrolls);
 
             if ($row !== null) {
                 $boats[] = $row;
@@ -250,11 +251,11 @@ class MonthClosingService
      * @param  array<int, string>  $warnings
      * @return array<string, mixed>|null null = لا نشاط للقارب في الشهر
      */
-    private function boatRow(User $owner, Boat $boat, int $year, int $month, array $assets, array &$warnings): ?array
+    private function boatRow(User $owner, Boat $boat, int $year, int $month, array $assets, array &$warnings, bool $refreshPayroll = true): ?array
     {
         $payroll = Payroll::forOwner($owner)->where('boat_id', $boat->id)->where('year', $year)->where('month', $month)->first();
 
-        if ($payroll) {
+        if ($payroll && $refreshPayroll) {
             $payroll = $this->payrolls->refresh($payroll, $owner);
         }
 

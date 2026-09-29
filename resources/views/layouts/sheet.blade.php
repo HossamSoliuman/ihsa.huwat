@@ -13,8 +13,15 @@
         لا قائمة ولا شريط — تُطبع أو تُحفظ PDF من نافذة الطباعة.
     --}}
     <style>
-        @page { size: A4 @yield('orientation'); margin: 12mm; }
+        @page {
+            size: A4 @yield('orientation');
+            margin: 12mm 12mm 14mm;
+            /* ترقيم الصفحات في هامش الورقة — يظهر في كل صفحة مطبوعة لا في المعاينة. */
+            @bottom-center { content: "صفحة " counter(page) " من " counter(pages); font-family: 'Tajawal', sans-serif; font-size: 9px; color: #64748b; }
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* ألوان رؤوس الجداول وخلفيات الملخصات تُطبع كما تُرى (وإلا صار رأس الجدول أبيض على أبيض). */
+        html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         body { font-family: 'Chakra Petch', 'Tajawal', sans-serif; color: #0f172a; background: #eef2f6; font-size: 12px; line-height: 1.7; }
         .sheet { max-width: @yield('width', '800px'); margin: 24px auto; background: #fff; border-top: 4px solid #1d6fb8; padding: 32px 36px; }
         .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; padding-bottom: 16px; border-bottom: 1px dashed #cbd5e1; }
@@ -29,8 +36,35 @@
         .chips b { color: #1d6fb8; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
         thead th { background: #1d6fb8; color: #fff; font-weight: 600; font-size: 11px; padding: 7px 6px; text-align: right; }
-        tbody td { padding: 6px; border-bottom: 1px solid #e2e8f0; font-size: 11px; vertical-align: top; }
+        tbody td { padding: 5px 6px; border-bottom: 1px solid #e2e8f0; font-size: 11px; line-height: 1.5; vertical-align: top; }
         tfoot td { padding: 7px 6px; font-weight: 800; background: #f1f5f9; font-size: 11.5px; }
+        /* رأس الجدول يتكرر في كل صفحة، والمجموع يظهر مرة واحدة في آخره، ولا ينقسم سطر بين صفحتين. */
+        thead { display: table-header-group; }
+        tfoot { display: table-row-group; }
+        tr, .totals, .signs, .kpis, .statement .block { break-inside: avoid; }
+        .head, .title, .section { break-after: avoid; }
+        /* التقارير (O6): مؤشرات، عنوان قسم، قائمة البنود، وسطر مُعلَّم. */
+        .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 16px; }
+        .kpis div { background: #f1f5f9; padding: 8px 12px; border-inline-start: 3px solid #1d6fb8; }
+        .kpis span { display: block; color: #64748b; font-size: 10px; }
+        .kpis bdi { font-size: 14px; font-weight: 800; }
+        .kpis .strong { background: #1d6fb8; color: #fff; }
+        .kpis .strong span { color: #dbeafe; }
+        .section { font-size: 13px; font-weight: 800; color: #1d6fb8; margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #1d6fb8; }
+        td.strong, th.strong { font-weight: 800; }
+        td.neg { color: #b91c1c; }
+        tr.dim td { color: #94a3b8; }
+        .notes { margin-top: 12px; padding: 10px 14px; border: 1px dashed #cbd5e1; color: #475569; font-size: 10px; }
+        .notes li { margin-inline-start: 14px; }
+        .statement { width: 100%; }
+        .statement .block { margin-bottom: 10px; }
+        .statement .row { display: flex; justify-content: space-between; gap: 16px; padding: 4px 10px; border-bottom: 1px solid #eef2f6; font-size: 11.5px; }
+        .statement .row.sub { padding-inline-start: 26px; color: #334155; font-size: 11px; }
+        .statement .row.hd { background: #1d6fb8; color: #fff; font-weight: 700; border: 0; }
+        .statement .row.total { background: #f1f5f9; font-weight: 800; border-bottom: 1px solid #cbd5e1; }
+        .statement .row.grand { background: #1d6fb8; color: #fff; font-weight: 800; font-size: 13.5px; border: 0; }
+        .statement .row .hint { color: #64748b; font-size: 10px; font-weight: 400; }
+        .statement .row.grand .hint, .statement .row.hd .hint { color: #dbeafe; }
         .num { font-family: 'Chakra Petch', sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }
         /* رقم بشرطات بعد نص عربي (التاريخ: 2026-09-24) يُقرأ أرقامًا عربية فتنقلب مقاطعه؛ العزل يُبقيه كما كُتب. */
         span.num, bdi.num { unicode-bidi: isolate; }
@@ -56,7 +90,7 @@
         @yield('content')
         <footer class="foot">
             <span>{{ config('hawat.name') }} — {{ config('hawat.sector') }}</span>
-            <span class="num">طُبع {{ now()->format('Y-m-d H:i') }}</span>
+            <span>طُبع <bdi class="num" dir="ltr">{{ now()->format('Y-m-d H:i') }}</bdi></span>
         </footer>
     </main>
 </body>
