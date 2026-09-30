@@ -3,47 +3,62 @@
 @section('title', $meta['title'])
 
 @section('content')
-    @include('panel.owner.reports.partials.web-head')
+    @php $money = fn ($v) => \App\Services\Owner\OwnerReports::money($v); @endphp
 
-    <form method="GET" action="{{ route('panel.owner.reports.show', $key) }}" class="filter-bar" style="margin-bottom:1.25rem;display:flex;flex-wrap:wrap;align-items:flex-end;gap:.65rem">
-        <label class="field"><span>السنة</span>
-            <select class="select" name="year" onchange="this.form.submit()">
-                @foreach ($years as $y)<option value="{{ $y }}" @selected($y === $year)>{{ $y }}</option>@endforeach
+    @include('panel.owner.reports.partials.head')
+
+    <form method="GET" action="{{ route('panel.owner.reports.show', $key) }}" class="filter-bar" style="margin-bottom:1.25rem">
+        <label class="field" style="flex:1;min-width:14rem"><span>القارب</span>
+            <select class="select" name="boat_id">
+                <option value="">كل القوارب</option>
+                @foreach ($boats as $b)<option value="{{ $b->id }}" @selected($boatId === $b->id)>{{ $b->name }}</option>@endforeach
             </select>
         </label>
-        <span style="margin-inline-start:auto;font-size:.82rem;color:hsl(var(--muted-foreground))">الأشهر المُغلقة: <b class="num">{{ $closed }}</b> من <b class="num">{{ $counted }}</b></span>
+        <button class="btn btn-primary">@include('partials.icon', ['name' => 'search']) عرض</button>
     </form>
 
-    @include('panel.owner.reports.partials.web-kpis', ['kpis' => array_merge($kpis, [
-        ['label' => 'هامش صافيك', 'value' => $margin, 'format' => 'pct', 'icon' => 'gauge'],
-    ])])
-
-    <div class="card" style="margin-bottom:1.25rem">
-        @include('partials.section-head', ['icon' => 'bar-chart', 'title' => 'السنة شهرًا بشهر', 'note' => 'الإيراد، والتكاليف (مصروفات القوارب والعامة والإهلاك)، وصافيك'])
-        <div class="chart-wrap" style="min-height:320px"><canvas dir="ltr" id="yearChart" aria-label="الإيراد والتكاليف وصافي المالك لكل شهر"></canvas></div>
+    <div class="card">
+        @include('partials.section-head', ['icon' => 'lock', 'title' => 'السنوات المقفلة'])
+        <div class="table-card">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>السنة</th>
+                        <th>الأشهر المقفلة</th>
+                        <th class="end">المبيعات</th>
+                        <th class="end">إجمالي المصروفات</th>
+                        <th class="end">صافي الربح</th>
+                        <th class="end">حصة البحارة</th>
+                        <th>الحالة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($years as $row)
+                        @php $t = $row['summary']['totals']; @endphp
+                        <tr>
+                            <td class="num" style="font-weight:700">{{ $row['year'] }}</td>
+                            <td class="num"><bdi dir="ltr">{{ $row['summary']['closed_count'] }} / 12</bdi></td>
+                            <td class="end">{{ $money($t['gross_sales']) }}</td>
+                            <td class="end tx-bad">{{ $money($t['total_expenses']) }}</td>
+                            <td class="end {{ $t['net_profit'] >= 0 ? 'tx-good' : 'tx-bad' }}" style="font-weight:700">{{ $money($t['net_profit']) }}</td>
+                            <td class="end">{{ $money($t['crew_share']) }}</td>
+                            <td>
+                                @if ($t['net_profit'] >= 0)
+                                    <span class="badge badge-ok">رابحة</span>
+                                @else
+                                    <span class="badge badge-danger">خاسرة</span>
+                                @endif
+                            </td>
+                            <td>
+                                <a href="{{ route('panel.owner.reports.show', ['report' => $key, 'mode' => 'print', 'year' => $row['year']] + ($boatId ? ['boat_id' => $boatId] : [])) }}" target="_blank" class="btn btn-outline" style="padding:.3rem .6rem;font-size:.74rem">@include('partials.icon', ['name' => 'printer']) طباعة</a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="8" class="empty">لا توجد أشهر مقفلة في هذه السنة.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
-
-    @include('panel.owner.reports.partials.web-table', ['table' => array_merge($table, ['title' => 'الأشهر']), 'icon' => 'calendar-days'])
-    @include('panel.owner.reports.partials.web-notes')
 @endsection
-
-@push('scripts')
-@include('partials.chart-setup')
-<script>
-    (function () {
-        const c = @json($chart);
-        const money = (v) => Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ر.س';
-        new Chart(document.getElementById('yearChart'), {
-            data: {
-                labels: c.labels,
-                datasets: [
-                    { type: 'bar', label: 'الإيراد', data: c.revenue, backgroundColor: hawatChart.categorical[0], order: 2 },
-                    { type: 'bar', label: 'التكاليف', data: c.costs, backgroundColor: hawatChart.categorical[1], order: 2 },
-                    { type: 'line', label: 'صافيك', data: c.owner_net, borderColor: hawatChart.categorical[2], backgroundColor: hawatChart.categorical[2], spanGaps: false, order: 1 },
-                ],
-            },
-            options: { plugins: { tooltip: { callbacks: { label: (x) => x.dataset.label + ': ' + money(x.raw) } } }, scales: { x: { ticks: { autoSkip: false } } } },
-        });
-    })();
-</script>
-@endpush

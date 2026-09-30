@@ -3,61 +3,50 @@
 @section('title', $meta['title'])
 
 @section('content')
-    @php
-        $now = now();
-        $presets = [
-            'هذا الشهر' => ['from' => $now->format('Y-m'), 'to' => $now->format('Y-m')],
-            'آخر 3 أشهر' => ['from' => $now->copy()->subMonthsNoOverflow(2)->format('Y-m'), 'to' => $now->format('Y-m')],
-            'هذه السنة' => ['from' => $now->format('Y').'-01', 'to' => $now->format('Y-m')],
-        ];
-    @endphp
+    @php $money = fn ($v) => \App\Services\Owner\OwnerReports::money($v); @endphp
 
-    @include('panel.owner.reports.partials.web-head')
-    @include('panel.owner.reports.partials.web-filter', ['range' => 'months', 'presets' => $presets])
-    @include('panel.owner.reports.partials.web-kpis')
+    @include('panel.owner.reports.partials.head')
+    @include('panel.owner.reports.partials.filter', ['showBoat' => false])
 
-    @if (count($chart['labels']) > 0)
-        <div class="card" style="margin-bottom:1.25rem">
-            @include('partials.section-head', ['icon' => 'bar-chart', 'title' => 'صافي الإيراد والتكاليف والربح لكل قارب', 'note' => $period])
-            <div class="chart-wrap" style="min-height:{{ max(240, count($chart['labels']) * 58 + 60) }}px"><canvas dir="ltr" id="boatChart" aria-label="ربحية كل قارب"></canvas></div>
-        </div>
-    @endif
-
-    @include('panel.owner.reports.partials.web-table', ['table' => array_merge($table, ['title' => 'القوارب']), 'icon' => 'ship', 'empty' => 'لا نشاط للقوارب في هذه الفترة'])
-
-    <div class="card" style="margin-bottom:1.25rem">
-        @include('partials.section-head', ['icon' => 'calculator', 'title' => 'من نصيبك إلى صافيك'])
-        <dl style="display:grid;grid-template-columns:1fr auto;gap:.35rem 1rem;font-size:.85rem;max-width:28rem">
-            <dt>نصيبك من القوارب</dt><dd class="num">{{ number_format($table['totals']['owner_share'] ?? 0, 2) }}</dd>
-            <dt>− مصروفات عامة (بلا قارب)</dt><dd class="num">{{ number_format($general['expenses'], 2) }}</dd>
-            <dt>− إهلاك الأصول العامة</dt><dd class="num">{{ number_format($general['depreciation'], 2) }}</dd>
-            <dt style="font-weight:800">صافيك</dt><dd class="num" style="font-weight:800">{{ number_format($owner_net, 2) }} ر.س</dd>
-        </dl>
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>القارب</th>
+                    <th class="end">إجمالي المبيعات</th>
+                    <th class="end">صافي المبيعات</th>
+                    <th class="end">المصروفات</th>
+                    <th class="end">صافي الربح</th>
+                    <th class="end">هامش الربح</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($rows as $row)
+                    <tr>
+                        <td>{{ $row['boat_name'] }}</td>
+                        <td class="end">{{ $money($row['gross_sales']) }}</td>
+                        <td class="end">{{ $money($row['net_sales']) }}</td>
+                        <td class="end tx-bad">{{ $money($row['expenses']) }}</td>
+                        <td class="end {{ $row['net_profit'] >= 0 ? 'tx-good' : 'tx-bad' }}" style="font-weight:700">{{ $money($row['net_profit']) }}</td>
+                        <td class="end num"><bdi dir="ltr">{{ number_format($row['margin'], 1) }}%</bdi></td>
+                    </tr>
+                @empty
+                    <tr><td colspan="6" class="empty">لا توجد بيانات في هذه الفترة</td></tr>
+                @endforelse
+            </tbody>
+            @if (count($rows))
+                <tfoot>
+                    <tr>
+                        <td>الإجمالي</td>
+                        <td class="end">{{ $money($totals['gross_sales']) }}</td>
+                        <td class="end">{{ $money($totals['net_sales']) }}</td>
+                        <td class="end tx-bad">{{ $money($totals['expenses']) }}</td>
+                        <td class="end {{ $totals['net_profit'] >= 0 ? 'tx-good' : 'tx-bad' }}">{{ $money($totals['net_profit']) }}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            @endif
+        </table>
     </div>
-
-    @include('panel.owner.reports.partials.web-notes')
+    <small class="report-note">الفترة أشهر كاملة: المبيعات من فواتير الفترة، وصافيها والمصروفات (السندات والإهلاك المحمَّل) وصافي الربح من إغلاق كل شهر.</small>
 @endsection
-
-@push('scripts')
-@include('partials.chart-setup')
-<script>
-    (function () {
-        const el = document.getElementById('boatChart');
-        if (!el) return;
-        const c = @json($chart);
-        const money = (v) => Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ر.س';
-        new Chart(el, {
-            type: 'bar',
-            data: {
-                labels: c.labels,
-                datasets: [
-                    { label: 'صافي الإيراد', data: c.revenue, backgroundColor: hawatChart.categorical[0] },
-                    { label: 'التكاليف', data: c.costs, backgroundColor: hawatChart.categorical[1] },
-                    { label: 'صافي الربح', data: c.net, backgroundColor: hawatChart.categorical[2] },
-                ],
-            },
-            options: { indexAxis: 'y', plugins: { tooltip: { callbacks: { label: (x) => x.dataset.label + ': ' + money(x.raw) } } } },
-        });
-    })();
-</script>
-@endpush

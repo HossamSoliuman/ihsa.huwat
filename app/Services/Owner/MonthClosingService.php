@@ -287,8 +287,12 @@ class MonthClosingService
             $hasShareMembers = $shares->isNotEmpty();
 
             $dues = $members->map(fn (Fisher $fisher) => [
+                'fisher_id' => $fisher->id,
                 'name' => $fisher->name,
                 'is_captain' => $fisher->is_captain,
+                'is_share' => (bool) $fisher->payType?->isShare(),
+                'shares' => (float) $fisher->profit_shares,
+                'custom_percent' => $fisher->custom_share_percent > 0 ? (float) $fisher->custom_share_percent : null,
                 'pay' => $this->payLabel($fisher->payType, (float) $fisher->fixed_salary, (float) $fisher->profit_shares, (float) $fisher->custom_share_percent),
                 'gross' => $fisher->payType?->isShare() ? ($amounts[$fisher->id] ?? 0.0) : (float) $fisher->fixed_salary,
                 'advances' => null,
@@ -314,15 +318,19 @@ class MonthClosingService
     }
 
     /**
-     * @return array<int, array{name: string, is_captain: bool, pay: string, gross: float, advances: ?float, net: ?float, paid: ?bool}>
+     * @return array<int, array{fisher_id: ?int, name: string, is_captain: bool, is_share: bool, shares: float, custom_percent: ?float, pay: string, gross: float, advances: ?float, net: ?float, paid: ?bool}>
      */
     private function payrollDues(Payroll $payroll): array
     {
         return $payroll->lines()->with('payType')->get()
             ->sortBy([['is_captain', 'desc'], ['member_name', 'asc']])
             ->map(fn (PayrollLine $line) => [
+                'fisher_id' => $line->fisher_id,
                 'name' => $line->member_name,
                 'is_captain' => $line->is_captain,
+                'is_share' => (bool) $line->payType?->isShare(),
+                'shares' => (float) $line->profit_shares,
+                'custom_percent' => $line->custom_share_percent > 0 ? (float) $line->custom_share_percent : null,
                 'pay' => $this->payLabel($line->payType, (float) $line->fixed_salary, (float) $line->profit_shares, (float) $line->custom_share_percent),
                 'gross' => $line->gross,
                 'advances' => (float) $line->advances,

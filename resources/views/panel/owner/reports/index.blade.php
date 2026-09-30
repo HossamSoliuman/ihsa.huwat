@@ -1,105 +1,64 @@
 @extends('layouts.app')
 
-@section('title', 'التقارير')
+@section('title', 'التقارير المفصلة')
 
 @section('content')
     @php
-        $tones = ['primary' => 'primary', 'info' => 'info', 'success' => 'success', 'warning' => 'warning'];
-        $crewUrl = fn ($id) => route('panel.owner.crew-pay.statement', $id);
+        // مجموعات hispa (ReportsHub) ببنودها وترتيبها، وكل بند رابط صفحته في ihsa.
+        $report = fn (string $key) => [route('panel.owner.reports.show', $key), $reports[$key]['hub'] ?? $reports[$key]['title']];
+        $sections = [
+            ['title' => 'تقارير تشغيلية', 'icon' => 'clipboard', 'tone' => 'primary', 'items' => [
+                $report('trip-report'),
+                $report('trip-profitability'),
+                $report('boat-profitability'),
+                $report('production'),
+            ]],
+            ['title' => 'تقارير مالية', 'icon' => 'coins', 'tone' => 'success', 'items' => [
+                $report('month-summary'),
+                $report('profit-loss'),
+                $report('sales-report'),
+                $report('expenses-by-category'),
+            ]],
+            ['title' => 'كشف الحسابات', 'icon' => 'file-text', 'tone' => 'info', 'items' => [
+                $report('customer-statement'),
+                $report('vendor-statement'),
+                $report('crew-statement'),
+            ]],
+            ['title' => 'تقارير الإقفال', 'icon' => 'lock', 'tone' => 'warning', 'items' => [
+                [route('panel.owner.month-closings'), 'الإقفال الشهري'],
+                $report('annual-summary'),
+            ]],
+            ['title' => 'تقارير إدارية', 'icon' => 'settings', 'tone' => 'muted', 'items' => [
+                $report('fish-quantity'),
+            ]],
+            ['title' => 'تقارير الأصول', 'icon' => 'archive', 'tone' => 'danger', 'items' => [
+                [route('panel.owner.assets'), 'سجل الأصول التفصيلي'],
+                [route('panel.owner.assets.depreciation'), 'جدول الإهلاك الشهري'],
+            ]],
+        ];
     @endphp
 
     <div class="page-header">
         <div class="lead">
             <div class="icon-wrap">@include('partials.icon', ['name' => 'file-chart'])</div>
             <div>
-                <h1>التقارير</h1>
+                <h1>التقارير المفصلة</h1>
+                <p>كل التقارير على أساس الشهر مع إمكانية التصفية بالقارب</p>
             </div>
         </div>
     </div>
 
-    @foreach ($groups as $group => $groupTitle)
-        <h2 style="font-size:.95rem;font-weight:700;margin:1.25rem 0 .75rem">{{ $groupTitle }}</h2>
-        <div style="display:grid;gap:var(--gap);grid-template-columns:repeat(auto-fill,minmax(14rem,17rem))">
-            @foreach ($reports as $key => $report)
-                @continue($report['group'] !== $group)
-                @if ($group !== 'accounts')
-                    <a href="{{ route('panel.owner.reports.show', $key) }}" class="report-card" style="text-decoration:none;color:inherit">
-                        <span class="accent {{ $tones[$report['tone']] }}"></span>
-                        <div class="body">
-                            <div class="lead">
-                                <div class="kpi-icon {{ $tones[$report['tone']] }}">@include('partials.icon', ['name' => $report['icon']])</div>
-                                <div style="min-width:0;flex:1">
-                                    <h3>{{ $report['title'] }}</h3>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                @else
-                    @php
-                        $isCustomer = $key === 'customer-statement';
-                        $parties = $isCustomer ? $customers : $vendors;
-                        $param = $isCustomer ? 'customer_id' : 'vendor_id';
-                    @endphp
-                    <form method="GET" action="{{ route('panel.owner.reports.show', $key) }}" class="report-card">
-                        <span class="accent {{ $tones[$report['tone']] }}"></span>
-                        <div class="body" style="display:grid;gap:.6rem">
-                            <div class="lead">
-                                <div class="kpi-icon {{ $tones[$report['tone']] }}">@include('partials.icon', ['name' => $report['icon']])</div>
-                                <div style="min-width:0;flex:1">
-                                    <h3>{{ $report['title'] }}</h3>
-                                </div>
-                            </div>
-                            <div style="display:flex;gap:.5rem">
-                                <select class="select" name="{{ $param }}" required aria-label="{{ $report['title'] }}" style="flex:1">
-                                    <option value="">{{ $isCustomer ? 'اختر العميل' : 'اختر المورد' }}</option>
-                                    @foreach ($parties as $party)<option value="{{ $party->id }}">{{ $party->name }}</option>@endforeach
-                                </select>
-                                <button class="btn btn-outline" @disabled($parties->isEmpty())>عرض</button>
-                            </div>
-                        </div>
-                    </form>
-                @endif
-            @endforeach
-
-            @if ($group === 'accounts')
-                <div class="report-card">
-                    <span class="accent info"></span>
-                    <div class="body" style="display:grid;gap:.6rem">
-                        <div class="lead">
-                            <div class="kpi-icon info">@include('partials.icon', ['name' => 'users'])</div>
-                            <div style="min-width:0;flex:1">
-                                <h3>كشف حساب فرد من الطاقم</h3>
-                            </div>
-                        </div>
-                        <div style="display:flex;gap:.5rem">
-                            <select class="select" id="crewPick" aria-label="الفرد" style="flex:1">
-                                <option value="">اختر الفرد</option>
-                                @foreach ($fishers as $fisher)<option value="{{ $crewUrl($fisher->id) }}">{{ $fisher->name }}@if ($fisher->is_captain) (كابتن)@endif</option>@endforeach
-                            </select>
-                            <button type="button" class="btn btn-outline" onclick="const v = document.getElementById('crewPick').value; if (v) window.open(v, '_blank')" @disabled($fishers->isEmpty())>عرض</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="report-card">
-                    <span class="accent success"></span>
-                    <div class="body" style="display:grid;gap:.6rem">
-                        <div class="lead">
-                            <div class="kpi-icon success">@include('partials.icon', ['name' => 'calculator'])</div>
-                            <div style="min-width:0;flex:1">
-                                <h3>كشف حساب دلال</h3>
-                            </div>
-                        </div>
-                        <div style="display:flex;gap:.5rem">
-                            <select class="select" id="dalalPick" aria-label="الدلال" style="flex:1">
-                                <option value="">اختر الدلال</option>
-                                @foreach ($dalals as $dalal)<option value="{{ route('panel.owner.dalal-accounts.show', $dalal->id) }}">{{ $dalal->name }}</option>@endforeach
-                            </select>
-                            <button type="button" class="btn btn-outline" onclick="const v = document.getElementById('dalalPick').value; if (v) window.location = v" @disabled($dalals->isEmpty())>عرض</button>
-                        </div>
-                    </div>
-                </div>
-            @endif
-        </div>
-    @endforeach
+    <div class="report-groups">
+        @foreach ($sections as $section)
+            <section class="card report-group">
+                <header class="{{ $section['tone'] }}">
+                    <span class="kpi-icon {{ $section['tone'] }}">@include('partials.icon', ['name' => $section['icon']])</span>
+                    {{ $section['title'] }}
+                </header>
+                @foreach ($section['items'] as [$url, $label])
+                    <a href="{{ $url }}"><span>{{ $label }}</span>@include('partials.icon', ['name' => 'arrow-left'])</a>
+                @endforeach
+            </section>
+        @endforeach
+    </div>
 @endsection

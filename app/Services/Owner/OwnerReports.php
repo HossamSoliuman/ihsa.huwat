@@ -6,52 +6,53 @@ use App\Models\Boat;
 use App\Models\CatchRecord;
 use App\Models\Customer;
 use App\Models\Expense;
+use App\Models\Fisher;
 use App\Models\MonthClosing;
-use App\Models\Payroll;
+use App\Models\PayrollLine;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Species;
-use App\Models\StockMovement;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vendor;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\HtmlString;
 
 /**
- * تقارير المالك (O6) — ReportsHub / ProfitLoss / MonthSummary / AnnualSummary /
- * ProfitabilityReport / AccountStatement في hispa على بيانات ihsa.
+ * تقارير المالك (O6) — تقارير hispa بمحتواها وتخطيطها (ReportsHub، ProfitLoss،
+ * MonthSummary، AnnualSummary، ProfitabilityReport، AccountStatement، كميات
+ * الأسماك) على بيانات ihsa. كل دالة تُرجع الحقول التي تعرضها صفحة hispa المقابلة.
  *
- * الأرقام المالية الشهرية (الإيراد، مصروفات القوارب، الإهلاك المحمَّل ومؤجَّله،
- * نصيب المالك والطاقم، العام، صافي المالك) تُقرأ من إغلاق الشهر: لقطته إن كان
- * مُغلقًا، وإلا معاينته الحيّة بلا تحديث المسيرات ({@see MonthClosingService::preview})
- * — فتتطابق قائمة الأرباح والملخصان وربحية القوارب مع إغلاق كل شهر سطرًا بسطر.
- * التفصيل (أنواع الإيراد، فئات المصروفات، الأصناف، الأوزان) من السجلات مباشرة.
- *
- * كل تقرير بنية واحدة: عنوان، فترة، فلاتر، مؤشرات، وجداول (أعمدة بصيغها،
- * سطور، مجاميع) — تعرضها صفحة الويب وصفحة الطباعة وملف Excel كما هي.
+ * الأرقام المالية الشهرية (صافي الإيراد، مصروفات القوارب، الإهلاك المحمَّل،
+ * نصيب الطاقم، العام) تُقرأ من إغلاق الشهر: لقطته إن كان مُغلقًا، وإلا معاينته
+ * الحيّة بلا تحديث المسيرات ({@see MonthClosingService::preview}) — فتتطابق
+ * قائمة الأرباح والملخصان وربحية القوارب مع إغلاق كل شهر. إجمالي المبيعات
+ * والفئات والأصناف والأوزان من السجلات مباشرة.
  */
 class OwnerReports
 {
-    public const GROUPS = [
-        'finance' => 'التقارير المالية',
-        'operations' => 'التشغيل والإنتاج',
-        'accounts' => 'كشوف الحساب',
-    ];
-
+    /** عنوان كل تقرير ووصفه كما في hispa، و`hub` تسميته في المركز إن اختلفت. */
     public const REPORTS = [
-        'profit-loss' => ['title' => 'قائمة الأرباح والخسائر', 'description' => 'الإيراد والمصروفات والإهلاك ونصيب الطاقم وصافيك لفترة من الأشهر', 'icon' => 'scale', 'group' => 'finance', 'tone' => 'primary'],
-        'month-summary' => ['title' => 'الملخص الشهري', 'description' => 'قائمة شهر واحد في صفحة: الإيراد، المصروفات بفئاتها، القوارب، الأصناف', 'icon' => 'calendar', 'group' => 'finance', 'tone' => 'info'],
-        'annual-summary' => ['title' => 'الملخص السنوي', 'description' => 'السنة شهرًا بشهر من إغلاقات الأشهر، وما لم يُغلق بأرقامه الحيّة', 'icon' => 'calendar-days', 'group' => 'finance', 'tone' => 'success'],
-        'expenses-by-category' => ['title' => 'المصروفات حسب الفئة', 'description' => 'مجموع كل فئة ومجموعتها وحصتها والمسدَّد منها', 'icon' => 'receipt', 'group' => 'finance', 'tone' => 'warning'],
-        'boat-profitability' => ['title' => 'ربحية القوارب', 'description' => 'إيراد كل قارب ومصروفاته وإهلاكه وربحه ونصيب طاقمه', 'icon' => 'ship', 'group' => 'operations', 'tone' => 'primary'],
-        'trip-profitability' => ['title' => 'ربحية الرحلات', 'description' => 'مصيد كل رحلة وما بيع منه وصافيه ومصروفاتها وربحها', 'icon' => 'route', 'group' => 'operations', 'tone' => 'info'],
-        'production' => ['title' => 'الإنتاج حسب الصنف', 'description' => 'المصيد والمباع مباشرة وعبر الدلال وسعر الكيلو وما لم يُبع', 'icon' => 'fish', 'group' => 'operations', 'tone' => 'success'],
-        'customer-statement' => ['title' => 'كشف حساب عميل', 'description' => 'فواتير العميل والمحصّل منها والرصيد الجاري', 'icon' => 'handshake', 'group' => 'accounts', 'tone' => 'primary'],
-        'vendor-statement' => ['title' => 'كشف حساب مورد', 'description' => 'سندات المورد والمسدَّد منها والرصيد الجاري', 'icon' => 'truck', 'group' => 'accounts', 'tone' => 'warning'],
+        'trip-report' => ['title' => 'تقرير الرحلات', 'description' => 'رحلاتك بحالتها ومصيدها ومواعيد مغادرتها وعودتها.'],
+        'sales-report' => ['title' => 'تقارير المبيعات', 'hub' => 'تقرير المبيعات', 'description' => 'فواتير بيعك المباشر بعمولتها وأجورها وصافيك والمتبقي منها.'],
+        'trip-profitability' => ['title' => 'ربحية الرحلات', 'description' => 'ربحية كل رحلة خلال الفترة: المبيعات، المصروفات، الصافي والهامش.'],
+        'boat-profitability' => ['title' => 'ربحية القوارب', 'description' => 'ربحية كل قارب خلال الفترة من المبيعات والمصروفات.'],
+        'production' => ['title' => 'الإنتاج حسب نوع السمك', 'description' => 'مقارنة الكميات المصطادة بالمباعة وقيمتها لكل نوع.'],
+        'month-summary' => ['title' => 'ملخص الشهر المالي', 'description' => 'قائمة الأرباح والخسائر الكاملة للشهر في صفحة واحدة قابلة للطباعة.'],
+        'profit-loss' => ['title' => 'تقرير الأرباح والخسائر', 'description' => 'احسب صافي الربح خلال الفترة المحددة، مع إمكانية تصفية النتائج حسب المركب.'],
+        'expenses-by-category' => ['title' => 'مصروفات الرحلات حسب الفئة', 'description' => 'توزيع المصروفات حسب الفئة خلال الفترة.'],
+        'customer-statement' => ['title' => 'كشف حساب العملاء', 'description' => 'كشف حساب تفصيلي لأي عميل: الفواتير والمدفوع والمتبقي.'],
+        'vendor-statement' => ['title' => 'كشف حساب الموردين', 'description' => 'كشف حساب تفصيلي لأي مورد: المصروفات والمبلغ المستحق.'],
+        'crew-statement' => ['title' => 'كشف حساب الطاقم', 'description' => 'كشف مستحقات الطاقم (الكباتن والصيادين): المستحق والمدفوع والمتبقي.'],
+        'annual-summary' => ['title' => 'الإقفال السنوي', 'description' => 'السنوات التي بها أشهر مقفلة — اضغط طباعة لعرض التقرير السنوي المفصّل.'],
+        'fish-quantity' => ['title' => 'تقرير مخزون الأسماك', 'hub' => 'كميات الأسماك', 'description' => 'كميات المصيد لكل نوع وسعره خلال الفترة.'],
     ];
 
-    public const MONTH_STATUS = ['closed' => 'مُغلق', 'open' => 'غير مُغلق', 'current' => 'الشهر الجاري'];
+    public const MONTHS = [1 => 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+
+    public const QUARTERS = [1 => 'الربع الأول (يناير–مارس)', 'الربع الثاني (أبريل–يونيو)', 'الربع الثالث (يوليو–سبتمبر)', 'الربع الرابع (أكتوبر–ديسمبر)'];
 
     /** @var array<string, array<string, mixed>|null> */
     private array $months = [];
@@ -62,26 +63,28 @@ class OwnerReports
     ) {}
 
     /**
-     * قيمة خلية بصيغة عمودها — واحدة للويب والطباعة.
+     * مبلغ بعملته للويب والطباعة — معزول LTR حتى لا تنقلب إشارة السالب،
+     * و`parens` للمطروح بين قوسين (داخل العزل فلا يلتف القوس على العملة).
      */
-    public static function format(mixed $value, string $format): string
+    public static function money(float|int|string|null $amount, bool $parens = false): HtmlString
     {
-        if ($value === null || $value === '') {
-            return '—';
-        }
+        $number = number_format((float) $amount, 2);
 
-        return match ($format) {
-            'money', 'price' => number_format((float) $value, 2),
-            'kg' => number_format((float) $value, 1),
-            'int' => number_format((float) $value),
-            'pct' => number_format((float) $value, 1).'%',
-            default => (string) $value,
-        };
+        return new HtmlString('<span class="money"><bdi dir="ltr">'.($parens ? '('.$number.')' : $number).'</bdi> <small>ر.س</small></span>');
     }
 
-    public static function isNumeric(string $format): bool
+    /**
+     * نسبة داخل نص عربي ("حصة المالك (50%)") معزولة LTR (LRI … PDI) — بدونها
+     * تُعرض "%50".
+     */
+    public static function percent(float $value): string
     {
-        return in_array($format, ['money', 'price', 'kg', 'int', 'pct'], true);
+        return "\u{2066}".rtrim(rtrim(number_format($value, 2), '0'), '.')."%\u{2069}";
+    }
+
+    public static function role(bool $isCaptain): string
+    {
+        return $isCaptain ? 'كابتن' : 'فرد طاقم';
     }
 
     // ───────────────────────────── الأشهر ─────────────────────────────
@@ -140,28 +143,6 @@ class OwnerReports
     }
 
     /**
-     * مجاميع الشهر (للأسطول أو لقارب واحد — والقارب لا عام عليه).
-     *
-     * @return array<string, float>
-     */
-    public function figures(array $month, ?int $boatId = null): array
-    {
-        $boats = collect($month['data']['boats'])->when($boatId, fn ($c) => $c->where('boat_id', $boatId));
-        $sum = fn (string $key) => round((float) $boats->sum($key), 2);
-
-        $f = [];
-        foreach (['revenue', 'expenses', 'pending_fixed', 'depreciation_own', 'depreciation_brought_forward', 'depreciation_charged', 'depreciation_deferred', 'net_profit', 'owner_share', 'crew_pool'] as $key) {
-            $f[$key] = $sum($key);
-        }
-
-        $f['general_expenses'] = $boatId ? 0.0 : round((float) $month['data']['general']['expenses'], 2);
-        $f['general_depreciation'] = $boatId ? 0.0 : round((float) $month['data']['general']['depreciation'], 2);
-        $f['owner_net'] = round($f['owner_share'] - $f['general_expenses'] - $f['general_depreciation'], 2);
-
-        return $f;
-    }
-
-    /**
      * @return array<int, CarbonImmutable>
      */
     public static function monthsBetween(CarbonImmutable $from, CarbonImmutable $to): array
@@ -175,20 +156,28 @@ class OwnerReports
         return $months;
     }
 
-    // ─────────────────────────── قائمة الأرباح ───────────────────────────
+    // ─────────────────── الأرقام المالية (قائمة الأرباح والملخص) ───────────────────
 
     /**
-     * قائمة الأرباح والخسائر لأشهر متتالية (وقارب واحد إن طُلب).
+     * أرقام الفترة (أشهر كاملة) بحقول hispa (MonthlyFinancialsService::compute):
+     *
+     *   إجمالي المبيعات      = البيع المباشر + إجمالي بيع الدلال لمصيدك
+     *   العمولة والعمالة     = إجمالي المبيعات − صافيك منها
+     *   صافي الإيرادات       = إيراد القوارب في إغلاق كل شهر
+     *   المصروفات التشغيلية  = سندات القوارب (ومنها الرواتب الثابتة)
+     *   المصروفات العمومية   = السندات بلا قارب (لا تُحمَّل على قارب واحد)
+     *   الإهلاك              = المحمَّل على القوارب + إهلاك الأصول العامة
+     *   صافي الربح           = صافي الإيرادات − إجمالي المصروفات
+     *   حصة البحارة          = نصيب الطاقم من أرباح القوارب، وحصة المالك الباقي
      *
      * @return array<string, mixed>
      */
-    public function profitLoss(User $owner, CarbonImmutable $from, CarbonImmutable $to, ?Boat $boat = null): array
+    public function financials(User $owner, CarbonImmutable $from, CarbonImmutable $to, ?int $boatId = null): array
     {
-        $boatId = $boat?->id;
-        $months = [];
-        $keys = ['revenue', 'expenses', 'pending_fixed', 'depreciation_own', 'depreciation_brought_forward', 'depreciation_charged', 'net_profit', 'owner_share', 'crew_pool', 'general_expenses', 'general_depreciation', 'owner_net'];
-        $sum = array_fill_keys($keys, 0.0);
-        $lastDeferred = 0.0;
+        $sum = array_fill_keys(['net_owner_revenue', 'trip_expenses', 'pending_fixed', 'general_expenses', 'depreciation', 'crew_share'], 0.0);
+        $deferred = 0.0;
+        $percents = [];
+        $members = [];
         $statuses = [];
 
         foreach (self::monthsBetween($from, $to) as $m) {
@@ -198,382 +187,272 @@ class OwnerReports
                 continue;
             }
 
-            $f = $this->figures($month, $boatId);
-            foreach ($keys as $key) {
-                $sum[$key] = round($sum[$key] + $f[$key], 2);
-            }
-            $lastDeferred = $f['depreciation_deferred'];
             $statuses[] = $month['status'];
+            $boats = collect($month['data']['boats'])->when($boatId, fn ($c) => $c->where('boat_id', $boatId));
 
-            $months[] = [
-                'month' => MonthClosing::label($m->year, $m->month),
-                'status' => self::MONTH_STATUS[$month['status']],
-                'revenue' => $f['revenue'],
-                'expenses' => round($f['expenses'] + $f['general_expenses'], 2),
-                'depreciation' => round($f['depreciation_charged'] + $f['general_depreciation'], 2),
-                'operating' => round($f['net_profit'] - $f['general_expenses'] - $f['general_depreciation'], 2),
-                'crew_pool' => $f['crew_pool'],
-                'owner_net' => $f['owner_net'],
-                '_closed' => $month['status'] === 'closed',
-            ];
-        }
+            $sum['net_owner_revenue'] += $boats->sum('revenue');
+            $sum['trip_expenses'] += $boats->sum('expenses');
+            $sum['pending_fixed'] += $boats->sum('pending_fixed');
+            $sum['depreciation'] += $boats->sum('depreciation_charged');
+            $sum['crew_share'] += $boats->sum('crew_pool');
+            $deferred = round((float) $boats->sum('depreciation_deferred'), 2);
 
-        $start = $from->startOfMonth();
-        $end = $to->endOfMonth();
-        $revenue = $this->revenueSplit($owner, $start, $end, $boatId);
-        $expenses = $this->expenseCategories($owner, $start, $end, $boatId === null ? null : (string) $boatId);
-
-        $totalExpenses = round($sum['expenses'] + $sum['general_expenses'], 2);
-        $operating = round($sum['revenue'] - $totalExpenses - $sum['depreciation_charged'] - $sum['general_depreciation'], 2);
-
-        $open = count(array_filter($statuses, fn ($s) => $s !== 'closed'));
-
-        return [
-            'figures' => $sum + [
-                'total_expenses' => $totalExpenses,
-                'depreciation_deferred' => $lastDeferred,
-                'operating' => $operating,
-                'margin' => $sum['revenue'] > 0 ? round($operating / $sum['revenue'] * 100, 1) : null,
-            ],
-            'revenue' => $revenue,
-            'expense_groups' => $expenses['groups'],
-            'months' => $this->table([
-                $this->col('month', 'الشهر'),
-                $this->col('status', 'الحالة'),
-                $this->col('revenue', 'الإيراد', 'money'),
-                $this->col('expenses', 'المصروفات', 'money'),
-                $this->col('depreciation', 'الإهلاك المحمَّل', 'money'),
-                $this->col('operating', 'الربح التشغيلي', 'money', strong: true),
-                $this->col('crew_pool', 'نصيب الطاقم', 'money'),
-                $this->col('owner_net', 'صافيك', 'money', strong: true),
-            ], $months, title: 'شهرًا بشهر'),
-            'closed_count' => count($statuses) - $open,
-            'open_count' => $open,
-            'boat' => $boat,
-            'notes' => array_values(array_filter([
-                'الإيراد صافيك من البيع: بيعك المباشر كاملًا، وبيع الدلال بعد عمولته وأجور العمالة.',
-                'الإهلاك المحمَّل ما غطّاه ربح القارب من قسط أصوله (والمؤجَّل من الشهر السابق)، والباقي يؤجَّل — قاعدة إغلاق الشهر.',
-                'نصيب الطاقم توزيع للربح بالنِّسب والأسهم لا مصروف؛ الرواتب الثابتة داخل المصروفات.',
-                match (true) {
-                    $open === 0 => null,
-                    count($statuses) === 1 => 'الشهر غير مُغلق — أرقامه حيّة وقد تتغير حتى يُغلق.',
-                    default => "{$open} من أشهر الفترة غير مُغلق — أرقامها حيّة وقد تتغير حتى تُغلق.",
-                },
-                $sum['pending_fixed'] > 0 ? 'المصروفات تشمل رواتب ثابتة لم تُرحَّل بعد ('.number_format($sum['pending_fixed'], 2).' ر.س) — تُرحَّل عند إنشاء مسير الشهر.' : null,
-            ])),
-        ];
-    }
-
-    /**
-     * سطور القائمة للتصدير: بند ومبلغ.
-     *
-     * @return array<string, mixed>
-     */
-    public function statementTable(array $pl): array
-    {
-        $rows = array_map(fn (array $line) => [
-            'item' => in_array($line['type'], ['sub'], true) ? '   '.$line['label'] : $line['label'],
-            'amount' => $line['amount'],
-            'hint' => $line['hint'] ?? null,
-        ], array_filter($this->statementLines($pl), fn ($line) => $line['type'] !== 'hd'));
-
-        return $this->table([$this->col('item', 'البند'), $this->col('amount', 'المبلغ', 'money', sum: false), $this->col('hint', 'ملاحظة')], array_values($rows));
-    }
-
-    /**
-     * بنود القائمة بالترتيب: hd عنوان قسم، row بند، sub بند فرعي، total مجموع
-     * قسم، grand نتيجة. المبالغ المطروحة سالبة. إن خالف تفصيلُ السجلات لقطةَ
-     * الإغلاق يظهر الفرق بندًا مستقلًا فلا يختفي.
-     *
-     * @return array<int, array{type: string, label: string, amount: ?float, hint?: ?string}>
-     */
-    public function statementLines(array $pl): array
-    {
-        $f = $pl['figures'];
-        $r = $pl['revenue'];
-        $money = fn (float $v) => number_format($v, 2);
-
-        $lines = [
-            ['type' => 'hd', 'label' => 'الإيراد', 'amount' => null],
-            ['type' => 'row', 'label' => 'مبيعات مباشرة', 'amount' => $r['direct_net'], 'hint' => 'بيعك لمصيد رحلاتك'],
-            ['type' => 'row', 'label' => 'مبيعات الدلالين (الإجمالي)', 'amount' => $r['dalal_gross'], 'hint' => 'سطور مصيدك في فواتيرهم'],
-            ['type' => 'row', 'label' => 'عمولة الدلالين وأجور العمالة', 'amount' => -$r['dalal_cut']],
-        ];
-        $diff = round($f['revenue'] - $r['net'], 2);
-        if (abs($diff) >= 0.01) {
-            $lines[] = ['type' => 'row', 'label' => 'فرق عن لقطة الإغلاق', 'amount' => $diff, 'hint' => 'سجلات تغيّرت بعد إغلاق الشهر'];
-        }
-        $lines[] = ['type' => 'total', 'label' => 'صافي الإيراد', 'amount' => $f['revenue']];
-
-        $lines[] = ['type' => 'hd', 'label' => 'المصروفات', 'amount' => null];
-        $listed = 0.0;
-        foreach ($pl['expense_groups'] as $group) {
-            $lines[] = ['type' => 'row', 'label' => $group['name'], 'amount' => -$group['total']];
-            foreach ($group['categories'] as $category) {
-                $lines[] = ['type' => 'sub', 'label' => $category['name'], 'amount' => -$category['total'], 'hint' => $category['count'].' سند'];
+            if ($boatId === null) {
+                $sum['general_expenses'] += $month['data']['general']['expenses'];
+                $sum['depreciation'] += $month['data']['general']['depreciation'];
             }
-            $listed += $group['total'];
+
+            foreach ($boats as $boat) {
+                $percents[] = round((float) $boat['owner_share_percent'], 2);
+
+                foreach ($boat['dues'] as $due) {
+                    if (! ($due['is_share'] ?? false)) {
+                        continue;
+                    }
+
+                    $key = $due['fisher_id'] ?? 'n:'.$due['name'];
+                    $members[$key] ??= [
+                        'name' => $due['name'],
+                        'role' => self::role($due['is_captain']),
+                        'is_captain' => $due['is_captain'],
+                        'custom_percent' => $due['custom_percent'],
+                        'shares' => $due['shares'],
+                        'due' => 0.0,
+                    ];
+                    $members[$key]['due'] = round($members[$key]['due'] + (float) $due['gross'], 2);
+                }
+            }
         }
+
+        $sum = array_map(fn ($v) => round($v, 2), $sum);
+        $sales = $this->salesTotals($owner, $from->startOfMonth(), $to->endOfMonth(), $boatId);
+        $total = round($sum['trip_expenses'] + $sum['general_expenses'] + $sum['depreciation'], 2);
+        $net = round($sum['net_owner_revenue'] - $total, 2);
+        $distribution = collect($members)->sortBy([['is_captain', 'desc'], ['due', 'desc']])->values()->all();
+        $percents = array_values(array_unique($percents));
+
+        return $sum + [
+            'gross_sales' => $sales['gross'],
+            'commission_labor' => $sales['cut'],
+            'total_expenses' => $total,
+            'net_profit' => $net,
+            'depreciation_deferred' => $deferred,
+            'owner_percent' => count($percents) === 1 ? $percents[0] : null,
+            'owner_share' => round($net - $sum['crew_share'], 2),
+            'crew_count' => count($distribution),
+            'per_fisherman' => $distribution ? round($sum['crew_share'] / count($distribution), 2) : 0.0,
+            'crew_distribution' => $distribution,
+            'months_count' => count($statuses),
+            'closed_count' => count(array_filter($statuses, fn ($s) => $s === 'closed')),
+        ];
+    }
+
+    /**
+     * بنود المصروفات لملخص الشهر: التشغيلية (سندات القوارب) والعمومية (بلا
+     * قارب) بفئاتها — ومجموع كلٍّ يطابق رقمه في {@see financials()}: الرواتب
+     * الثابتة التي لم تُرحَّل بعد وأي فرق عن لقطة الإغلاق يظهران بندين.
+     *
+     * @return array{operating: array<int, array<string, mixed>>, general: array<int, array<string, mixed>>}
+     */
+    public function monthExpenses(User $owner, CarbonImmutable $from, CarbonImmutable $to, array $f, ?int $boatId = null): array
+    {
+        $operating = $this->expenseRows($owner, $from, $to, $boatId === null ? 'boats' : (string) $boatId);
+        $general = $boatId === null ? $this->expenseRows($owner, $from, $to, 'general') : [];
+
         if ($f['pending_fixed'] > 0) {
-            $lines[] = ['type' => 'row', 'label' => 'رواتب ثابتة لم تُرحَّل بعد', 'amount' => -$f['pending_fixed'], 'hint' => 'تُرحَّل عند إنشاء مسير الشهر'];
-            $listed += $f['pending_fixed'];
+            $operating[] = ['category' => 'رواتب ثابتة لم تُرحَّل بعد', 'type' => null, 'count' => 0, 'amount' => $f['pending_fixed']];
         }
-        $diff = round($f['total_expenses'] - $listed, 2);
-        if (abs($diff) >= 0.01) {
-            $lines[] = ['type' => 'row', 'label' => 'فرق عن لقطة الإغلاق', 'amount' => -$diff, 'hint' => 'سندات قارب لم يدخل إغلاق الشهر'];
-        }
-        $lines[] = ['type' => 'total', 'label' => 'إجمالي المصروفات', 'amount' => -$f['total_expenses']];
 
-        $lines[] = ['type' => 'hd', 'label' => 'الإهلاك', 'amount' => null];
-        $lines[] = ['type' => 'row', 'label' => 'إهلاك أصول القوارب المحمَّل', 'amount' => -$f['depreciation_charged'],
-            'hint' => 'القسط '.$money($f['depreciation_own']).($f['depreciation_brought_forward'] > 0 ? ' + مؤجَّل داخل '.$money($f['depreciation_brought_forward']) : '').($f['depreciation_deferred'] > 0 ? ' — مؤجَّل لما بعد الفترة '.$money($f['depreciation_deferred']) : ''),
-        ];
-        if (($pl['boat'] ?? null) === null) {
-            $lines[] = ['type' => 'row', 'label' => 'إهلاك الأصول العامة', 'amount' => -$f['general_depreciation'], 'hint' => 'أصول غير مربوطة بقارب'];
-        }
-        $lines[] = ['type' => 'total', 'label' => 'إجمالي الإهلاك', 'amount' => -round($f['depreciation_charged'] + $f['general_depreciation'], 2)];
+        $reconcile = function (array $rows, float $expected): array {
+            $diff = round($expected - array_sum(array_column($rows, 'amount')), 2);
 
-        $lines[] = ['type' => 'grand', 'label' => 'الربح التشغيلي', 'amount' => $f['operating'], 'hint' => $f['margin'] !== null ? 'هامش '.($f['margin'] < 0 ? 'سالب ' : '').number_format(abs($f['margin']), 1).'% من صافي الإيراد' : null];
-
-        $lines[] = ['type' => 'hd', 'label' => 'توزيع الربح', 'amount' => null];
-        $lines[] = ['type' => 'row', 'label' => 'نصيب الطاقم من أرباح القوارب', 'amount' => -$f['crew_pool'], 'hint' => 'بالنِّسب والأسهم — مسيرات الرواتب'];
-        $lines[] = ['type' => 'grand', 'label' => ($pl['boat'] ?? null) ? 'نصيبك من القارب' : 'صافي المالك', 'amount' => $f['owner_net']];
-
-        return $lines;
-    }
-
-    // ─────────────────────────── الملخص الشهري ───────────────────────────
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function monthSummary(User $owner, int $year, int $month): array
-    {
-        $start = CarbonImmutable::create($year, $month, 1)->startOfDay();
-        $pl = $this->profitLoss($owner, $start, $start->endOfMonth());
-        $data = $this->month($owner, $year, $month);
-
-        $boats = collect($data['data']['boats'])->map(fn (array $b) => [
-            'boat' => $b['boat_name'],
-            'revenue' => (float) $b['revenue'],
-            'expenses' => (float) $b['expenses'],
-            'depreciation' => (float) $b['depreciation_charged'],
-            'deferred' => (float) $b['depreciation_deferred'],
-            'net_profit' => (float) $b['net_profit'],
-            'owner_percent' => (float) $b['owner_share_percent'],
-            'owner_share' => (float) $b['owner_share'],
-            'crew_pool' => (float) $b['crew_pool'],
-            'payroll' => $b['payroll']?->payroll_number ?? '—',
-        ])->values()->all();
-
-        $species = collect($this->speciesSold($owner, $start, $start->endOfMonth()))->sortByDesc('net')->values()->all();
-
-        return $pl + [
-            'label' => MonthClosing::label($year, $month),
-            'status' => $data['status'],
-            'closing' => $data['closing'],
-            'boats' => $this->table([
-                $this->col('boat', 'القارب'),
-                $this->col('revenue', 'الإيراد', 'money'),
-                $this->col('expenses', 'المصروفات', 'money'),
-                $this->col('depreciation', 'الإهلاك المحمَّل', 'money'),
-                $this->col('deferred', 'مؤجَّل للتالي', 'money'),
-                $this->col('net_profit', 'صافي الربح', 'money', strong: true),
-                $this->col('owner_percent', 'نسبتك', 'pct', sum: false),
-                $this->col('owner_share', 'نصيبك', 'money'),
-                $this->col('crew_pool', 'نصيب الطاقم', 'money'),
-                $this->col('payroll', 'المسير'),
-            ], $boats, title: 'القوارب'),
-            'species' => $this->table([
-                $this->col('species', 'الصنف'),
-                $this->col('kg', 'المباع', 'kg'),
-                $this->col('gross', 'قيمة البيع', 'money'),
-                $this->col('cut', 'العمولة والأجور', 'money'),
-                $this->col('net', 'صافيك', 'money', strong: true),
-                $this->col('avg_price', 'سعر الكيلو', 'price', sum: false),
-            ], $species, ['avg_price' => $this->ratio(array_sum(array_column($species, 'gross')), array_sum(array_column($species, 'kg')))], title: 'المبيعات حسب الصنف'),
-        ];
-    }
-
-    // ─────────────────────────── الملخص السنوي ───────────────────────────
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function annual(User $owner, int $year): array
-    {
-        $rows = [];
-        $closed = 0;
-        $counted = 0;
-
-        for ($m = 1; $m <= 12; $m++) {
-            $month = $this->month($owner, $year, $m);
-            $row = ['month' => Payroll::MONTHS[$m], 'status' => 'لم يبدأ', '_dim' => true];
-
-            if ($month !== null) {
-                $f = $this->figures($month);
-                $counted++;
-                $closed += $month['status'] === 'closed' ? 1 : 0;
-                $row = [
-                    'month' => Payroll::MONTHS[$m],
-                    'status' => self::MONTH_STATUS[$month['status']],
-                    'revenue' => $f['revenue'],
-                    'expenses' => $f['expenses'],
-                    'depreciation' => $f['depreciation_charged'],
-                    'deferred' => $f['depreciation_deferred'],
-                    'net_profit' => $f['net_profit'],
-                    'crew_pool' => $f['crew_pool'],
-                    'owner_share' => $f['owner_share'],
-                    'general' => round($f['general_expenses'] + $f['general_depreciation'], 2),
-                    'owner_net' => $f['owner_net'],
-                    '_closed' => $month['status'] === 'closed',
-                ];
+            if (abs($diff) >= 0.01) {
+                $rows[] = ['category' => 'فرق عن لقطة الإغلاق', 'type' => null, 'count' => 0, 'amount' => $diff];
             }
 
-            $rows[] = $row;
-        }
+            return $rows;
+        };
 
-        $table = $this->table([
-            $this->col('month', 'الشهر'),
-            $this->col('status', 'الحالة'),
-            $this->col('revenue', 'الإيراد', 'money'),
-            $this->col('expenses', 'مصروفات القوارب', 'money'),
-            $this->col('depreciation', 'الإهلاك المحمَّل', 'money'),
-            $this->col('deferred', 'مؤجَّل', 'money', sum: false),
-            $this->col('net_profit', 'صافي ربح القوارب', 'money'),
-            $this->col('crew_pool', 'نصيب الطاقم', 'money'),
-            $this->col('owner_share', 'نصيبك', 'money'),
-            $this->col('general', 'عام (مصروف + إهلاك)', 'money'),
-            $this->col('owner_net', 'صافيك', 'money', strong: true),
-        ], $rows);
+        return ['operating' => $reconcile($operating, $f['trip_expenses']), 'general' => $reconcile($general, $f['general_expenses'])];
+    }
 
-        $t = $table['totals'];
-        $lastDeferred = collect($rows)->whereNotNull('deferred')->last()['deferred'] ?? 0.0;
-        $table['totals']['deferred'] = $lastDeferred;
+    // ─────────────────────────── المصروفات حسب الفئة ───────────────────────────
 
-        return [
-            'year' => $year,
-            'table' => $table,
-            'closed' => $closed,
-            'counted' => $counted,
-            'totals' => $t,
-            'margin' => ($t['revenue'] ?? 0) > 0 ? round($t['owner_net'] / $t['revenue'] * 100, 1) : null,
-            'chart' => [
-                'labels' => array_column($rows, 'month'),
-                'revenue' => array_map(fn ($r) => $r['revenue'] ?? null, $rows),
-                'costs' => array_map(fn ($r) => isset($r['revenue']) ? round($r['expenses'] + $r['depreciation'] + $r['general'], 2) : null, $rows),
-                'owner_net' => array_map(fn ($r) => $r['owner_net'] ?? null, $rows),
-            ],
-            'notes' => array_values(array_filter([
-                "الأشهر المُغلقة من لقطة إغلاقها ({$closed} من {$counted})؛ وما لم يُغلق بأرقامه الحيّة كما في معاينة إغلاقه.",
-                'المؤجَّل في المجموع هو مؤجَّل آخر شهر — ينتقل إلى الشهر التالي ولا يُجمع.',
-                'صافيك = نصيبك من القوارب − المصروفات العامة − إهلاك الأصول العامة.',
-            ])),
-        ];
+    /**
+     * المصروفات مجمّعة بالفئة ونوعها (مجموعتها)، الأكبر أولًا.
+     *
+     * @param  string|null  $boat  رقم قارب، أو "boats" لسندات القوارب، أو "general" لما بلا قارب، أو null للكل
+     * @return array<int, array{category: string, type: ?string, count: int, amount: float}>
+     */
+    public function expenseRows(User $owner, CarbonImmutable $from, CarbonImmutable $to, ?string $boat = null): array
+    {
+        return Expense::forOwner($owner)
+            ->leftJoin('expense_categories', 'expense_categories.id', '=', 'expenses.expense_category_id')
+            ->leftJoin('expense_groups', 'expense_groups.id', '=', 'expense_categories.expense_group_id')
+            ->whereDate('expenses.date', '>=', $from->toDateString())
+            ->whereDate('expenses.date', '<=', $to->toDateString())
+            ->when($boat === 'general', fn ($q) => $q->whereNull('expenses.boat_id'))
+            ->when($boat === 'boats', fn ($q) => $q->whereNotNull('expenses.boat_id'))
+            ->when(is_numeric($boat), fn ($q) => $q->where('expenses.boat_id', (int) $boat))
+            ->selectRaw('expense_categories.name AS category, expense_groups.name AS type, COUNT(*) AS n, SUM(expenses.total) AS amount')
+            ->groupBy('expense_categories.id', 'expense_categories.name', 'expense_groups.name')
+            ->get()
+            ->map(fn ($r) => ['category' => $r->category ?? '—', 'type' => $r->type, 'count' => (int) $r->n, 'amount' => round((float) $r->amount, 2)])
+            ->sortByDesc('amount')->values()->all();
     }
 
     // ─────────────────────────── ربحية القوارب ───────────────────────────
 
     /**
-     * @return array<string, mixed>
+     * كل قارب: إجمالي مبيعات مصيده، وصافيك منها، ومصروفاته (سنداته والإهلاك
+     * المحمَّل) وصافي ربحه من إغلاق كل شهر، والهامش من الصافي.
+     *
+     * @return array{rows: array<int, array<string, mixed>>, totals: array<string, float>}
      */
     public function boatProfitability(User $owner, CarbonImmutable $from, CarbonImmutable $to): array
     {
-        $start = $from->startOfMonth();
-        $end = $to->endOfMonth();
-        $acc = [];
-        $general = ['expenses' => 0.0, 'depreciation' => 0.0];
+        $blank = ['gross_sales' => 0.0, 'net_sales' => 0.0, 'expenses' => 0.0, 'net_profit' => 0.0];
+        $rows = Boat::forOwner($owner)->orderBy('name')->get(['id', 'name'])
+            ->mapWithKeys(fn (Boat $boat) => [$boat->id => ['boat_id' => $boat->id, 'boat_name' => $boat->name] + $blank])->all();
 
-        foreach (self::monthsBetween($start, $end) as $m) {
+        foreach (self::monthsBetween($from, $to) as $m) {
             $month = $this->month($owner, $m->year, $m->month);
 
-            if ($month === null) {
-                continue;
+            foreach ($month['data']['boats'] ?? [] as $b) {
+                $rows[$b['boat_id']] ??= ['boat_id' => $b['boat_id'], 'boat_name' => $b['boat_name']] + $blank;
+                $rows[$b['boat_id']]['net_sales'] += $b['revenue'];
+                $rows[$b['boat_id']]['expenses'] += $b['expenses'] + $b['depreciation_charged'];
+                $rows[$b['boat_id']]['net_profit'] += $b['net_profit'];
             }
-
-            foreach ($month['data']['boats'] as $b) {
-                $row = $acc[$b['boat_id']] ?? ['boat_id' => $b['boat_id'], 'boat' => $b['boat_name']] + array_fill_keys(['revenue', 'expenses', 'depreciation', 'net_profit', 'crew_pool', 'owner_share'], 0.0);
-                $row['revenue'] += $b['revenue'];
-                $row['expenses'] += $b['expenses'];
-                $row['depreciation'] += $b['depreciation_charged'];
-                $row['net_profit'] += $b['net_profit'];
-                $row['crew_pool'] += $b['crew_pool'];
-                $row['owner_share'] += $b['owner_share'];
-                $acc[$b['boat_id']] = $row;
-            }
-
-            $general['expenses'] += $month['data']['general']['expenses'];
-            $general['depreciation'] += $month['data']['general']['depreciation'];
         }
 
-        $trips = Trip::forOwner($owner)->where('status', '!=', Trip::CANCELLED)
-            ->whereBetween('departure_time', [$start, $end])->get(['id', 'boat_id']);
-        $caught = $this->caughtByTrip($trips->pluck('id'));
-        $sales = $this->salesByTrip($owner, $start, $end);
+        $sales = $this->salesByTrip($owner, $from->startOfMonth(), $to->endOfMonth());
         $boatOf = Trip::whereIn('id', $sales->keys())->pluck('boat_id', 'id');
 
-        $rows = collect($acc)->map(function (array $row) use ($trips, $caught, $sales, $boatOf) {
-            $boatTrips = $trips->where('boat_id', $row['boat_id'])->pluck('id');
-            $boatSales = $sales->filter(fn ($s, $tripId) => (int) ($boatOf[$tripId] ?? 0) === $row['boat_id']);
+        foreach ($sales as $tripId => $s) {
+            $boat = $boatOf[$tripId] ?? null;
 
-            foreach (['revenue', 'expenses', 'depreciation', 'net_profit', 'crew_pool', 'owner_share'] as $k) {
+            if ($boat !== null && isset($rows[$boat])) {
+                $rows[$boat]['gross_sales'] += $s['direct_gross'] + $s['dalal_gross'];
+            }
+        }
+
+        $rows = array_map(function (array $row) {
+            foreach (['gross_sales', 'net_sales', 'expenses', 'net_profit'] as $k) {
                 $row[$k] = round($row[$k], 2);
             }
 
+            return $row + ['margin' => $this->margin($row['net_profit'], $row['net_sales'])];
+        }, array_values($rows));
+
+        usort($rows, fn ($a, $b) => $b['net_profit'] <=> $a['net_profit']);
+
+        return ['rows' => $rows, 'totals' => $this->totals($rows, ['gross_sales', 'net_sales', 'expenses', 'net_profit'])];
+    }
+
+    // ─────────────────────── تقرير الرحلات والمبيعات ───────────────────────
+
+    /**
+     * تقرير الرحلات (TripReport في hispa): الرحلات التي غادرت في الفترة (كلها
+     * إن لم تُحدَّد) بحالتها، ومصيد كلٍّ (أصنافه ووزنه)، ومواعيدها ومدتها،
+     * وإجمالي مبيعاتها وصافي ربحها (صافيك منها − سنداتها).
+     *
+     * @return array{rows: array<int, array<string, mixed>>, statistics: array<string, float|int>}
+     */
+    public function tripReport(User $owner, ?CarbonImmutable $from, ?CarbonImmutable $to, ?string $status = null): array
+    {
+        $trips = Trip::forOwner($owner)
+            ->when($from, fn ($q) => $q->where('departure_time', '>=', $from->startOfDay()))
+            ->when($to, fn ($q) => $q->where('departure_time', '<=', $to->endOfDay()))
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->with(['boat:id,name', 'captain:id,name', 'departurePort:id,name'])
+            ->orderByDesc('departure_time')->get();
+
+        $ids = $trips->pluck('id');
+        $caught = CatchRecord::whereIn('trip_id', $ids)
+            ->selectRaw('trip_id, COUNT(*) AS n, SUM(COALESCE(counted_kg, quantity_kg)) AS kg')
+            ->groupBy('trip_id')->get()->keyBy('trip_id');
+        $sales = $this->salesByTrip($owner, null, null, $ids);
+        $expenses = Expense::forOwner($owner)->whereIn('trip_id', $ids)
+            ->selectRaw('trip_id, SUM(total) AS total')->groupBy('trip_id')->pluck('total', 'trip_id');
+
+        $rows = $trips->map(function (Trip $trip) use ($owner, $caught, $sales, $expenses) {
+            $s = $sales[$trip->id] ?? $this->emptySales();
+            $back = $trip->return_time;
+
             return [
-                'boat' => $row['boat'],
-                'trips' => $boatTrips->count(),
-                'caught_kg' => round($boatTrips->sum(fn ($id) => $caught[$id] ?? 0), 2),
-                'sold_kg' => round($boatSales->sum(fn ($s) => $s['direct_kg'] + $s['dalal_kg']), 2),
-                'gross' => round($boatSales->sum(fn ($s) => $s['direct_gross'] + $s['dalal_gross']), 2),
-                'cut' => round($boatSales->sum('dalal_cut'), 2),
-                'revenue' => $row['revenue'],
-                'expenses' => $row['expenses'],
-                'depreciation' => $row['depreciation'],
-                'net_profit' => $row['net_profit'],
-                'margin' => $this->percent($row['net_profit'], $row['revenue']),
-                'crew_pool' => $row['crew_pool'],
-                'owner_share' => $row['owner_share'],
+                'trip_id' => $trip->id,
+                'number' => $trip->trip_number,
+                'boat_name' => $trip->boat?->name ?? '—',
+                'license_number' => $trip->license_number,
+                'status' => $trip->status,
+                'owner_name' => $owner->name,
+                'captain_name' => $trip->captain?->name ?? $trip->captain_name ?? '—',
+                'items' => (int) ($caught[$trip->id]->n ?? 0),
+                'weight' => round((float) ($caught[$trip->id]->kg ?? 0), 2),
+                'port' => $trip->departurePort?->name ?? '—',
+                'departed' => $trip->departure_time?->format('Y-m-d'),
+                'returned' => $back?->format('Y-m-d'),
+                'departed_time' => $trip->departure_time?->format('H:i'),
+                'returned_time' => $back?->format('H:i'),
+                'days' => $trip->departure_time && $back ? (int) abs($trip->departure_time->toImmutable()->startOfDay()->diffInDays($back->toImmutable()->startOfDay())) + 1 : null,
+                'sold' => $trip->sale_status === Trip::SALE_DONE,
+                'gross_revenue' => round($s['direct_gross'] + $s['dalal_gross'], 2),
+                'net_profit' => round($s['direct_net'] + $s['dalal_net'] - (float) ($expenses[$trip->id] ?? 0), 2),
             ];
-        })->sortByDesc('net_profit')->values()->all();
-
-        $table = $this->table([
-            $this->col('boat', 'القارب'),
-            $this->col('trips', 'الرحلات', 'int'),
-            $this->col('caught_kg', 'المصيد', 'kg'),
-            $this->col('sold_kg', 'المباع', 'kg'),
-            $this->col('gross', 'قيمة البيع', 'money'),
-            $this->col('cut', 'اقتطاع الدلال', 'money'),
-            $this->col('revenue', 'صافي الإيراد', 'money'),
-            $this->col('expenses', 'المصروفات', 'money'),
-            $this->col('depreciation', 'الإهلاك', 'money'),
-            $this->col('net_profit', 'صافي الربح', 'money', strong: true),
-            $this->col('margin', 'الهامش', 'pct', sum: false),
-            $this->col('crew_pool', 'نصيب الطاقم', 'money'),
-            $this->col('owner_share', 'نصيبك', 'money'),
-        ], $rows);
-
-        if ($table['totals'] !== null) {
-            $table['totals']['margin'] = $this->percent($table['totals']['net_profit'], $table['totals']['revenue']);
-        }
-
-        $ownerShare = (float) ($table['totals']['owner_share'] ?? 0);
-        $general = array_map(fn ($v) => round($v, 2), $general);
+        })->all();
 
         return [
-            'table' => $table,
-            'general' => $general,
-            'owner_net' => round($ownerShare - $general['expenses'] - $general['depreciation'], 2),
-            'chart' => [
-                'labels' => array_column($rows, 'boat'),
-                'revenue' => array_column($rows, 'revenue'),
-                'costs' => array_map(fn ($r) => round($r['expenses'] + $r['depreciation'], 2), $rows),
-                'net' => array_column($rows, 'net_profit'),
+            'rows' => $rows,
+            'statistics' => [
+                'total_trips' => count($rows),
+                'completed_trips' => count(array_filter($rows, fn ($r) => $r['sold'])),
+                'total_catch' => array_sum(array_column($rows, 'items')),
+                'total_weight' => round(array_sum(array_column($rows, 'weight')), 2),
+                'total_revenue' => round(array_sum(array_column($rows, 'gross_revenue')), 2),
+                'net_profit' => round(array_sum(array_column($rows, 'net_profit')), 2),
             ],
-            'notes' => [
-                'الإيراد والمصروفات والإهلاك ونصيب الطاقم من إغلاق كل شهر (أو معاينته إن لم يُغلق) — فمجموعها يطابق الملخص السنوي وقائمة الأرباح.',
-                'الرحلات والمصيد: ما غادر في الفترة. المباع وقيمته: ما بيع في الفترة من أي رحلة للقارب.',
-                'الهامش = صافي الربح ÷ صافي الإيراد. المصروفات العامة وإهلاك الأصول غير المربوطة لا تُحمَّل على قارب.',
+        ];
+    }
+
+    /**
+     * تقرير المبيعات (SalesReport في hispa): فواتير بيعك المباشر في الفترة،
+     * الأحدث أولًا، بوزنها وعمولتها وأجورها وصافيك والمتبقي منها.
+     *
+     * @return array{rows: array<int, array<string, mixed>>, statistics: array<string, float|int>}
+     */
+    public function salesReport(User $owner, CarbonImmutable $from, CarbonImmutable $to, ?string $status = null): array
+    {
+        $rows = Sale::forSeller($owner)
+            ->whereDate('sold_at', '>=', $from->toDateString())
+            ->whereDate('sold_at', '<=', $to->toDateString())
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->with(['customer:id,name', 'paymentMethod:id,name'])
+            ->withSum('items', 'weight_kg')
+            ->orderByDesc('sold_at')->orderByDesc('id')->get()
+            ->map(fn (Sale $sale) => [
+                'sale_id' => $sale->id,
+                'number' => $sale->invoice_number,
+                'status' => $sale->status,
+                'completed' => $sale->status === Sale::COMPLETED,
+                'customer' => $sale->customer?->name ?? 'عميل نقدي',
+                'payment_method' => $sale->paymentMethod?->name ?? '—',
+                'weight' => round((float) $sale->items_sum_weight_kg, 2),
+                'commission' => round((float) $sale->commission_amount, 2),
+                'labor' => round((float) $sale->wage_amount, 2),
+                'total' => round((float) $sale->total, 2),
+                'net_owner' => round((float) $sale->owner_net, 2),
+                'remaining' => $sale->remaining,
+                'date' => $sale->sold_at->format('Y-m-d'),
+            ])->all();
+
+        return [
+            'rows' => $rows,
+            'statistics' => [
+                'total_sales' => count($rows),
+                'total_revenue' => round(array_sum(array_column($rows, 'total')), 2),
+                'total_weight' => round(array_sum(array_column($rows, 'weight')), 2),
+                'net_owner' => round(array_sum(array_column($rows, 'net_owner')), 2),
             ],
         ];
     }
@@ -581,342 +460,527 @@ class OwnerReports
     // ─────────────────────────── ربحية الرحلات ───────────────────────────
 
     /**
-     * @return array<string, mixed>
+     * الرحلات التي غادرت في الفترة، الأحدث أولًا: إجمالي مبيعات مصيدها وصافيك
+     * منه (في أي تاريخ)، ومصروفاتها — السندات المربوطة بها مباشرة.
+     *
+     * @return array{rows: array<int, array<string, mixed>>, totals: array<string, float>}
      */
     public function tripProfitability(User $owner, CarbonImmutable $from, CarbonImmutable $to, ?int $boatId = null): array
     {
-        $trips = Trip::forOwner($owner)->where('status', '!=', Trip::CANCELLED)
+        $trips = Trip::forOwner($owner)
             ->whereBetween('departure_time', [$from->startOfDay(), $to->endOfDay()])
             ->when($boatId, fn ($q) => $q->where('boat_id', $boatId))
             ->with(['boat:id,name', 'captain:id,name'])
-            ->orderBy('departure_time')->get();
+            ->orderByDesc('departure_time')->get();
 
         $ids = $trips->pluck('id');
-        $caught = $this->caughtByTrip($ids);
         $sales = $this->salesByTrip($owner, null, null, $ids);
         $expenses = Expense::forOwner($owner)->whereIn('trip_id', $ids)
             ->selectRaw('trip_id, SUM(total) AS total')->groupBy('trip_id')->pluck('total', 'trip_id');
-        $unsold = StockMovement::whereIn('trip_id', $ids)
-            ->selectRaw('trip_id, SUM(weight_kg) AS kg')->groupBy('trip_id')->pluck('kg', 'trip_id');
 
-        $rows = $trips->map(function (Trip $trip) use ($caught, $sales, $expenses, $unsold) {
+        $rows = $trips->map(function (Trip $trip) use ($sales, $expenses) {
             $s = $sales[$trip->id] ?? $this->emptySales();
             $net = round($s['direct_net'] + $s['dalal_net'], 2);
             $cost = round((float) ($expenses[$trip->id] ?? 0), 2);
 
             return [
-                'trip' => $trip->trip_number,
-                'date' => $trip->departure_time?->format('Y-m-d'),
-                'boat' => $trip->boat?->name ?? '—',
-                'captain' => $trip->captain?->name ?? $trip->captain_name ?? '—',
-                'sale_status' => $trip->sale_status,
-                'caught_kg' => round((float) ($caught[$trip->id] ?? 0), 2),
-                'sold_kg' => round($s['direct_kg'] + $s['dalal_kg'], 2),
-                'unsold_kg' => round(max((float) ($unsold[$trip->id] ?? 0), 0), 2),
-                'gross' => round($s['direct_gross'] + $s['dalal_gross'], 2),
-                'cut' => round($s['dalal_cut'], 2),
-                'revenue' => $net,
+                'trip_id' => $trip->id,
+                'number' => $trip->trip_number,
+                'boat_name' => $trip->boat?->name ?? '—',
+                'captain_name' => $trip->captain?->name ?? $trip->captain_name ?? '—',
+                'start_date' => $trip->departure_time?->format('Y-m-d'),
+                'status_label' => $trip->app_status,
+                'gross_sales' => round($s['direct_gross'] + $s['dalal_gross'], 2),
+                'net_sales' => $net,
                 'expenses' => $cost,
-                'profit' => round($net - $cost, 2),
-                'margin' => $this->percent($net - $cost, $net),
-                '_url' => route('panel.owner.trips.show', $trip->id),
+                'net_profit' => round($net - $cost, 2),
+                'margin' => $this->margin($net - $cost, $net),
             ];
         })->all();
 
-        $table = $this->table([
-            $this->col('trip', 'الرحلة', 'code'),
-            $this->col('date', 'المغادرة', 'date'),
-            $this->col('boat', 'القارب'),
-            $this->col('captain', 'الكابتن'),
-            $this->col('sale_status', 'البيع'),
-            $this->col('caught_kg', 'المصيد', 'kg'),
-            $this->col('sold_kg', 'المباع', 'kg'),
-            $this->col('unsold_kg', 'لم يُبع', 'kg'),
-            $this->col('gross', 'قيمة البيع', 'money'),
-            $this->col('cut', 'اقتطاع الدلال', 'money'),
-            $this->col('revenue', 'صافي الإيراد', 'money'),
-            $this->col('expenses', 'مصروفات الرحلة', 'money'),
-            $this->col('profit', 'الربح', 'money', strong: true),
-            $this->col('margin', 'الهامش', 'pct', sum: false),
-        ], $rows);
-
-        if ($table['totals'] !== null) {
-            $table['totals']['margin'] = $this->percent($table['totals']['profit'], $table['totals']['revenue']);
-        }
-
-        return [
-            'table' => $table,
-            'notes' => [
-                'الرحلات التي غادرت في الفترة (عدا الملغاة)، وإيرادها كل ما بيع من مصيدها في أي تاريخ: بيعك المباشر كاملًا وبيع الدلال بعد العمولة والأجور.',
-                'مصروفات الرحلة: السندات المربوطة بها وحدها. مصروفات القارب العامة والإهلاك تظهر في ربحية القوارب.',
-                'لم يُبع: ما بقي من مصيد الرحلة في مخزونك أو عند الدلالين.',
-            ],
-        ];
+        return ['rows' => $rows, 'totals' => $this->totals($rows, ['gross_sales', 'net_sales', 'expenses', 'net_profit'])];
     }
 
-    // ─────────────────────────── الإنتاج حسب الصنف ───────────────────────────
+    // ─────────────────────────── الإنتاج حسب النوع ───────────────────────────
 
     /**
-     * @return array<string, mixed>
+     * مصيد الرحلات التي غادرت في الفترة (عدا الملغاة) — الوزن المعدود وإلا
+     * المعلن، وقيمته — مقابل ما بيع منه في أي تاريخ مباشرة وعبر الدلال.
+     *
+     * @return array<int, array{fish_name: string, unit_name: string, caught_weight: float, caught_value: float, sold_weight: float, sold_value: float}>
      */
-    public function production(User $owner, CarbonImmutable $from, CarbonImmutable $to, ?int $boatId = null): array
+    public function production(User $owner, CarbonImmutable $from, CarbonImmutable $to): array
     {
         $trips = Trip::forOwner($owner)->where('status', '!=', Trip::CANCELLED)
             ->whereBetween('departure_time', [$from->startOfDay(), $to->endOfDay()])
-            ->when($boatId, fn ($q) => $q->where('boat_id', $boatId))
             ->pluck('id');
 
         $caught = CatchRecord::whereIn('trip_id', $trips)
-            ->selectRaw('species_id, COUNT(DISTINCT trip_id) AS trips, SUM(COALESCE(counted_kg, quantity_kg)) AS kg')
+            ->selectRaw('species_id, SUM(COALESCE(counted_kg, quantity_kg)) AS kg, SUM(COALESCE(total_value, COALESCE(counted_kg, quantity_kg) * price_per_kg, 0)) AS value')
             ->groupBy('species_id')->get()->keyBy('species_id');
         $sold = collect($this->speciesSold($owner, null, null, $trips))->keyBy('species_id');
-        $unsold = StockMovement::whereIn('trip_id', $trips)
-            ->selectRaw('species_id, SUM(weight_kg) AS kg')->groupBy('species_id')->pluck('kg', 'species_id');
-
         $names = Species::whereIn('id', $caught->keys()->merge($sold->keys())->unique())->pluck('name_ar', 'id');
 
-        $rows = $names->map(function ($name, $id) use ($caught, $sold, $unsold) {
-            $s = $sold[$id] ?? ['direct_kg' => 0.0, 'dalal_kg' => 0.0, 'kg' => 0.0, 'gross' => 0.0, 'cut' => 0.0, 'net' => 0.0];
-            $caughtKg = round((float) ($caught[$id]->kg ?? 0), 2);
-
-            return [
-                'species' => $name,
-                'trips' => (int) ($caught[$id]->trips ?? 0),
-                'caught_kg' => $caughtKg,
-                'direct_kg' => $s['direct_kg'],
-                'dalal_kg' => $s['dalal_kg'],
-                'sold_kg' => $s['kg'],
-                'sell_through' => $this->percent($s['kg'], $caughtKg),
-                'unsold_kg' => round(max((float) ($unsold[$id] ?? 0), 0), 2),
-                'gross' => $s['gross'],
-                'cut' => $s['cut'],
-                'net' => $s['net'],
-                'avg_price' => $this->ratio($s['gross'], $s['kg']),
-            ];
-        })->sortByDesc('caught_kg')->values()->all();
-
-        $table = $this->table([
-            $this->col('species', 'الصنف'),
-            $this->col('trips', 'الرحلات', 'int', sum: false),
-            $this->col('caught_kg', 'المصيد', 'kg'),
-            $this->col('direct_kg', 'بيع مباشر', 'kg'),
-            $this->col('dalal_kg', 'عبر الدلال', 'kg'),
-            $this->col('sold_kg', 'المباع', 'kg'),
-            $this->col('sell_through', 'التصريف', 'pct', sum: false),
-            $this->col('unsold_kg', 'لم يُبع', 'kg'),
-            $this->col('gross', 'قيمة البيع', 'money'),
-            $this->col('cut', 'اقتطاع الدلال', 'money'),
-            $this->col('net', 'صافيك', 'money', strong: true),
-            $this->col('avg_price', 'سعر الكيلو', 'price', sum: false),
-        ], $rows);
-
-        if ($table['totals'] !== null) {
-            $table['totals']['trips'] = $trips->count();
-            $table['totals']['sell_through'] = $this->percent($table['totals']['sold_kg'], $table['totals']['caught_kg']);
-            $table['totals']['avg_price'] = $this->ratio($table['totals']['gross'], $table['totals']['sold_kg']);
-        }
-
-        $top = array_slice($rows, 0, 10);
-
-        return [
-            'table' => $table,
-            'trips' => $trips->count(),
-            'chart' => [
-                'labels' => array_column($top, 'species'),
-                'caught' => array_column($top, 'caught_kg'),
-                'sold' => array_column($top, 'sold_kg'),
-            ],
-            'notes' => [
-                'مصيد الرحلات التي غادرت في الفترة (عدا الملغاة) — الوزن المعدود، وإلا ما أعلنه الكابتن — وما بيع منه في أي تاريخ.',
-                'قيمة البيع المباشر بعد توزيع خصم الفاتورة على سطورها؛ صافيك من الدلال بعد عمولته والأجور. سعر الكيلو = قيمة البيع ÷ المباع.',
-            ],
-        ];
+        return $names->map(fn ($name, $id) => [
+            'fish_name' => $name,
+            'unit_name' => 'كجم',
+            'caught_weight' => round((float) ($caught[$id]->kg ?? 0), 2),
+            'caught_value' => round((float) ($caught[$id]->value ?? 0), 2),
+            'sold_weight' => round((float) ($sold[$id]['kg'] ?? 0), 2),
+            'sold_value' => round((float) ($sold[$id]['gross'] ?? 0), 2),
+        ])->sortByDesc('caught_weight')->values()->all();
     }
 
-    // ─────────────────────────── المصروفات حسب الفئة ───────────────────────────
+    // ─────────────────────────── كميات الأسماك ───────────────────────────
 
     /**
-     * @param  string|null  $boat  رقم قارب، أو "general" لما لا قارب له، أو null للكل
-     * @return array<string, mixed>
+     * سطور المصيد المسجّلة في الفترة بتصفية القارب والرحلة والنوع: الوزن
+     * (المعدود وإلا المعلن) وسعر الكيلو والإجمالي.
+     *
+     * @return Collection<int, array{fish_id: int, fish_name: string, trip: string, weight: float, unit: string, price_per_kg: float, total: float}>
      */
-    public function expensesByCategory(User $owner, CarbonImmutable $from, CarbonImmutable $to, ?string $boat = null): array
+    public function fishQuantity(User $owner, CarbonImmutable $from, CarbonImmutable $to, ?int $boatId = null, ?int $tripId = null, ?int $speciesId = null): Collection
     {
-        $data = $this->expenseCategories($owner, $from->startOfDay(), $to->endOfDay(), $boat);
-        $total = $data['total'];
+        return CatchRecord::query()
+            ->whereHas('trip', fn ($q) => $q->forOwner($owner)->when($boatId, fn ($q) => $q->where('boat_id', $boatId)))
+            ->when($tripId, fn ($q) => $q->where('trip_id', $tripId))
+            ->when($speciesId, fn ($q) => $q->where('species_id', $speciesId))
+            ->whereDate('recorded_at', '>=', $from->toDateString())
+            ->whereDate('recorded_at', '<=', $to->toDateString())
+            ->with(['species:id,name_ar', 'trip:id,trip_number'])
+            ->orderBy('recorded_at')->orderBy('id')->get()
+            ->map(function (CatchRecord $record) {
+                $kg = (float) ($record->counted_kg ?? $record->quantity_kg);
+                $price = (float) $record->price_per_kg;
 
-        $rows = [];
-        foreach ($data['groups'] as $group) {
-            foreach ($group['categories'] as $c) {
-                $rows[] = ['group' => $group['name'], 'category' => $c['name']] + $c + ['share' => $this->percent($c['total'], $total)];
-            }
-        }
-
-        $table = $this->table([
-            $this->col('group', 'المجموعة'),
-            $this->col('category', 'الفئة'),
-            $this->col('count', 'السندات', 'int'),
-            $this->col('subtotal', 'المبلغ', 'money'),
-            $this->col('discount', 'الخصم', 'money'),
-            $this->col('vat', 'الضريبة', 'money'),
-            $this->col('total', 'الإجمالي', 'money', strong: true),
-            $this->col('paid', 'المسدَّد', 'money'),
-            $this->col('remaining', 'المتبقي', 'money'),
-            $this->col('share', 'الحصة', 'pct', sum: false),
-        ], $rows, $rows ? ['share' => 100.0] : []);
-
-        $groups = array_map(fn ($g) => [
-            'group' => $g['name'],
-            'count' => array_sum(array_column($g['categories'], 'count')),
-            'total' => $g['total'],
-            'paid' => round(array_sum(array_column($g['categories'], 'paid')), 2),
-            'remaining' => round(array_sum(array_column($g['categories'], 'remaining')), 2),
-            'share' => $this->percent($g['total'], $total),
-        ], $data['groups']);
-
-        return [
-            'table' => $table,
-            'groups' => $this->table([
-                $this->col('group', 'المجموعة'),
-                $this->col('count', 'السندات', 'int'),
-                $this->col('total', 'الإجمالي', 'money', strong: true),
-                $this->col('paid', 'المسدَّد', 'money'),
-                $this->col('remaining', 'المتبقي', 'money'),
-                $this->col('share', 'الحصة', 'pct', sum: false),
-            ], $groups, $groups ? ['share' => 100.0] : [], title: 'حسب المجموعة'),
-            'total' => $total,
-            'chart' => [
-                'groups' => array_column($groups, 'group'),
-                'group_totals' => array_column($groups, 'total'),
-                'categories' => array_column(collect($rows)->sortByDesc('total')->take(10)->values()->all(), 'category'),
-                'category_totals' => array_column(collect($rows)->sortByDesc('total')->take(10)->values()->all(), 'total'),
-            ],
-            'notes' => [
-                'الإجمالي = (المبلغ − الخصم) + الضريبة، والحصة من إجمالي الفترة. التاريخ تاريخ السند.',
-            ],
-        ];
+                return [
+                    'fish_id' => $record->species_id,
+                    'fish_name' => $record->species?->name_ar ?? '—',
+                    'trip' => $record->trip?->trip_number ?? '—',
+                    'weight' => round($kg, 2),
+                    'unit' => 'كجم',
+                    'price_per_kg' => round($price, 2),
+                    'total' => round($kg * $price, 2),
+                ];
+            });
     }
 
     // ─────────────────────────── كشوف الحساب ───────────────────────────
 
     /**
-     * كشف حساب عميل: فواتير المالك له بالتاريخ، والمحصّل منها، ورصيد جارٍ
-     * للمتبقي، ورصيد افتتاحي لما قبل الفترة.
+     * فواتيرك للعميل في الفترة (الأحدث أولًا) بمدفوعها ومتبقيها.
      *
-     * @return array<string, mixed>
+     * @return array{rows: array<int, array<string, mixed>>, statistics: array<string, float|int>}
      */
     public function customerStatement(User $owner, Customer $customer, ?string $from, ?string $to): array
     {
-        $sales = Sale::forSeller($owner)->where('customer_id', $customer->id)
-            ->with('trip:id,trip_number')->withSum('items', 'weight_kg')
-            ->orderBy('sold_at')->orderBy('id')->get();
+        $rows = Sale::forSeller($owner)->where('customer_id', $customer->id)
+            ->when($from, fn ($q) => $q->whereDate('sold_at', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('sold_at', '<=', $to))
+            ->with(['paymentMethod:id,name', 'paymentStatus:id,name'])
+            ->orderByDesc('sold_at')->orderByDesc('id')->get()
+            ->map(fn (Sale $sale) => [
+                'number' => $sale->invoice_number,
+                'date' => $sale->sold_at->format('Y-m-d'),
+                'payment_method' => $sale->paymentMethod?->name ?? '—',
+                'payment_status' => $sale->paymentStatus?->name ?? $this->paymentStatus((float) $sale->paid_amount, (float) $sale->total),
+                'total' => round((float) $sale->total, 2),
+                'paid' => round((float) $sale->paid_amount, 2),
+                'remaining' => $sale->remaining,
+            ])->all();
 
-        $entries = $sales->map(fn (Sale $sale) => [
-            'date' => $sale->sold_at->format('Y-m-d'),
-            'number' => $sale->invoice_number,
-            'details' => trim(($sale->trip ? 'رحلة '.$sale->trip->trip_number : '').($sale->notes ? ' — '.$sale->notes : ''), ' —') ?: '—',
-            'kg' => round((float) $sale->items_sum_weight_kg, 2),
-            'debit' => round((float) $sale->total, 2),
-            'credit' => round((float) $sale->paid_amount, 2),
-        ]);
-
-        return $this->statement($entries, $from, $to, [
-            $this->col('date', 'التاريخ', 'date'),
-            $this->col('number', 'الفاتورة', 'code'),
-            $this->col('details', 'البيان'),
-            $this->col('kg', 'الوزن', 'kg'),
-            $this->col('debit', 'قيمة الفاتورة', 'money'),
-            $this->col('credit', 'المحصّل', 'money'),
-            $this->col('balance', 'الرصيد', 'money', sum: false, strong: true),
-        ], 'فاتورة') + ['party' => $customer, 'last' => $sales->last()?->sold_at];
+        return [
+            'rows' => $rows,
+            'statistics' => [
+                'total_orders' => count($rows),
+                'total_purchases' => round(array_sum(array_column($rows, 'total')), 2),
+                'total_paid' => round(array_sum(array_column($rows, 'paid')), 2),
+                'total_remaining' => round(array_sum(array_column($rows, 'remaining')), 2),
+            ],
+        ];
     }
 
     /**
-     * كشف حساب مورد: سندات المالك عليه بالتاريخ، والمسدَّد منها، ورصيد جارٍ.
+     * سنداتك على المورد في الفترة (الأحدث أولًا)، ومجموعها والمستحق منها.
      *
-     * @return array<string, mixed>
+     * @return array{rows: array<int, array<string, mixed>>, total_expenses: float, total_due: float}
      */
     public function vendorStatement(User $owner, Vendor $vendor, ?string $from, ?string $to): array
     {
         $expenses = Expense::forOwner($owner)->where('vendor_id', $vendor->id)
-            ->with(['category:id,name', 'boat:id,name'])
-            ->orderBy('date')->orderBy('id')->get();
+            ->when($from, fn ($q) => $q->whereDate('date', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('date', '<=', $to))
+            ->with(['category:id,name', 'trip:id,trip_number', 'paymentStatus:id,name'])
+            ->orderByDesc('date')->orderByDesc('id')->get();
 
-        $entries = $expenses->map(fn (Expense $e) => [
-            'date' => $e->date->format('Y-m-d'),
-            'number' => $e->expense_number,
-            'details' => trim(($e->category?->name ?? '').($e->boat ? ' — '.$e->boat->name : '').($e->description ? ' — '.$e->description : ''), ' —') ?: '—',
-            'debit' => round($e->total, 2),
-            'credit' => round($e->paid_amount, 2),
-        ]);
-
-        return $this->statement($entries, $from, $to, [
-            $this->col('date', 'التاريخ', 'date'),
-            $this->col('number', 'السند', 'code'),
-            $this->col('details', 'البيان'),
-            $this->col('debit', 'قيمة السند', 'money'),
-            $this->col('credit', 'المسدَّد', 'money'),
-            $this->col('balance', 'الرصيد', 'money', sum: false, strong: true),
-        ], 'سند') + ['party' => $vendor, 'last' => $expenses->last()?->date];
+        return [
+            'rows' => $expenses->map(fn (Expense $e) => [
+                'number' => $e->expense_number,
+                'category' => $e->category?->name ?? '—',
+                'trip' => $e->trip?->trip_number ?? '—',
+                'date' => $e->date->format('Y-m-d'),
+                'status' => $e->paymentStatus?->name ?? $this->paymentStatus((float) $e->paid_amount, (float) $e->total),
+                'is_paid' => $e->is_paid,
+                'amount' => round((float) $e->total, 2),
+            ])->all(),
+            'total_expenses' => round((float) $expenses->sum('total'), 2),
+            'total_due' => round((float) $expenses->sum(fn (Expense $e) => $e->remaining), 2),
+        ];
     }
 
     /**
-     * @param  Collection<int, array<string, mixed>>  $entries  مرتّبة بالتاريخ
+     * مستحقات الفرد الشهرية من سطور مسيراته (صافيها بعد السلف)، والمدفوع منها
+     * وغير المدفوع، بأشهر الفترة.
+     *
+     * @return array{rows: array<int, array<string, mixed>>, totals: array<string, float|int>}
+     */
+    public function crewStatement(Fisher $fisher, ?string $from, ?string $to): array
+    {
+        $fromKey = $from ? substr($from, 0, 7) : null;
+        $toKey = $to ? substr($to, 0, 7) : null;
+
+        $rows = $fisher->payrollLines()->with('payroll.boat:id,name')->get()
+            ->filter(fn (PayrollLine $line) => (! $fromKey || $line->payroll->period_key >= $fromKey) && (! $toKey || $line->payroll->period_key <= $toKey))
+            ->sortBy(fn (PayrollLine $line) => $line->payroll->period_key)
+            ->map(fn (PayrollLine $line) => [
+                'period' => sprintf('%02d / %04d', $line->payroll->month, $line->payroll->year),
+                'boat' => $line->payroll->boat?->name,
+                'due' => round($line->net, 2),
+                'paid' => $line->is_paid ? round($line->paid_amount, 2) : 0.0,
+                'unpaid' => $line->is_paid ? 0.0 : round($line->net, 2),
+                'paid_date' => $line->paid_at?->format('Y-m-d'),
+                'is_paid' => $line->is_paid,
+                'notes' => $line->notes,
+            ])->values()->all();
+
+        return [
+            'rows' => $rows,
+            'totals' => $this->totals($rows, ['due', 'paid', 'unpaid']) + ['months' => count($rows)],
+        ];
+    }
+
+    // ─────────────────────────── الإقفال السنوي ───────────────────────────
+
+    /**
+     * السنوات التي بها أشهر مُغلقة، الأحدث أولًا، ولكلٍّ ملخصها.
+     *
+     * @return array<int, array{year: int, summary: array<string, mixed>}>
+     */
+    public function closedYears(User $owner, ?int $boatId = null): array
+    {
+        return MonthClosing::forOwner($owner)->distinct()->orderByDesc('year')->pluck('year')
+            ->map(fn ($year) => ['year' => (int) $year, 'summary' => $this->annualSummary($owner, (int) $year, $boatId)])
+            ->all();
+    }
+
+    /**
+     * السنة من أشهرها المُغلقة وحدها (لقطة كل إغلاق)، والشهر غير المُغلق null.
+     * المؤجَّل في المجموع مؤجَّل آخر شهر مُغلق — ينتقل ولا يُجمع.
+     *
+     * @return array{year: int, months: array<int, array<string, mixed>|null>, totals: array<string, float>, closed_count: int}
+     */
+    public function annualSummary(User $owner, int $year, ?int $boatId = null): array
+    {
+        $months = [];
+
+        foreach (range(1, 12) as $m) {
+            $month = $this->month($owner, $year, $m);
+            $start = CarbonImmutable::create($year, $m, 1);
+
+            $months[$m] = $month !== null && $month['status'] === 'closed'
+                ? $this->financials($owner, $start, $start->endOfMonth(), $boatId) + ['closed_at' => $month['closing']->closed_at]
+                : null;
+        }
+
+        $closed = array_filter($months);
+        $totals = [];
+
+        foreach (['gross_sales', 'net_owner_revenue', 'trip_expenses', 'general_expenses', 'depreciation', 'total_expenses', 'net_profit', 'owner_share', 'crew_share'] as $field) {
+            $totals[$field] = round(array_sum(array_column($closed, $field)), 2);
+        }
+
+        $totals['depreciation_deferred'] = $closed === [] ? 0.0 : (float) $closed[array_key_last($closed)]['depreciation_deferred'];
+
+        return ['year' => $year, 'months' => $months, 'totals' => $totals, 'closed_count' => count($closed)];
+    }
+
+    /**
+     * تحليل السنة للتقرير المطبوع (annualAnalysis في hispa): الرحلات، ومسيرات
+     * الطاقم، والمصروفات بفئاتها ومجموعاتها، والمبيعات، والمصيد، وأرباح كل فرد،
+     * والمؤشرات والتوصيات — كلها مقصورة على أشهر السنة المُغلقة.
+     *
+     * @param  array<string, mixed>  $summary  {@see annualSummary()}
      * @return array<string, mixed>
      */
-    private function statement(Collection $entries, ?string $from, ?string $to, array $columns, string $noun): array
+    public function annualAnalysis(User $owner, array $summary, ?int $boatId = null): array
     {
-        $before = $from ? $entries->filter(fn ($e) => $e['date'] < $from) : collect();
-        $opening = round($before->sum('debit') - $before->sum('credit'), 2);
+        $year = $summary['year'];
+        $closedMonths = array_keys(array_filter($summary['months']));
 
-        $balance = $opening;
-        $rows = $entries
-            ->filter(fn ($e) => (! $from || $e['date'] >= $from) && (! $to || $e['date'] <= $to))
-            ->map(function ($e) use (&$balance) {
-                $balance = round($balance + $e['debit'] - $e['credit'], 2);
+        $lines = MonthClosing::forOwner($owner)->where('year', $year)->whereIn('month', $closedMonths ?: [0])
+            ->with('boats.payroll.lines')->get()
+            ->flatMap(fn (MonthClosing $closing) => $closing->boats
+                ->when($boatId, fn ($boats) => $boats->where('boat_id', $boatId))
+                ->pluck('payroll')->filter()->flatMap->lines);
 
-                return $e + ['balance' => $balance];
-            })->values()->all();
+        $trips = Trip::forOwner($owner)->whereYear('departure_time', $year)->when($boatId, fn ($q) => $q->where('boat_id', $boatId));
+        $total = (clone $trips)->count();
+        $sold = (clone $trips)->where('sale_status', Trip::SALE_DONE)->count();
+        $cancelled = (clone $trips)->where('status', Trip::CANCELLED)->count();
 
-        $table = $this->table($columns, $rows);
+        [$byCategory, $byType] = $this->annualExpenses($owner, $year, $closedMonths, $boatId);
 
-        if ($table['totals'] !== null) {
-            $table['totals']['balance'] = $balance;
+        return [
+            'trips' => ['total' => $total, 'sold' => $sold, 'cancelled' => $cancelled, 'active' => max($total - $sold - $cancelled, 0)],
+            'payroll' => [
+                'crew_count' => $lines->pluck('fisher_id')->filter()->unique()->count(),
+                'crew_pool' => $summary['totals']['crew_share'],
+                'owner_share' => $summary['totals']['owner_share'],
+                'advances' => round((float) $lines->sum('advances'), 2),
+                'paid' => round((float) $lines->filter(fn (PayrollLine $l) => $l->is_paid)->sum('paid_amount'), 2),
+                'remaining' => round((float) $lines->reject(fn (PayrollLine $l) => $l->is_paid)->sum('net'), 2),
+            ],
+            'expenses_by_category' => $byCategory,
+            'expenses_by_type' => $byType,
+            'sales' => $this->annualSales($owner, $year, $closedMonths, $boatId),
+            'catch' => $this->annualCatch($owner, $year, $closedMonths, $boatId),
+            'crew_members' => $lines->groupBy(fn (PayrollLine $l) => $l->fisher_id ?? 'n:'.$l->member_name)
+                ->map(fn (Collection $group) => [
+                    'name' => $group->first()->member_name,
+                    'role' => self::role($group->first()->is_captain),
+                    'months' => $group->count(),
+                    'earned' => round((float) $group->sum(fn (PayrollLine $l) => $l->gross), 2),
+                    'advances' => round((float) $group->sum('advances'), 2),
+                    'paid' => round((float) $group->filter(fn (PayrollLine $l) => $l->is_paid)->sum('paid_amount'), 2),
+                    'remaining' => round((float) $group->reject(fn (PayrollLine $l) => $l->is_paid)->sum('net'), 2),
+                ])->sortByDesc('earned')->values()->all(),
+            'analysis' => $this->insights($summary, $byCategory),
+        ];
+    }
+
+    /**
+     * @param  array<int, int>  $months
+     * @return array{0: array<int, array{name: string, total: float}>, 1: array<int, array{label: string, total: float}>}
+     */
+    private function annualExpenses(User $owner, int $year, array $months, ?int $boatId): array
+    {
+        if ($months === []) {
+            return [[], []];
+        }
+
+        $rows = Expense::forOwner($owner)
+            ->leftJoin('expense_categories', 'expense_categories.id', '=', 'expenses.expense_category_id')
+            ->leftJoin('expense_groups', 'expense_groups.id', '=', 'expense_categories.expense_group_id')
+            ->when($boatId, fn ($q) => $q->where('expenses.boat_id', $boatId))
+            ->where(fn ($q) => $this->inMonths($q, 'expenses.date', $year, $months))
+            ->selectRaw('expense_categories.name AS category, expense_groups.name AS grp, SUM(expenses.total) AS total')
+            ->groupBy('expense_categories.id', 'expense_categories.name', 'expense_groups.name')
+            ->get();
+
+        $byCategory = $rows->map(fn ($r) => ['name' => $r->category ?? '—', 'total' => round((float) $r->total, 2)])
+            ->sortByDesc('total')->values()->all();
+        $byType = $rows->groupBy(fn ($r) => $r->grp ?? 'أخرى')
+            ->map(fn (Collection $group, $label) => ['label' => (string) $label, 'total' => round((float) $group->sum('total'), 2)])
+            ->sortByDesc('total')->values()->all();
+
+        return [$byCategory, $byType];
+    }
+
+    /**
+     * مبيعات الأشهر المُغلقة: بيعك المباشر وسطور مصيدك في فواتير الدلالين.
+     *
+     * @param  array<int, int>  $months
+     * @return array{totals: array<string, float|int>, by_fish: array<int, array<string, mixed>>, top_customers: array<int, array<string, mixed>>, by_boat: array<int, array<string, mixed>>}
+     */
+    private function annualSales(User $owner, int $year, array $months, ?int $boatId): array
+    {
+        $empty = ['totals' => ['gross' => 0.0, 'net_owner' => 0.0, 'invoices' => 0, 'avg_invoice' => 0.0], 'by_fish' => [], 'top_customers' => [], 'by_boat' => []];
+
+        if ($months === []) {
+            return $empty;
+        }
+
+        $tripIds = $boatId ? Trip::where('boat_id', $boatId)->pluck('id') : null;
+
+        $direct = Sale::forSeller($owner)
+            ->when($tripIds, fn ($q) => $q->whereIn('trip_id', $tripIds))
+            ->where(fn ($q) => $this->inMonths($q, 'sold_at', $year, $months))
+            ->with(['customer:id,name', 'trip:id,boat_id', 'trip.boat:id,name', 'items.species:id,name_ar'])
+            ->get();
+
+        $dalal = SaleItem::soldByDalalFor($owner)
+            ->when($tripIds, fn ($q) => $q->whereIn('sale_items.trip_id', $tripIds))
+            ->where(fn ($q) => $this->inMonths($q, 'sales.sold_at', $year, $months))
+            ->select('sale_items.*', 'sales.seller_id AS dalal_id')
+            ->with(['species:id,name_ar', 'trip:id,boat_id', 'trip.boat:id,name'])
+            ->get();
+
+        $gross = round((float) $direct->sum('total') + (float) $dalal->sum('total'), 2);
+        $invoices = $direct->count() + $dalal->pluck('sale_id')->unique()->count();
+
+        $fish = $direct->flatMap->items->map(fn (SaleItem $i) => ['name' => $i->species?->name_ar ?? '—', 'weight' => (float) $i->weight_kg, 'total' => (float) $i->total])
+            ->merge($dalal->map(fn (SaleItem $i) => ['name' => $i->species?->name_ar ?? '—', 'weight' => (float) $i->weight_kg, 'total' => (float) $i->total]))
+            ->groupBy('name')
+            ->map(fn (Collection $g, $name) => ['name' => $name, 'weight' => round($g->sum('weight'), 2), 'total' => round($g->sum('total'), 2)])
+            ->sortByDesc('total')->take(10)->values()->all();
+
+        $dalalNames = User::whereIn('id', $dalal->pluck('dalal_id')->unique())->pluck('name', 'id');
+        $customers = $direct->groupBy(fn (Sale $s) => 'c:'.($s->customer_id ?? 0))
+            ->map(fn (Collection $g) => ['name' => $g->first()->customer?->name ?? 'عميل نقدي', 'invoices' => $g->count(), 'total' => round((float) $g->sum('total'), 2)])
+            ->merge($dalal->groupBy(fn (SaleItem $i) => 'd:'.$i->dalal_id)
+                ->map(fn (Collection $g) => ['name' => 'الدلال '.($dalalNames[$g->first()->dalal_id] ?? '—'), 'invoices' => $g->pluck('sale_id')->unique()->count(), 'total' => round((float) $g->sum('total'), 2)]))
+            ->sortByDesc('total')->take(10)->values()->all();
+
+        $byBoat = [];
+
+        if ($boatId === null) {
+            $byBoat = $direct->map(fn (Sale $s) => ['boat' => $s->trip?->boat?->name ?? 'غير محدد', 'sale' => 's'.$s->id, 'total' => (float) $s->total])
+                ->merge($dalal->map(fn (SaleItem $i) => ['boat' => $i->trip?->boat?->name ?? 'غير محدد', 'sale' => 'd'.$i->sale_id, 'total' => (float) $i->total]))
+                ->groupBy('boat')
+                ->map(fn (Collection $g, $name) => ['name' => $name, 'invoices' => $g->pluck('sale')->unique()->count(), 'total' => round($g->sum('total'), 2)])
+                ->sortByDesc('total')->values()->all();
         }
 
         return [
-            'table' => $table,
-            'opening' => $from ? $opening : null,
-            'closing' => $balance,
-            'count' => count($rows),
-            'all_time' => round($entries->sum('debit') - $entries->sum('credit'), 2),
-            'notes' => [
-                ($noun === 'فاتورة' ? 'كل فاتورة تُقيَّد بقيمتها ويقابلها ما حُصِّل منها' : 'كل سند يُقيَّد بقيمته ويقابله ما سُدِّد منه').'، والرصيد الجاري = الرصيد الافتتاحي + القيم − '.($noun === 'فاتورة' ? 'المحصّل.' : 'المسدَّد.'),
+            'totals' => [
+                'gross' => $gross,
+                'net_owner' => round((float) $direct->sum('owner_net') + (float) $dalal->sum('owner_net'), 2),
+                'invoices' => $invoices,
+                'avg_invoice' => $invoices > 0 ? round($gross / $invoices, 2) : 0.0,
             ],
+            'by_fish' => $fish,
+            'top_customers' => $customers,
+            'by_boat' => $byBoat,
+        ];
+    }
+
+    /**
+     * مصيد الأشهر المُغلقة: رحلات لها مصيد، ووزنه وقيمته، وأعلى الأنواع قيمةً.
+     *
+     * @param  array<int, int>  $months
+     * @return array{trips_with_catch: int, total_weight: float, total_amount: float, by_species: array<int, array<string, mixed>>}
+     */
+    private function annualCatch(User $owner, int $year, array $months, ?int $boatId): array
+    {
+        if ($months === []) {
+            return ['trips_with_catch' => 0, 'total_weight' => 0.0, 'total_amount' => 0.0, 'by_species' => []];
+        }
+
+        $records = CatchRecord::query()
+            ->whereHas('trip', fn ($q) => $q->forOwner($owner)->when($boatId, fn ($q) => $q->where('boat_id', $boatId)))
+            ->where(fn ($q) => $this->inMonths($q, 'recorded_at', $year, $months))
+            ->with('species:id,name_ar')->get()
+            ->map(function (CatchRecord $r) {
+                $kg = (float) ($r->counted_kg ?? $r->quantity_kg);
+
+                return ['trip_id' => $r->trip_id, 'name' => $r->species?->name_ar ?? '—', 'weight' => $kg, 'total' => (float) ($r->total_value ?? $kg * (float) $r->price_per_kg)];
+            });
+
+        return [
+            'trips_with_catch' => $records->pluck('trip_id')->unique()->count(),
+            'total_weight' => round($records->sum('weight'), 2),
+            'total_amount' => round($records->sum('total'), 2),
+            'by_species' => $records->groupBy('name')
+                ->map(fn (Collection $g, $name) => ['name' => $name, 'weight' => round($g->sum('weight'), 2), 'total' => round($g->sum('total'), 2)])
+                ->sortByDesc('total')->take(10)->values()->all(),
+        ];
+    }
+
+    /**
+     * قراءة المحلل للسنة (buildInsights في hispa): أفضل شهر وأضعفه، والهامش،
+     * ونسبة المصروفات، والاتجاه، والحكم، والمؤشرات، والتوصيات.
+     *
+     * @param  array<int, array{name: string, total: float}>  $expensesByCategory
+     * @return array<string, mixed>
+     */
+    private function insights(array $summary, array $expensesByCategory): array
+    {
+        $closed = array_filter($summary['months']);
+        $count = count($closed);
+        $t = $summary['totals'];
+        $nets = array_map(fn (array $m) => (float) $m['net_profit'], $closed);
+
+        $bestMonth = $nets ? array_search(max($nets), $nets, true) : null;
+        $worstMonth = $nets ? array_search(min($nets), $nets, true) : null;
+        $avgNet = $count > 0 ? round($t['net_profit'] / $count, 2) : 0.0;
+        $margin = $t['gross_sales'] > 0 ? round($t['net_profit'] / $t['gross_sales'] * 100, 1) : 0.0;
+        $expenseRatio = $t['gross_sales'] > 0 ? round($t['total_expenses'] / $t['gross_sales'] * 100, 1) : 0.0;
+        $profitable = count(array_filter($nets, fn ($n) => $n > 0));
+        $losing = count(array_filter($nets, fn ($n) => $n < 0));
+        $isProfitable = $t['net_profit'] > 0;
+
+        $trend = 'flat';
+        if ($count >= 2) {
+            $ordered = array_values($nets);
+            $half = max(intdiv($count, 2), 1);
+            $diff = array_sum(array_slice($ordered, -$half)) / $half - array_sum(array_slice($ordered, 0, $half)) / $half;
+            $threshold = abs($avgNet) * 0.1;
+            $trend = $diff > $threshold ? 'up' : ($diff < -$threshold ? 'down' : 'flat');
+        }
+
+        // الأرقام معزولة LTR داخل الجملة العربية: بدونها تُطبع "%12" و"1,800.00-".
+        $money = fn (float $v) => "\u{2066}".number_format($v, 2)."\u{2069}";
+        $pct = fn (float $v) => "\u{2066}{$v}%\u{2069}";
+
+        $insights = [
+            $isProfitable
+                ? 'السنة رابحة بصافي ربح '.$money($t['net_profit']).' ريال وبهامش ربح '.$pct($margin).'.'
+                : 'السنة خاسرة بصافي '.$money($t['net_profit']).' ريال — الإيرادات لم تغطِّ المصروفات.',
+        ];
+        if ($bestMonth !== null) {
+            $insights[] = 'أفضل شهر: '.self::MONTHS[$bestMonth].' بصافي ربح '.$money($nets[$bestMonth]).' ريال.';
+        }
+        if ($worstMonth !== null && $worstMonth !== $bestMonth) {
+            $insights[] = 'أضعف شهر: '.self::MONTHS[$worstMonth].' بصافي '.$money($nets[$worstMonth]).' ريال.';
+        }
+        $insights[] = 'متوسط صافي الربح الشهري '.$money($avgNet).' ريال على مدى '.$count.' شهرًا مقفلًا.';
+        $insights[] = 'المصروفات تمثل '.$pct($expenseRatio).' من إجمالي المبيعات.';
+        $insights[] = match ($trend) {
+            'up' => 'الأداء في تحسّن؛ صافي الربح في النصف الثاني من السنة أعلى من النصف الأول.',
+            'down' => 'الأداء في تراجع؛ صافي الربح في النصف الثاني من السنة أقل من النصف الأول.',
+            default => 'الأداء مستقر تقريبًا على مدار السنة دون تغيّر كبير.',
+        };
+        $insights[] = $profitable.' شهر رابح مقابل '.$losing.' شهر خاسر من أصل '.$count.' شهر مقفل.';
+
+        $recommendations = array_values(array_filter([
+            $isProfitable ? null : 'راجع هيكل المصروفات والأسعار؛ السنة أغلقت على خسارة وتحتاج إجراءً تصحيحيًا.',
+            $expenseRatio > 70 ? 'نسبة المصروفات مرتفعة ('.$pct($expenseRatio).')؛ ابحث عن بنود يمكن ترشيدها.' : null,
+            $margin > 0 && $margin < 15 ? 'هامش الربح ضعيف ('.$pct($margin).')؛ فكّر في رفع الأسعار أو خفض التكاليف.' : null,
+            $trend === 'down' ? 'اتجاه الربح للأسفل؛ حلّل أسباب تراجع النصف الثاني من السنة.' : null,
+            $losing > 0 ? 'يوجد '.$losing.' شهر خاسر؛ راجع تفاصيلها لتفادي تكرارها.' : null,
+            $expensesByCategory ? 'أكبر بند مصروفات هو «'.$expensesByCategory[0]['name'].'» بمبلغ '.$money($expensesByCategory[0]['total']).' ريال؛ ركّز على ضبطه.' : null,
+        ]));
+
+        return [
+            'closed_count' => $count,
+            'best' => $bestMonth !== null ? ['month' => $bestMonth, 'net' => $nets[$bestMonth]] : null,
+            'worst' => $worstMonth !== null ? ['month' => $worstMonth, 'net' => $nets[$worstMonth]] : null,
+            'avg_net' => $avgNet,
+            'margin' => $margin,
+            'expense_ratio' => $expenseRatio,
+            'profitable_months' => $profitable,
+            'loss_months' => $losing,
+            'is_profitable' => $isProfitable,
+            'trend' => $trend,
+            'insights' => $insights,
+            'recommendations' => $recommendations ?: ['المؤشرات المالية للسنة في وضع جيد؛ حافظ على نفس النهج.'],
         ];
     }
 
     // ─────────────────────────── مصادر مشتركة ───────────────────────────
 
     /**
-     * صافي الإيراد مقسومًا: بيع مباشر، وبيع الدلال بإجماليه واقتطاعه وصافيه.
+     * إجمالي مبيعات مصيدك (مباشرة وعبر الدلال)، واقتطاعها، وصافيك منها.
      *
-     * @return array{direct_net: float, dalal_gross: float, dalal_cut: float, dalal_net: float, net: float}
+     * @return array{gross: float, cut: float, net: float}
      */
-    public function revenueSplit(User $owner, CarbonImmutable $from, CarbonImmutable $to, ?int $boatId = null): array
+    private function salesTotals(User $owner, CarbonImmutable $from, CarbonImmutable $to, ?int $boatId): array
     {
-        $tripIds = $boatId ? Trip::where('boat_id', $boatId)->pluck('id') : null;
-        $sales = $this->salesByTrip($owner, $from, $to, $tripIds);
+        $sales = $this->salesByTrip($owner, $from, $to, $boatId ? Trip::where('boat_id', $boatId)->pluck('id') : null);
+        $gross = round($sales->sum('direct_gross') + $sales->sum('dalal_gross'), 2);
+        $net = round($sales->sum('direct_net') + $sales->sum('dalal_net'), 2);
 
-        $direct = round($sales->sum('direct_net'), 2);
-        $dalalNet = round($sales->sum('dalal_net'), 2);
-
-        return [
-            'direct_net' => $direct,
-            'dalal_gross' => round($sales->sum('dalal_gross'), 2),
-            'dalal_cut' => round($sales->sum('dalal_cut'), 2),
-            'dalal_net' => $dalalNet,
-            'net' => round($direct + $dalalNet, 2),
-        ];
+        return ['gross' => $gross, 'cut' => round($gross - $net, 2), 'net' => $net];
     }
 
     /**
@@ -936,35 +1000,24 @@ class OwnerReports
             ->selectRaw('sales.trip_id AS trip_id, SUM(sales.total) AS gross, SUM(sales.owner_net) AS net')
             ->groupBy('sales.trip_id')->get()->keyBy('trip_id');
 
-        $directKg = SaleItem::join('sales', 'sales.id', '=', 'sale_items.sale_id')
-            ->where('sales.seller_id', $owner->id)->whereNotNull('sales.trip_id')
-            ->when($tripIds, fn ($q) => $q->whereIn('sales.trip_id', $tripIds))
-            ->tap($range)
-            ->selectRaw('sales.trip_id AS trip_id, SUM(sale_items.weight_kg) AS kg')
-            ->groupBy('sales.trip_id')->pluck('kg', 'trip_id');
-
         $dalal = SaleItem::soldByDalalFor($owner)->whereNotNull('sale_items.trip_id')
             ->when($tripIds, fn ($q) => $q->whereIn('sale_items.trip_id', $tripIds))
             ->tap($range)
-            ->selectRaw('sale_items.trip_id AS trip_id, SUM(sale_items.total) AS gross, SUM(sale_items.commission_amount + sale_items.wage_amount) AS cut, SUM(sale_items.owner_net) AS net, SUM(sale_items.weight_kg) AS kg')
+            ->selectRaw('sale_items.trip_id AS trip_id, SUM(sale_items.total) AS gross, SUM(sale_items.owner_net) AS net')
             ->groupBy('sale_items.trip_id')->get()->keyBy('trip_id');
 
         return $direct->keys()->merge($dalal->keys())->unique()->mapWithKeys(fn ($tripId) => [(int) $tripId => [
             'direct_gross' => round((float) ($direct[$tripId]->gross ?? 0), 2),
             'direct_net' => round((float) ($direct[$tripId]->net ?? 0), 2),
-            'direct_kg' => round((float) ($directKg[$tripId] ?? 0), 2),
             'dalal_gross' => round((float) ($dalal[$tripId]->gross ?? 0), 2),
-            'dalal_cut' => round((float) ($dalal[$tripId]->cut ?? 0), 2),
             'dalal_net' => round((float) ($dalal[$tripId]->net ?? 0), 2),
-            'dalal_kg' => round((float) ($dalal[$tripId]->kg ?? 0), 2),
         ]]);
     }
 
     /**
-     * المباع لكل صنف: السطور المباشرة بعد توزيع خصم فاتورتها، وسطور الدلال
-     * بإجماليها واقتطاعها وصافيها.
+     * المباع لكل نوع: السطور المباشرة بعد توزيع خصم فاتورتها، وسطور الدلال.
      *
-     * @return array<int, array<string, mixed>>
+     * @return array<int, array{species_id: int, kg: float, gross: float}>
      */
     private function speciesSold(User $owner, ?CarbonImmutable $from, ?CarbonImmutable $to, ?Collection $tripIds = null): array
     {
@@ -982,84 +1035,37 @@ class OwnerReports
         $dalal = SaleItem::soldByDalalFor($owner)
             ->when($tripIds, fn ($q) => $q->whereIn('sale_items.trip_id', $tripIds))
             ->tap($range)
-            ->selectRaw('sale_items.species_id AS species_id, SUM(sale_items.weight_kg) AS kg, SUM(sale_items.total) AS gross, SUM(sale_items.commission_amount + sale_items.wage_amount) AS cut, SUM(sale_items.owner_net) AS net')
+            ->selectRaw('sale_items.species_id AS species_id, SUM(sale_items.weight_kg) AS kg, SUM(sale_items.total) AS gross')
             ->groupBy('sale_items.species_id')->get()->keyBy('species_id');
 
-        $ids = $direct->keys()->merge($dalal->keys())->unique();
-        $names = Species::whereIn('id', $ids)->pluck('name_ar', 'id');
-
-        return $ids->map(function ($id) use ($direct, $dalal, $names) {
-            $directKg = round((float) ($direct[$id]->kg ?? 0), 2);
-            $directGross = round((float) ($direct[$id]->gross ?? 0), 2);
-            $dalalKg = round((float) ($dalal[$id]->kg ?? 0), 2);
-            $gross = round($directGross + (float) ($dalal[$id]->gross ?? 0), 2);
-            $kg = round($directKg + $dalalKg, 2);
-
-            return [
-                'species_id' => (int) $id,
-                'species' => $names[$id] ?? '—',
-                'direct_kg' => $directKg,
-                'dalal_kg' => $dalalKg,
-                'kg' => $kg,
-                'gross' => $gross,
-                'cut' => round((float) ($dalal[$id]->cut ?? 0), 2),
-                'net' => round($directGross + (float) ($dalal[$id]->net ?? 0), 2),
-                'avg_price' => $this->ratio($gross, $kg),
-            ];
-        })->values()->all();
+        return $direct->keys()->merge($dalal->keys())->unique()->map(fn ($id) => [
+            'species_id' => (int) $id,
+            'kg' => round((float) ($direct[$id]->kg ?? 0) + (float) ($dalal[$id]->kg ?? 0), 2),
+            'gross' => round((float) ($direct[$id]->gross ?? 0) + (float) ($dalal[$id]->gross ?? 0), 2),
+        ])->values()->all();
     }
 
     /**
-     * @return Collection<int, float>
-     */
-    private function caughtByTrip(Collection $tripIds): Collection
-    {
-        return CatchRecord::whereIn('trip_id', $tripIds)
-            ->selectRaw('trip_id, SUM(COALESCE(counted_kg, quantity_kg)) AS kg')
-            ->groupBy('trip_id')->pluck('kg', 'trip_id')
-            ->map(fn ($kg) => round((float) $kg, 2));
-    }
-
-    /**
-     * المصروفات مجمّعة: مجموعة ← فئات بأرقامها.
+     * يقصر الاستعلام على أشهر من السنة (whereDate: عمود `expenses.date` يخزّن
+     * وقتًا أيضًا).
      *
-     * @return array{groups: array<int, array{name: string, total: float, categories: array<int, array<string, mixed>>}>, total: float}
+     * @param  array<int, int>  $months
      */
-    private function expenseCategories(User $owner, CarbonImmutable $from, CarbonImmutable $to, ?string $boat): array
+    private function inMonths(Builder $query, string $column, int $year, array $months): void
     {
-        $rows = Expense::forOwner($owner)
-            ->leftJoin('expense_categories', 'expense_categories.id', '=', 'expenses.expense_category_id')
-            ->leftJoin('expense_groups', 'expense_groups.id', '=', 'expense_categories.expense_group_id')
-            ->whereDate('expenses.date', '>=', $from->toDateString())
-            ->whereDate('expenses.date', '<=', $to->toDateString())
-            ->when($boat === 'general', fn ($q) => $q->whereNull('expenses.boat_id'))
-            ->when($boat !== null && $boat !== 'general', fn ($q) => $q->where('expenses.boat_id', (int) $boat))
-            ->selectRaw('expense_groups.name AS group_name, expense_groups.id AS group_id, expense_categories.name AS category, COUNT(*) AS n,
-                SUM(expenses.subtotal) AS subtotal, SUM(expenses.discount) AS discount, SUM(expenses.vat_amount) AS vat,
-                SUM(expenses.total) AS total, SUM(expenses.paid_amount) AS paid')
-            ->groupBy('expense_groups.id', 'expense_groups.name', 'expense_categories.id', 'expense_categories.name')
-            ->get();
+        foreach ($months as $m) {
+            $start = CarbonImmutable::create($year, $m, 1);
+            $query->orWhere(fn ($q) => $q->whereDate($column, '>=', $start->toDateString())->whereDate($column, '<=', $start->endOfMonth()->toDateString()));
+        }
+    }
 
-        $groups = $rows->groupBy(fn ($r) => $r->group_id ?? 0)->map(function (Collection $cats) {
-            $categories = $cats->map(fn ($c) => [
-                'name' => $c->category ?? '—',
-                'count' => (int) $c->n,
-                'subtotal' => round((float) $c->subtotal, 2),
-                'discount' => round((float) $c->discount, 2),
-                'vat' => round((float) $c->vat, 2),
-                'total' => round((float) $c->total, 2),
-                'paid' => round((float) $c->paid, 2),
-                'remaining' => round((float) $c->total - (float) $c->paid, 2),
-            ])->sortByDesc('total')->values()->all();
-
-            return [
-                'name' => $cats->first()->group_name ?? '—',
-                'total' => round(array_sum(array_column($categories, 'total')), 2),
-                'categories' => $categories,
-            ];
-        })->sortByDesc('total')->values()->all();
-
-        return ['groups' => $groups, 'total' => round(array_sum(array_column($groups, 'total')), 2)];
+    private function paymentStatus(float $paid, float $total): string
+    {
+        return match (true) {
+            $total > 0 && $paid >= $total => 'مدفوع',
+            $paid > 0 => 'مدفوع جزئيًا',
+            default => 'غير مدفوع',
+        };
     }
 
     /**
@@ -1067,55 +1073,21 @@ class OwnerReports
      */
     private function emptySales(): array
     {
-        return array_fill_keys(['direct_gross', 'direct_net', 'direct_kg', 'dalal_gross', 'dalal_cut', 'dalal_net', 'dalal_kg'], 0.0);
+        return array_fill_keys(['direct_gross', 'direct_net', 'dalal_gross', 'dalal_net'], 0.0);
     }
 
-    private function percent(float $part, float $whole): ?float
+    private function margin(float $profit, float $net): float
     {
-        return $whole > 0 ? round($part / $whole * 100, 1) : null;
-    }
-
-    private function ratio(float $a, float $b): ?float
-    {
-        return $b > 0 ? round($a / $b, 2) : null;
-    }
-
-    /**
-     * عمود جدول: `format` = text | code | date | money | price | kg | int | pct.
-     * المجموع افتراضيًا للمبالغ والأوزان والأعداد.
-     *
-     * @return array{key: string, label: string, format: string, sum: bool, strong: bool}
-     */
-    private function col(string $key, string $label, string $format = 'text', ?bool $sum = null, bool $strong = false): array
-    {
-        return [
-            'key' => $key,
-            'label' => $label,
-            'format' => $format,
-            'sum' => $sum ?? in_array($format, ['money', 'kg', 'int'], true),
-            'strong' => $strong,
-        ];
+        return $net > 0 ? round($profit / $net * 100, 2) : 0.0;
     }
 
     /**
      * @param  array<int, array<string, mixed>>  $rows
-     * @param  array<string, mixed>  $overrides  مجاميع لا تُجمع (نسب، أرصدة)
-     * @return array{title: ?string, columns: array, rows: array, totals: ?array}
+     * @param  array<int, string>  $keys
+     * @return array<string, float>
      */
-    private function table(array $columns, array $rows, array $overrides = [], ?string $title = null): array
+    private function totals(array $rows, array $keys): array
     {
-        $totals = null;
-
-        if ($rows !== []) {
-            $totals = [];
-            foreach ($columns as $column) {
-                if ($column['sum']) {
-                    $totals[$column['key']] = round(array_sum(array_map(fn ($row) => (float) ($row[$column['key']] ?? 0), $rows)), 2);
-                }
-            }
-            $totals = $overrides + $totals;
-        }
-
-        return ['title' => $title, 'columns' => $columns, 'rows' => $rows, 'totals' => $totals];
+        return collect($keys)->mapWithKeys(fn ($key) => [$key => round(array_sum(array_column($rows, $key)), 2)])->all();
     }
 }

@@ -531,11 +531,11 @@ $adminPanel = function () use ($operationsConsole): void {
             Route::get('/month-closings/{closing}/print', [OwnerMonthClosingController::class, 'print'])->name('month-closings.print');
             Route::delete('/month-closings/{closing}', [OwnerMonthClosingController::class, 'reopen'])->name('month-closings.reopen');
 
-            // التقارير (O6): المركز، وكل تقرير ويب + طباعة A4 + Excel من بنية واحدة.
+            // التقارير (O6) بنسق hispa: المركز، وكل تقرير صفحة ويب + ورقة A4 للطباعة.
             Route::get('/reports', [OwnerReportController::class, 'index'])->name('reports');
             Route::get('/reports/{report}/{mode?}', [OwnerReportController::class, 'show'])
                 ->whereIn('report', array_keys(OwnerReports::REPORTS))
-                ->whereIn('mode', ['print', 'export'])
+                ->whereIn('mode', ['print'])
                 ->name('reports.show');
         });
 

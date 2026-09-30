@@ -681,6 +681,52 @@ html.dark .delta-pill.down { color: hsl(352 85% 72%); border-color: hsl(352 85% 
 .report-card .actions { display: flex; gap: .3rem; margin-top: auto; padding-top: .7rem; }
 .report-card .actions > * { flex: 1; justify-content: center; padding: .4rem .45rem; font-size: 11px; }
 
+/*
+ * تقارير المالك بنسق hispa: مجموعات المركز (رأس ملوّن بأيقونته فوق قائمة
+ * روابط)، والمبلغ بعملته، ولون الربح والخسارة، وعمود الأرقام في طرف الجدول،
+ * وسطر المجموع، وقائمة ملخص الشهر.
+ */
+.report-groups { display: grid; gap: var(--gap); grid-template-columns: 1fr; align-items: start; }
+@media (min-width: 768px) { .report-groups { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1280px) { .report-groups { grid-template-columns: repeat(3, 1fr); } }
+.report-group { padding: 0; }
+.report-group > header { display: flex; align-items: center; gap: .6rem; padding: .75rem 1rem; font-size: .88rem; font-weight: 700; border-bottom: 1px solid var(--hair); background: hsl(var(--primary) / .07); }
+.report-group > header.success { background: hsl(160 62% 35% / .08); }
+.report-group > header.info { background: hsl(199 89% 40% / .08); }
+.report-group > header.warning { background: hsl(35 92% 45% / .1); }
+.report-group > header.danger { background: hsl(352 80% 50% / .07); }
+.report-group > header.muted { background: hsl(var(--muted) / .7); }
+.report-group a { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .7rem 1rem; font-size: .84rem; color: inherit; }
+.report-group a + a { border-top: 1px solid hsl(var(--border) / .6); }
+.report-group a svg { width: 15px; height: 15px; color: hsl(var(--muted-foreground)); }
+.report-group a:hover { background: hsl(var(--primary) / .05); color: hsl(var(--primary)); }
+.report-group a:hover svg { color: hsl(var(--primary)); }
+.kpi-icon.muted { background: hsl(var(--muted)); border-color: hsl(var(--border)); color: hsl(var(--muted-foreground)); }
+.money { white-space: nowrap; }
+.money small { margin-inline-start: .15rem; font-size: .74em; font-weight: 600; color: hsl(var(--muted-foreground)); }
+.tx-good { color: var(--st-good); }
+.tx-bad { color: var(--st-critical); }
+.data-table .end { text-align: end; }
+.data-table tfoot td { font-weight: 700; background: hsl(var(--muted) / .55); border-top: 1px solid hsl(var(--border)); }
+.data-table td.empty { padding: 2rem; text-align: center; color: hsl(var(--muted-foreground)); }
+/* جدول كثير الأعمدة (تقرير الرحلات والمبيعات): خط أصغر وخانات لا تنكسر، ويُمرَّر أفقيًا. */
+.data-table.compact th, .data-table.compact td { padding: .45rem .55rem; font-size: .74rem; white-space: nowrap; }
+.report-note { display: block; margin-top: .6rem; font-size: .74rem; color: hsl(var(--muted-foreground)); }
+.report-prompt { border: 1px solid hsl(199 89% 40% / .35); background: hsl(199 89% 40% / .08); color: hsl(199 89% 32%); padding: .75rem 1rem; font-size: .82rem; }
+html.dark .report-prompt { color: hsl(199 85% 70%); }
+.ms-statement { width: 100%; border-collapse: collapse; font-size: .84rem; margin-bottom: 1.1rem; }
+.ms-statement th, .ms-statement td { padding: .55rem 1rem; }
+.ms-statement thead th { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); text-align: start; font-weight: 700; }
+.ms-statement.distribution thead th { background: hsl(var(--muted)); color: hsl(var(--foreground)); }
+.ms-statement .section td { background: hsl(var(--muted) / .6); font-weight: 700; border-block: 1px solid hsl(var(--border)); }
+.ms-statement .line td { border-bottom: 1px solid hsl(var(--border) / .5); color: hsl(var(--muted-foreground)); }
+.ms-statement .indent { padding-inline-start: 2.25rem; }
+.ms-statement .amount { text-align: end; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ms-statement .subtotal td { font-weight: 700; color: hsl(var(--foreground)); border-top: 1px solid hsl(var(--border)); border-bottom: 2px solid hsl(var(--border)); background: hsl(var(--muted) / .35); }
+.ms-statement .subtotal.light td { background: transparent; border-bottom-width: 1px; font-weight: 600; }
+.ms-statement .total td { font-weight: 800; font-size: 1rem; padding-block: .8rem; }
+.ms-statement .faint { opacity: .6; }
+
 .chat { display: flex; flex-direction: column; gap: 1.1rem; border: 1px solid var(--hair); background: var(--surface); padding: 1.1rem; }
 .chat-row { display: flex; gap: .65rem; }
 .chat-row.me { flex-direction: row-reverse; }

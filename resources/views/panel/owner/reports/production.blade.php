@@ -3,49 +3,35 @@
 @section('title', $meta['title'])
 
 @section('content')
-    @php
-        $now = now();
-        $presets = [
-            'هذا الشهر' => ['from' => $now->copy()->startOfMonth()->toDateString(), 'to' => $now->toDateString()],
-            'آخر 3 أشهر' => ['from' => $now->copy()->subMonthsNoOverflow(2)->startOfMonth()->toDateString(), 'to' => $now->toDateString()],
-            'هذه السنة' => ['from' => $now->copy()->startOfYear()->toDateString(), 'to' => $now->toDateString()],
-        ];
-    @endphp
+    @php $money = fn ($v) => \App\Services\Owner\OwnerReports::money($v); @endphp
 
-    @include('panel.owner.reports.partials.web-head')
-    @include('panel.owner.reports.partials.web-filter', ['range' => 'dates', 'boat' => true, 'presets' => $presets])
-    @include('panel.owner.reports.partials.web-kpis')
+    @include('panel.owner.reports.partials.head')
+    @include('panel.owner.reports.partials.filter', ['showBoat' => false])
 
-    @if (count($chart['labels']) > 0)
-        <div class="card" style="margin-bottom:1.25rem">
-            @include('partials.section-head', ['icon' => 'fish', 'title' => 'المصيد والمباع', 'note' => 'أعلى عشرة أصناف مصيدًا — بالكيلوغرام'])
-            <div class="chart-wrap" style="min-height:{{ max(240, count($chart['labels']) * 44 + 60) }}px"><canvas dir="ltr" id="speciesChart" aria-label="المصيد والمباع لكل صنف"></canvas></div>
-        </div>
-    @endif
-
-    @include('panel.owner.reports.partials.web-table', ['table' => array_merge($table, ['title' => 'الأصناف']), 'icon' => 'fish', 'empty' => 'لا مصيد لرحلات هذه الفترة'])
-    @include('panel.owner.reports.partials.web-notes')
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>النوع</th>
+                    <th class="end">الوزن المصطاد</th>
+                    <th class="end">قيمة المصطاد</th>
+                    <th class="end">الوزن المباع</th>
+                    <th class="end">قيمة المباع</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($rows as $row)
+                    <tr>
+                        <td>{{ $row['fish_name'] }}</td>
+                        <td class="end num">{{ number_format($row['caught_weight'], 2) }} {{ $row['unit_name'] }}</td>
+                        <td class="end">{{ $money($row['caught_value']) }}</td>
+                        <td class="end num">{{ number_format($row['sold_weight'], 2) }} {{ $row['unit_name'] }}</td>
+                        <td class="end" style="font-weight:700">{{ $money($row['sold_value']) }}</td>
+                    </tr>
+                @empty
+                    <tr><td colspan="5" class="empty">لا توجد بيانات في هذه الفترة</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 @endsection
-
-@push('scripts')
-@include('partials.chart-setup')
-<script>
-    (function () {
-        const el = document.getElementById('speciesChart');
-        if (!el) return;
-        const c = @json($chart);
-        const kg = (v) => Number(v).toLocaleString('en-US', { maximumFractionDigits: 1 }) + ' كجم';
-        new Chart(el, {
-            type: 'bar',
-            data: {
-                labels: c.labels,
-                datasets: [
-                    { label: 'المصيد', data: c.caught, backgroundColor: hawatChart.categorical[0] },
-                    { label: 'المباع', data: c.sold, backgroundColor: hawatChart.categorical[2] },
-                ],
-            },
-            options: { indexAxis: 'y', plugins: { tooltip: { callbacks: { label: (x) => x.dataset.label + ': ' + kg(x.raw) } } }, scales: { x: { beginAtZero: true } } },
-        });
-    })();
-</script>
-@endpush
