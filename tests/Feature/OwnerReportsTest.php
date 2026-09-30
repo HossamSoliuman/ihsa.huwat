@@ -464,6 +464,13 @@ class OwnerReportsTest extends TestCase
 
         $this->asOwner()->get('/admin/owner/reports/annual-summary/print?year='.$this->month->year)->assertOk()
             ->assertSee('تفصيل الأشهر')->assertSee('أهم المؤشرات')->assertSee(AmountInWords::riyals(12980));
+
+        // سنة بلا شهر مُغلق: لا تقرير (لا "خاسرة" بصافي صفر).
+        $this->asOwner()->get('/admin/owner/reports/annual-summary/print?year='.($this->month->year - 1))->assertNotFound();
+
+        // تاريخ غير موجود يُتجاهل فتعود الفترة الافتراضية.
+        $this->asOwner()->get('/admin/owner/reports/production?from=2026-02-31&to=2026-02-31')->assertOk()
+            ->assertSee(CarbonImmutable::now()->startOfMonth()->toDateString());
     }
 
     public function test_amount_in_words(): void

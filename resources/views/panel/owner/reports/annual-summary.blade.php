@@ -44,7 +44,7 @@
                             <td class="end {{ $t['net_profit'] >= 0 ? 'tx-good' : 'tx-bad' }}" style="font-weight:700">{{ $money($t['net_profit']) }}</td>
                             <td class="end">{{ $money($t['crew_share']) }}</td>
                             <td>
-                                @if ($t['net_profit'] >= 0)
+                                @if ($t['net_profit'] > 0)
                                     <span class="badge badge-ok">رابحة</span>
                                 @else
                                     <span class="badge badge-danger">خاسرة</span>
@@ -55,7 +55,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="empty">لا توجد أشهر مقفلة في هذه السنة.</td></tr>
+                        <tr><td colspan="8" class="empty">لا توجد أشهر مقفلة بعد.</td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -121,6 +121,8 @@ class ReportController extends Controller
         $year = (int) $request->query('year', (string) now()->year);
         abort_unless($year >= 2000 && $year <= now()->year, 404);
         $summary = $this->reports->annualSummary($owner, $year, $boat?->id);
+        // سنة بلا شهر مُغلق لا تقرير لها — وإلا طُبعت "خاسرة" بصافي صفر.
+        abort_if($summary['closed_count'] === 0, 404);
 
         return $base + [
             'year' => $year,
@@ -266,7 +268,10 @@ class ReportController extends Controller
 
     private function date(mixed $value): ?CarbonImmutable
     {
-        return is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) && strtotime($value) ? CarbonImmutable::parse($value) : null;
+        // تاريخ صحيح فقط: "2026-02-31" لا يُقبل (كان يصير 3 مارس بصمت).
+        $date = is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) ? CarbonImmutable::createFromFormat('!Y-m-d', $value) : null;
+
+        return $date && $date->format('Y-m-d') === $value ? $date : null;
     }
 
     private function boat(Request $request, User $owner): ?Boat
