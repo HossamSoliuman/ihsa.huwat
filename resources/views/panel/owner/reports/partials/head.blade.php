@@ -1,6 +1,6 @@
 {{--
-    رأس صفحة التقرير كما في hispa: العنوان ووصفه، وزر الطباعة أعلى الصفحة
-    في التقريرين اللذين يضعانه هناك (قائمة الأرباح وملخص الشهر).
+    رأس صفحة التقرير كما في hispa: العنوان ووصفه، ورابط العودة إلى مركز
+    التقارير، وزر الطباعة أعلى الصفحة في التقارير التي تضعه هناك.
 --}}
 <div class="page-header">
     <div class="lead">
@@ -10,9 +10,10 @@
             @if ($description ?? true)<p>{{ $meta['description'] }}</p>@endif
         </div>
     </div>
-    @if ($print ?? false)
-        <div class="actions">
+    <div class="actions">
+        <a href="{{ route('panel.owner.reports') }}" class="btn btn-outline">@include('partials.icon', ['name' => 'chevron-right']) التقارير المفصلة</a>
+        @if ($print ?? false)
             <a href="{{ route('panel.owner.reports.show', ['report' => $key, 'mode' => 'print'] + $query) }}" target="_blank" class="btn btn-outline">@include('partials.icon', ['name' => 'printer']) طباعة</a>
-        </div>
-    @endif
+        @endif
+    </div>
 </div>

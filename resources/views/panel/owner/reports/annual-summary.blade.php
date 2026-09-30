@@ -44,11 +44,8 @@
                             <td class="end {{ $t['net_profit'] >= 0 ? 'tx-good' : 'tx-bad' }}" style="font-weight:700">{{ $money($t['net_profit']) }}</td>
                             <td class="end">{{ $money($t['crew_share']) }}</td>
                             <td>
-                                @if ($t['net_profit'] > 0)
-                                    <span class="badge badge-ok">رابحة</span>
-                                @else
-                                    <span class="badge badge-danger">خاسرة</span>
-                                @endif
+                                @php $verdict = \App\Services\Owner\OwnerReports::verdict((float) $t['net_profit']); @endphp
+                                <span class="badge {{ ['رابحة' => 'badge-ok', 'خاسرة' => 'badge-danger'][$verdict] ?? 'badge-muted' }}">{{ $verdict }}</span>
                             </td>
                             <td>
                                 <a href="{{ route('panel.owner.reports.show', ['report' => $key, 'mode' => 'print', 'year' => $row['year']] + ($boatId ? ['boat_id' => $boatId] : [])) }}" target="_blank" class="btn btn-outline" style="padding:.3rem .6rem;font-size:.74rem">@include('partials.icon', ['name' => 'printer']) طباعة</a>

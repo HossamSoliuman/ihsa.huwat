@@ -45,7 +45,7 @@
                         @forelse ($statement['rows'] as $row)
                             <tr>
                                 <td class="num">{{ $loop->iteration }}</td>
-                                <td><bdi class="num" dir="ltr">{{ $row['number'] }}</bdi></td>
+                                <td><a href="{{ route('panel.owner.sales.show', $row['sale_id']) }}"><bdi class="num" dir="ltr">{{ $row['number'] }}</bdi></a></td>
                                 <td><bdi class="num" dir="ltr">{{ $row['date'] }}</bdi></td>
                                 <td>{{ $row['payment_method'] }}</td>
                                 <td>{{ $row['payment_status'] }}</td>

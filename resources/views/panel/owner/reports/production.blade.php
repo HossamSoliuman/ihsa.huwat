@@ -22,7 +22,7 @@
             <tbody>
                 @forelse ($rows as $row)
                     <tr>
-                        <td>{{ $row['fish_name'] }}</td>
+                        <td><a href="{{ route('panel.owner.reports.show', ['report' => 'fish-quantity', 'fish_id' => $row['fish_id'], 'from' => $from, 'to' => $to]) }}" title="كميات النوع">{{ $row['fish_name'] }}</a></td>
                         <td class="end num">{{ number_format($row['caught_weight'], 2) }} {{ $row['unit_name'] }}</td>
                         <td class="end">{{ $money($row['caught_value']) }}</td>
                         <td class="end num">{{ number_format($row['sold_weight'], 2) }} {{ $row['unit_name'] }}</td>

@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Models\Vendor;
 use App\Services\Owner\MonthClosingService;
 use App\Services\Owner\OwnerReports;
+use App\Services\Owner\PayrollService;
 use App\Support\AmountInWords;
 use Carbon\CarbonImmutable;
 use Database\Seeders\LookupSeeder;
@@ -279,6 +280,89 @@ class OwnerReportsTest extends TestCase
         $this->assertEquals(0, $f['owner_share']);
     }
 
+    public function test_an_idle_boat_keeps_its_fixed_salaries_only_in_months_that_will_still_close(): void
+    {
+        $idle = Boat::factory()->ownedBy($this->owner)->create(['name' => 'قارب خامل']);
+        Fisher::factory()->ownedBy($this->owner)->onBoat($idle)->create([
+            'pay_type_id' => PayType::named(PayType::FIXED)->id,
+            'fixed_salary' => 900,
+        ]);
+        $now = CarbonImmutable::now()->startOfMonth();
+        $old = $now->subMonths(3);
+
+        // قبل أي إغلاق: الإغلاق يبدأ بالشهر الماضي، فالشهر الجاري سيُرحِّل الراتب،
+        // وشهر أقدم بلا نشاط للقارب لا يُعدّ.
+        $this->assertEquals(900, $this->reports()->financials($this->owner, $now, $now->endOfMonth(), $idle->id)['pending_fixed']);
+        $this->assertEquals(0, $this->reports()->financials($this->owner, $old, $old->endOfMonth(), $idle->id)['pending_fixed']);
+
+        app(MonthClosingService::class)->close($this->owner, $this->month->year, $this->month->month);
+
+        // بعد الإغلاق: الشهر الجاري يلي آخر إغلاق — راتبه على القارب وإن خلا من النشاط.
+        $f = $this->reports()->financials($this->owner, $now, $now->endOfMonth(), $idle->id);
+        $this->assertEquals(900, $f['pending_fixed']);
+        $this->assertEquals(-900, $f['net_profit']);
+    }
+
+    public function test_the_statement_shows_sales_changed_after_the_closing_as_a_difference(): void
+    {
+        $this->seedMonth();
+        app(MonthClosingService::class)->close($this->owner, $this->month->year, $this->month->month);
+
+        // بيع مباشر أُضيف لشهر مُغلق: الإجمالي من الفواتير، وصافي الإيراد من اللقطة.
+        Sale::factory()->create([
+            'seller_id' => $this->owner->id, 'trip_id' => $this->trip->id,
+            'subtotal' => 700, 'total' => 700, 'owner_net' => 700,
+            'sold_at' => $this->month->addDays(20)->setTime(10, 0),
+        ]);
+
+        $f = $this->reports()->financials($this->owner, $this->month, $this->month->endOfMonth());
+        $this->assertEquals(16700, $f['gross_sales']);
+        $this->assertEquals(15580, $f['net_owner_revenue']);
+        $this->assertEquals(-700, $f['revenue_adjustment']);
+        $this->assertEquals($f['net_owner_revenue'], round($f['gross_sales'] - $f['commission_labor'] + $f['revenue_adjustment'], 2));
+
+        $this->asOwner()->get('/admin/owner/reports/month-summary?'.$this->range())->assertOk()->assertSee('فرق عن لقطة الإغلاق');
+        $this->asOwner()->get('/admin/owner/reports/profit-loss/print?'.$this->range())->assertOk()->assertSee('فرق عن لقطة الإغلاق');
+    }
+
+    public function test_open_months_are_flagged_as_provisional_with_a_link_to_the_closings(): void
+    {
+        $this->seedMonth();
+
+        foreach (['profit-loss', 'month-summary', 'boat-profitability'] as $report) {
+            $this->asOwner()->get("/admin/owner/reports/{$report}?".$this->range())->assertOk()
+                ->assertSee('الأشهر المقفلة في الفترة: 0 من 1')->assertSee(route('panel.owner.month-closings'), false);
+        }
+
+        app(MonthClosingService::class)->close($this->owner, $this->month->year, $this->month->month);
+        $this->asOwner()->get('/admin/owner/reports/profit-loss?'.$this->range())->assertOk()->assertDontSee('الأشهر المقفلة في الفترة');
+    }
+
+    public function test_reports_link_to_their_records_and_to_each_other(): void
+    {
+        $this->seedMonth();
+        $fisher = $this->sharer();
+        $closing = app(MonthClosingService::class)->close($this->owner, $this->month->year, $this->month->month);
+        $payroll = $closing->boats()->first()->payroll;
+        $customer = Customer::factory()->ofAccount($this->owner)->create();
+        $sale = Sale::factory()->create(['seller_id' => $this->owner->id, 'trip_id' => $this->trip->id, 'customer_id' => $customer->id, 'sold_at' => $this->month->addDays(5)]);
+        $vendor = Vendor::factory()->create(['owner_id' => $this->owner->id]);
+        $expense = $this->expense(250, vendor: $vendor);
+        $range = ['from' => $this->month->toDateString(), 'to' => $this->month->endOfMonth()->toDateString()];
+
+        // روابط باستعلام: `&` تُطبع `&amp;`، فتُقارن مُهرَّبة.
+        $this->asOwner()->get('/admin/owner/reports/production?'.$this->range())
+            ->assertSee(route('panel.owner.reports.show', ['report' => 'fish-quantity', 'fish_id' => $this->hamour->id] + $range))
+            ->assertSee(route('panel.owner.reports'), false);
+        $this->asOwner()->get('/admin/owner/reports/boat-profitability?'.$this->range())
+            ->assertSee(route('panel.owner.reports.show', ['report' => 'trip-profitability', 'boat_id' => $this->boat->id] + $range));
+        $this->asOwner()->get('/admin/owner/reports/expenses-by-category?'.$this->range())
+            ->assertSee(route('panel.owner.expenses', ['category' => $expense->expense_category_id] + $range));
+        $this->asOwner()->get("/admin/owner/reports/customer-statement?customer_id={$customer->id}")->assertSee(route('panel.owner.sales.show', $sale->id), false);
+        $this->asOwner()->get("/admin/owner/reports/vendor-statement?vendor_id={$vendor->id}")->assertSee(route('panel.owner.expenses', ['search' => $expense->expense_number]), false);
+        $this->asOwner()->get("/admin/owner/reports/crew-statement?person_id={$fisher->id}")->assertSee(route('panel.owner.payrolls.show', $payroll->id), false);
+    }
+
     public function test_crew_share_is_distributed_and_the_crew_statement_follows_the_payroll(): void
     {
         $this->seedMonth();
@@ -290,13 +374,25 @@ class OwnerReportsTest extends TestCase
         $this->assertEquals(6740, $f['crew_distribution'][0]['due']);
         $this->assertEquals(6740, $f['per_fisherman']);
 
+        // مسير الشهر المفتوح يتقادم ببيع لاحق (التقرير لا يحدّثه)، والتوزيع يتبع
+        // نصيب الطاقم لا سطر المسير: مجموعه = حصة البحارة.
+        app(PayrollService::class)->generate($this->owner, $this->boat, $this->month->year, $this->month->month);
+        Sale::factory()->create([
+            'seller_id' => $this->owner->id, 'trip_id' => $this->trip->id,
+            'subtotal' => 1000, 'total' => 1000, 'owner_net' => 1000,
+            'sold_at' => $this->month->addDays(12)->setTime(10, 0),
+        ]);
+        $stale = app(OwnerReports::class)->financials($this->owner, $this->month, $this->month->endOfMonth());
+        $this->assertEquals(7240, $stale['crew_share']);
+        $this->assertEquals($stale['crew_share'], array_sum(array_column($stale['crew_distribution'], 'due')));
+
         app(MonthClosingService::class)->close($this->owner, $this->month->year, $this->month->month);
 
         $statement = $this->reports()->crewStatement($fisher, null, null);
         $this->assertCount(1, $statement['rows']);
         $this->assertSame($this->month->format('m / Y'), $statement['rows'][0]['period']);
-        $this->assertEquals(6740, $statement['totals']['due']);
-        $this->assertEquals(6740, $statement['totals']['unpaid']);
+        $this->assertEquals(7240, $statement['totals']['due']);
+        $this->assertEquals(7240, $statement['totals']['unpaid']);
         $this->assertEquals(0, $statement['totals']['paid']);
 
         // خارج الفترة: لا سطور.

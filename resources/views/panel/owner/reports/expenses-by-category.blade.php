@@ -21,7 +21,13 @@
             <tbody>
                 @forelse ($rows as $row)
                     <tr>
-                        <td>{{ $row['category'] }}</td>
+                        <td>
+                            @if ($row['category_id'])
+                                <a href="{{ route('panel.owner.expenses', array_filter(['category' => $row['category_id'], 'boat' => $boatId, 'from' => $from, 'to' => $to])) }}" title="سندات الفئة">{{ $row['category'] }}</a>
+                            @else
+                                {{ $row['category'] }}
+                            @endif
+                        </td>
                         <td>{{ $row['type'] ?? '—' }}</td>
                         <td class="end num">{{ number_format($row['count']) }}</td>
                         <td class="end" style="font-weight:700">{{ $money($row['amount']) }}</td>

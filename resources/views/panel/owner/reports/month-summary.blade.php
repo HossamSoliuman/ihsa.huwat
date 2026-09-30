@@ -5,6 +5,7 @@
 @section('content')
     @include('panel.owner.reports.partials.head', ['print' => true])
     @include('panel.owner.reports.partials.filter', ['printable' => false])
+    @include('panel.owner.reports.partials.closing-note', ['months' => $f['months_count'], 'closed' => $f['closed_count']])
 
     <div class="card">
         @include('panel.owner.reports.partials.month-statement')

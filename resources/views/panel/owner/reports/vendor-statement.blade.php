@@ -29,6 +29,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>رقم السند</th>
                             <th>الفئة</th>
                             <th>الرحلة</th>
                             <th>التاريخ</th>
@@ -40,6 +41,7 @@
                         @forelse ($statement['rows'] as $row)
                             <tr>
                                 <td class="num">{{ $loop->iteration }}</td>
+                                <td><a href="{{ route('panel.owner.expenses', ['search' => $row['number']]) }}"><bdi class="num" dir="ltr">{{ $row['number'] }}</bdi></a></td>
                                 <td>{{ $row['category'] }}</td>
                                 <td><bdi class="num" dir="ltr">{{ $row['trip'] }}</bdi></td>
                                 <td><bdi class="num" dir="ltr">{{ $row['date'] }}</bdi></td>
@@ -47,13 +49,13 @@
                                 <td class="end">{{ $money($row['amount']) }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="empty">لا توجد بيانات في هذه الفترة</td></tr>
+                            <tr><td colspan="7" class="empty">لا توجد بيانات في هذه الفترة</td></tr>
                         @endforelse
                     </tbody>
                     @if (count($statement['rows']))
                         <tfoot>
                             <tr>
-                                <td colspan="5">الإجمالي</td>
+                                <td colspan="6">الإجمالي</td>
                                 <td class="end">{{ $money($statement['total_expenses']) }}</td>
                             </tr>
                         </tfoot>

@@ -7,6 +7,7 @@
 
     @include('panel.owner.reports.partials.head')
     @include('panel.owner.reports.partials.filter', ['showBoat' => false])
+    @include('panel.owner.reports.partials.closing-note', ['months' => $months_count, 'closed' => $closed_count])
 
     <div class="table-card">
         <table class="data-table">
@@ -23,7 +24,14 @@
             <tbody>
                 @forelse ($rows as $row)
                     <tr>
-                        <td>{{ $row['boat_name'] }}</td>
+                        <td>
+                            {{-- قارب في لقطة إغلاق قديمة ولم يعد لك: بلا رابط. --}}
+                            @if ($boats->contains('id', $row['boat_id']))
+                                <a href="{{ route('panel.owner.reports.show', ['report' => 'trip-profitability', 'boat_id' => $row['boat_id'], 'from' => $from, 'to' => $to]) }}" title="ربحية رحلات القارب">{{ $row['boat_name'] }}</a>
+                            @else
+                                {{ $row['boat_name'] }}
+                            @endif
+                        </td>
                         <td class="end">{{ $money($row['gross_sales']) }}</td>
                         <td class="end">{{ $money($row['net_sales']) }}</td>
                         <td class="end tx-bad">{{ $money($row['expenses']) }}</td>

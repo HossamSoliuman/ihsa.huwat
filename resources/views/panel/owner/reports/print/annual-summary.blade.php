@@ -18,7 +18,7 @@
         $crew = $analysis['crew_members'];
 
         $boatLabel = $boat?->name ?? 'كل القوارب';
-        $verdict = $a['is_profitable'] ? 'رابحة' : 'خاسرة';
+        $verdict = $a['verdict'];
         $reportTitle = $meta['title'].' — '.$year;
         $phMeta = $boatLabel.' · '.$summary['closed_count'].'/12 · '.$verdict;
         $tone = fn (float $v) => $v >= 0 ? 'tx-good' : 'tx-bad';

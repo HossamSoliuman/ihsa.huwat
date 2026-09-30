@@ -40,4 +40,8 @@
         ['label' => 'المصروفات', 'value' => $totals['expenses'], 'money' => true],
         ['label' => 'صافي الربح', 'value' => $totals['net_profit'], 'money' => true, 'highlight' => true],
     ]])
+
+    @if ($months_count > $closed_count)
+        <p class="note">الأشهر المقفلة في الفترة: {{ $closed_count }} من {{ $months_count }} — أرقام الأشهر المفتوحة معاينة لإغلاقها وتتغير حتى يُقفل الشهر.</p>
+    @endif
 @endsection

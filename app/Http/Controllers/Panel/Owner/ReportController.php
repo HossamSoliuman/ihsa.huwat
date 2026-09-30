@@ -25,15 +25,20 @@ use Illuminate\View\View;
  */
 class ReportController extends Controller
 {
-    public function __construct(private readonly OwnerReports $reports) {}
+    private OwnerReports $reports;
 
     public function index(): View
     {
         return view('panel.owner.reports.index', ['reports' => OwnerReports::REPORTS]);
     }
 
-    public function show(Request $request, string $report, ?string $mode = null): View
+    /**
+     * `OwnerReports` يُحقن في الطلب لا في المُنشئ: Laravel يحتفظ بالمتحكم على
+     * المسار، فذاكرة أشهره كانت ستبقى من طلب إلى طلب (Octane والاختبارات).
+     */
+    public function show(Request $request, OwnerReports $reports, string $report, ?string $mode = null): View
     {
+        $this->reports = $reports;
         $owner = $request->user();
         $print = $mode === 'print';
 

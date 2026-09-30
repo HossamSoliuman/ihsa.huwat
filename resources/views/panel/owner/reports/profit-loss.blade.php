@@ -9,6 +9,7 @@
     @endphp
 
     @include('panel.owner.reports.partials.head', ['description' => false, 'print' => true])
+    @include('panel.owner.reports.partials.closing-note', ['months' => $f['months_count'], 'closed' => $f['closed_count']])
 
     <div class="card">
         @include('partials.section-head', ['icon' => 'search', 'title' => 'الفلتر'])

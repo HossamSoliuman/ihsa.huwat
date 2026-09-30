@@ -34,6 +34,9 @@
                     <tbody>
                         <tr><td class="col-text">إجمالي المبيعات</td><td class="col-num">{{ $money($f['gross_sales']) }}</td><td>{{ $pct($f['gross_sales'], $revenueBase) }}</td></tr>
                         <tr><td class="col-text">العمولة والعمالة</td><td class="col-num">{{ $money($f['commission_labor'], true) }}</td><td>{{ $pct($f['commission_labor'], $revenueBase) }}</td></tr>
+                        @if (abs($f['revenue_adjustment']) >= 0.01)
+                            <tr><td class="col-text">فرق عن لقطة الإغلاق</td><td class="col-num">{{ $money($f['revenue_adjustment']) }}</td><td><bdi dir="ltr">{{ $pct($f['revenue_adjustment'], $revenueBase) }}</bdi></td></tr>
+                        @endif
                     </tbody>
                     <tfoot>
                         <tr><th class="col-text">صافي الإيرادات</th><th class="col-num">{{ $money($f['net_owner_revenue']) }}</th><th>{{ $pct($f['net_owner_revenue'], $revenueBase) }}</th></tr>
@@ -95,6 +98,10 @@
                 <tr><th colspan="4" class="col-text">حصة البحارة</th><th class="col-num">{{ $money(collect($f['crew_distribution'])->sum('due')) }}</th></tr>
             </tfoot>
         </table>
+    @endif
+
+    @if ($f['months_count'] > $f['closed_count'])
+        <p class="note">الأشهر المقفلة في الفترة: {{ $f['closed_count'] }} من {{ $f['months_count'] }} — أرقام الأشهر المفتوحة معاينة لإغلاقها وتتغير حتى يُقفل الشهر.</p>
     @endif
 
     @include('panel.owner.reports.print.partials.signatures', ['items' => ['المحاسب', 'المدير المالي', 'المدير العام']])

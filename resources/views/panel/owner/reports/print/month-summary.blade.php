@@ -41,6 +41,9 @@
                         <tr><th class="col-text" colspan="2">الإيرادات</th></tr>
                         <tr><td class="col-text" style="{{ $indent }}">إجمالي المبيعات</td><td class="col-num">{{ $money($f['gross_sales']) }}</td></tr>
                         <tr><td class="col-text" style="{{ $indent }}">يُخصم: العمولة والعمالة</td><td class="col-num">{{ $money($f['commission_labor'], true) }}</td></tr>
+                        @if (abs($f['revenue_adjustment']) >= 0.01)
+                            <tr><td class="col-text" style="{{ $indent }}">فرق عن لقطة الإغلاق</td><td class="col-num">{{ $money($f['revenue_adjustment']) }}</td></tr>
+                        @endif
                         <tr><th class="col-text">صافي إيراد المالك</th><th class="col-num">{{ $money($f['net_owner_revenue']) }}</th></tr>
 
                         @foreach ([
@@ -88,6 +91,10 @@
             </td>
         </tr>
     </table>
+
+    @if ($f['months_count'] > $f['closed_count'])
+        <p class="note">الأشهر المقفلة في الفترة: {{ $f['closed_count'] }} من {{ $f['months_count'] }} — أرقام الأشهر المفتوحة معاينة لإغلاقها وتتغير حتى يُقفل الشهر.</p>
+    @endif
 
     @include('panel.owner.reports.print.partials.signatures', ['items' => ['المحاسب', 'المدير المالي', 'المدير العام']])
     @include('panel.owner.reports.print.partials.footer', ['note' => 'جميع المبالغ بالريال السعودي'])
