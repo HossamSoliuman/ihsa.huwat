@@ -13,7 +13,6 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'file-chart'])</div>
             <div>
                 <h1>التقارير</h1>
-                <p>كل تقرير يُعرض هنا، ويُطبع على ورقة A4 أو يُحفظ PDF، ويُنزَّل Excel بالتصفية نفسها</p>
             </div>
         </div>
     </div>
@@ -31,7 +30,6 @@
                                 <div class="kpi-icon {{ $tones[$report['tone']] }}">@include('partials.icon', ['name' => $report['icon']])</div>
                                 <div style="min-width:0;flex:1">
                                     <h3>{{ $report['title'] }}</h3>
-                                    <p class="desc">{{ $report['description'] }}</p>
                                 </div>
                             </div>
                         </div>
@@ -49,7 +47,6 @@
                                 <div class="kpi-icon {{ $tones[$report['tone']] }}">@include('partials.icon', ['name' => $report['icon']])</div>
                                 <div style="min-width:0;flex:1">
                                     <h3>{{ $report['title'] }}</h3>
-                                    <p class="desc">{{ $report['description'] }}</p>
                                 </div>
                             </div>
                             <div style="display:flex;gap:.5rem">
@@ -72,7 +69,6 @@
                             <div class="kpi-icon info">@include('partials.icon', ['name' => 'users'])</div>
                             <div style="min-width:0;flex:1">
                                 <h3>كشف حساب فرد من الطاقم</h3>
-                                <p class="desc">مسيرات الكابتن أو البحّار وسلفه وصافي مستحقه</p>
                             </div>
                         </div>
                         <div style="display:flex;gap:.5rem">
@@ -92,7 +88,6 @@
                             <div class="kpi-icon success">@include('partials.icon', ['name' => 'calculator'])</div>
                             <div style="min-width:0;flex:1">
                                 <h3>كشف حساب دلال</h3>
-                                <p class="desc">فواتيره بصافيك منها، وما استلمته، والمستحق عنده</p>
                             </div>
                         </div>
                         <div style="display:flex;gap:.5rem">
