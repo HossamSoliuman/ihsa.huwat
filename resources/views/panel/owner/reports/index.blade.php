@@ -19,7 +19,7 @@
 
     @foreach ($groups as $group => $groupTitle)
         <h2 style="font-size:.95rem;font-weight:700;margin:1.25rem 0 .75rem">{{ $groupTitle }}</h2>
-        <div style="display:grid;gap:var(--gap);grid-template-columns:repeat(auto-fit,minmax(18rem,1fr))">
+        <div style="display:grid;gap:var(--gap);grid-template-columns:repeat(auto-fill,minmax(14rem,17rem))">
             @foreach ($reports as $key => $report)
                 @continue($report['group'] !== $group)
                 @if ($group !== 'accounts')
