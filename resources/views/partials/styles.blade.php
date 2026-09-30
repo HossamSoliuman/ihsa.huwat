@@ -667,14 +667,16 @@ html.dark .delta-pill.down { color: hsl(352 85% 72%); border-color: hsl(352 85% 
 
 .report-card { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--hair); background: var(--surface); transition: border-color .15s; }
 .report-card:hover { border-color: hsl(var(--primary) / .6); }
-.report-card .accent { height: 2px; width: 100%; background: hsl(var(--primary)); }
+.report-card .accent { height: 1px; width: 100%; background: hsl(var(--primary)); }
 .report-card .accent.info { background: #0ea5e9; }
 .report-card .accent.success { background: #0f7a5a; }
 .report-card .accent.warning { background: #d97706; }
 .report-card .accent.danger { background: #d61f47; }
-.report-card .body { display: flex; flex: 1; flex-direction: column; padding: .9rem; }
-.report-card .lead { display: flex; align-items: flex-start; gap: .65rem; }
-.report-card h3 { font-size: .82rem; font-weight: 700; line-height: 1.45; }
+.report-card .body { display: flex; flex: 1; flex-direction: column; justify-content: center; min-height: 5.5rem; padding: 1.25rem 1.35rem; }
+.report-card .lead { display: flex; align-items: center; gap: .85rem; }
+.report-card .kpi-icon { height: 2rem; width: 2rem; }
+.report-card .kpi-icon svg { width: 16px; height: 16px; }
+.report-card h3 { font-size: .98rem; font-weight: 700; line-height: 1.45; }
 .report-card .desc { margin-top: .1rem; font-size: 11px; line-height: 1.75; color: hsl(var(--muted-foreground)); }
 .report-card .actions { display: flex; gap: .3rem; margin-top: auto; padding-top: .7rem; }
 .report-card .actions > * { flex: 1; justify-content: center; padding: .4rem .45rem; font-size: 11px; }
