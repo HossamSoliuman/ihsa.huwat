@@ -54,22 +54,18 @@
     @include('partials.styles')
     <style>
         html, body { height: 100%; }
-        {{-- الصفحة كلها في نافذة واحدة: ترويسة، ثم البوابات، ثم حقوق الوزارة. --}}
+        {{-- الصفحة كلها في نافذة واحدة: ترويسة، ثم البوابات، ثم حقوق حوات. --}}
         .portal-page {
             height: 100dvh; overflow: hidden;
             display: grid; grid-template-rows: auto 1fr auto; gap: 1.5rem;
             padding: 1.5rem clamp(1rem, 3vw, 2.5rem);
         }
-        .portal-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; }
-        .hawat-mark img { height: clamp(30px, 4.2vh, 44px); width: auto; display: block; }
+        .portal-head { display: flex; justify-content: center; }
+        .hawat-mark img { height: clamp(40px, 6vh, 64px); width: auto; display: block; }
         {{-- نسخة الشعار البيضاء للوضع الليلي، والزرقاء للنهاري. --}}
         .hawat-mark .mark-dark { display: none; }
         .dark .hawat-mark .mark-light { display: none; }
         .dark .hawat-mark .mark-dark { display: block; }
-        .gov-mark { display: flex; align-items: center; }
-        .gov-mark img { height: clamp(52px, 8vh, 84px); width: auto; }
-        {{-- شعار الوزارة أخضر داكن، فيُسنَد إلى أرضية بيضاء في الوضع الليلي. --}}
-        .dark .gov-mark img { background: #fff; border-radius: .75rem; padding: .5rem .75rem; }
 
         .portal-main { display: flex; align-items: center; justify-content: center; min-height: 0; }
         .portal-grid { display: grid; gap: 1rem; width: 100%; max-width: 30rem; }
@@ -124,12 +120,6 @@
                 <img class="mark-light" src="{{ asset('images/logo.png') }}" alt="{{ config('hawat.name') }}">
                 <img class="mark-dark" src="{{ asset('images/logo-white.png') }}" alt="" aria-hidden="true">
             </a>
-
-            <div class="gov-mark">
-                <img src="{{ asset('images/moewa-logo.png') }}" alt="{{ config('hawat.ministry') }}">
-            </div>
-
-            <span></span>
         </header>
 
         <main class="portal-main">
@@ -164,7 +154,7 @@
         </main>
 
         <footer class="portal-foot">
-            جميع الحقوق محفوظة لوزارة البيئة والمياه والزراعة، وكالة الوزارة لتقنية المعلومات والتحول الرقمي
+            جميع الحقوق محفوظة — حوات · مؤسسة دار الحوت للتجارة
         </footer>
     </div>
 </body>

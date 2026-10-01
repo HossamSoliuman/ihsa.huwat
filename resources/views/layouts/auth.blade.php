@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     @include('partials.styles')
     <style>
-        {{-- صفحة الدخول شاشة واحدة: ترويسة، ثم البطاقة في وسطها، ثم حقوق الوزارة. --}}
+        {{-- صفحة الدخول شاشة واحدة: ترويسة، ثم البطاقة في وسطها، ثم حقوق حوات. --}}
         .auth-page {
             min-height: 100dvh;
             display: grid; grid-template-rows: auto 1fr auto; gap: 1.5rem;
@@ -75,7 +75,7 @@
         </main>
 
         <footer class="auth-foot">
-            جميع الحقوق محفوظة لوزارة البيئة والمياه والزراعة، وكالة الوزارة لتقنية المعلومات والتحول الرقمي
+            جميع الحقوق محفوظة — حوات · مؤسسة دار الحوت للتجارة
         </footer>
     </div>
     <script>
