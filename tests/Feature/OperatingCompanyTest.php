@@ -454,6 +454,17 @@ class OperatingCompanyTest extends TestCase
         $this->assertSame($this->port->id, $officer->fresh()->port_id);
     }
 
+    public function test_the_landing_page_links_to_the_apply_page_and_the_counter_profile_shows_the_company(): void
+    {
+        $this->get(route('landing'))->assertOk()->assertSee(route('counter-apply'), false);
+
+        $officer = $this->companyCounter();
+        $this->actingAs($officer->user)->get(route('panel.profile'))
+            ->assertOk()
+            ->assertSee('شركة التشغيل')
+            ->assertSee('شركة الساحل (اختبار)');
+    }
+
     public function test_super_admin_sees_ministry_and_company_counters_together(): void
     {
         $this->companyCounter()->update(['name' => 'عدّاد الشركة']);

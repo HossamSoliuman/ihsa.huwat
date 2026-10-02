@@ -814,6 +814,14 @@
                                 <a href="{{ $phoneHref }}" dir="ltr">{{ $phone }}</a>
                             </div>
                         </div>
+                        {{-- العدّاد لا يسجّل هنا: توظّفه شركة التشغيل في جولاتها. --}}
+                        <div class="card">
+                            <span class="ico-box">@include('partials.icon', ['name' => 'clipboard-check'])</span>
+                            <div>
+                                <div class="k">تبحث عن عمل عدّادًا في الميناء؟</div>
+                                <a href="{{ route('counter-apply') }}">قدّم في جولات التوظيف المفتوحة</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

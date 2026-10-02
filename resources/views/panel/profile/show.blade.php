@@ -42,6 +42,11 @@
                 <dt>الجوال</dt><dd dir="ltr" class="num" style="text-align:right">{{ $user->phone ?? '—' }}</dd>
                 <dt>البريد</dt><dd dir="ltr" style="text-align:right">{{ $user->email ?? '—' }}</dd>
                 <dt>الميناء</dt><dd>{{ $port ? $port->name.($port->governorate ? ' — '.$port->governorate->name : '') : '—' }}</dd>
+                {{-- عدّاد الشركة يرى شركته، وموظف الشركة شركته. --}}
+                @php $company = $user->operatingCompany ?? $user->statisticsOfficer?->company; @endphp
+                @if ($company)
+                    <dt>شركة التشغيل</dt><dd>{{ $company->name }}</dd>
+                @endif
                 @if ($user->owner)
                     <dt>يتبع المالك</dt><dd>{{ $user->owner->name }} <span dir="ltr" class="num" style="color:hsl(var(--muted-foreground))">{{ $user->owner->phone }}</span></dd>
                 @endif

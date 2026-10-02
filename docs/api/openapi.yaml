@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Hawat Mobile API
-  version: 1.4.2
+  version: 1.5.0
   description: |
     Hawat mobile app API (com.os.hawat). All responses are JSON.
 
@@ -15,6 +15,7 @@ info:
     - The captain portal lives under `/captain/*` and requires the `captain` role; only trips assigned to the captain are visible (`404` otherwise).
     - The counter portal lives under `/counter/*` and requires the `counter` role; only trips that returned to the counter's port are visible (`404` otherwise).
     - The dalal portal lives under `/dalal/*` and requires the `dalal` role; sales, customers, partnership requests and workers of another dalal are `404`.
+    - Counter hiring: `GET /hiring-rounds` and `/counter-applications/*` need no token. An applicant applies in an open round, verifies the phone with the SMS code, then follows the application with its `token`. Approval (by the operating company, on the web) creates a `counter` account with the password chosen at signup.
     - Printed invoices: every `Sale` carries `invoice_url`, a signed A4 page the app opens in the browser to print or save as PDF (no token needed).
     - Notifications (`/notifications`) are per account for every role; the app registers its device with `POST /auth/fcm-token` to receive pushes.
     - Paginated lists return `{ data: [...], links: {...}, meta: {...} }` with `?page=` and `?per_page=` (max 100).
@@ -48,6 +49,8 @@ tags:
   description: الدلال — البيع من المخزون والعملاء
 - name: dalal-owners
   description: الدلال — طلبات الملاك والصيّادون المرتبطون ودفعاتهم
+- name: counter-applications
+  description: التقديم لوظيفة عدّاد لدى شركات التشغيل — بلا حساب
 paths:
   /auth/login:
     post:
@@ -3288,12 +3291,334 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '422':
           $ref: '#/components/responses/ValidationError'
+  /hiring-rounds:
+    get:
+      tags:
+      - counter-applications
+      summary: جولات التوظيف التي تستقبل الطلبات الآن
+      description: مفتوحة، داخل مدتها، لشركة نشطة، وبقي فيها مقعد. التطبيق يبني منها اختيار المنطقة ← المحافظة ← الميناء.
+      security: []
+      responses:
+        '200':
+          description: الجولات المفتوحة، الأقرب إغلاقًا أولًا
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HiringRound'
+  /counter-applications:
+    post:
+      tags:
+      - counter-applications
+      summary: التقديم في جولة (يرسل رمز تحقق إلى الجوال)
+      description: الطلب لا يصل الشركة قبل توثيق الجوال (`/counter-applications/{token}/verify`). احفظ `data.token` لمتابعة الطلب. إعادة التقديم بالجوال نفسه قبل التوثيق تستبدل الطلب السابق.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CounterApplicationInput'
+      responses:
+        '201':
+          description: حُفظ الطلب وأُرسل الرمز
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/CounterApplication'
+                  meta:
+                    type: object
+                    properties:
+                      expires_in:
+                        type: integer
+                        example: 600
+                        description: صلاحية الرمز بالثواني
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          description: تجاوز الحدّ — انتظر دقيقة
+  /counter-applications/{token}:
+    parameters:
+    - $ref: '#/components/parameters/ApplicationToken'
+    get:
+      tags:
+      - counter-applications
+      summary: حالة الطلب
+      security: []
+      responses:
+        '200':
+          description: الطلب
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CounterApplication'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /counter-applications/{token}/verify:
+    parameters:
+    - $ref: '#/components/parameters/ApplicationToken'
+    post:
+      tags:
+      - counter-applications
+      summary: توثيق الجوال بالرمز — يوصل الطلب إلى الشركة
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              properties:
+                code:
+                  type: string
+                  example: '123456'
+      responses:
+        '200':
+          description: وُثّق الجوال
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/CounterApplication'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /counter-applications/{token}/resend:
+    parameters:
+    - $ref: '#/components/parameters/ApplicationToken'
+    post:
+      tags:
+      - counter-applications
+      summary: إعادة إرسال رمز التوثيق
+      security: []
+      responses:
+        '200':
+          description: أُرسل رمز جديد
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      expires_in:
+                        type: integer
+                        example: 600
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /counter-applications/{token}/withdraw:
+    parameters:
+    - $ref: '#/components/parameters/ApplicationToken'
+    post:
+      tags:
+      - counter-applications
+      summary: سحب طلب قيد المراجعة
+      security: []
+      responses:
+        '200':
+          description: سُحب الطلب
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/CounterApplication'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
+  parameters:
+    ApplicationToken:
+      name: token
+      in: path
+      required: true
+      description: مفتاح الطلب من ردّ التقديم (`data.token`)
+      schema:
+        type: string
   schemas:
+    IdName:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+    HiringRound:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        seats:
+          type: integer
+        seats_left:
+          type: integer
+        opens_at:
+          type: string
+          format: date
+        closes_at:
+          type: string
+          format: date
+        notes:
+          type: string
+          nullable: true
+        company:
+          $ref: '#/components/schemas/IdName'
+        port:
+          $ref: '#/components/schemas/IdName'
+        governorate:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        region:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+    CounterApplicationInput:
+      type: object
+      required:
+      - hiring_round_id
+      - name
+      - phone
+      - national_id
+      - password
+      - password_confirmation
+      properties:
+        hiring_round_id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+          example: '0551234567'
+        national_id:
+          type: string
+          description: الهوية أو الإقامة — 10 أرقام تبدأ بـ 1 أو 2
+          example: '1098765432'
+        email:
+          type: string
+          nullable: true
+        birth_date:
+          type: string
+          format: date
+          nullable: true
+          description: 18 سنة فأكثر
+        qualification:
+          type: string
+          nullable: true
+        experience_years:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        password:
+          type: string
+          description: كلمة مرور الحساب الذي يُنشأ عند الاعتماد (8 أحرف فأكثر)
+        password_confirmation:
+          type: string
+    CounterApplication:
+      type: object
+      properties:
+        id:
+          type: integer
+        token:
+          type: string
+        status:
+          type: string
+          enum:
+          - pending
+          - approved
+          - rejected
+          - withdrawn
+        status_label:
+          type: string
+        phone_verified:
+          type: boolean
+        name:
+          type: string
+        phone:
+          type: string
+        national_id:
+          type: string
+        email:
+          type: string
+          nullable: true
+        birth_date:
+          type: string
+          format: date
+          nullable: true
+        qualification:
+          type: string
+          nullable: true
+        experience_years:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        rejection_reason:
+          type: string
+          nullable: true
+        round:
+          type: object
+          properties:
+            id:
+              type: integer
+            title:
+              type: string
+        company:
+          $ref: '#/components/schemas/IdName'
+        port:
+          $ref: '#/components/schemas/IdName'
+        created_at:
+          type: string
+          format: date-time
+        reviewed_at:
+          type: string
+          format: date-time
+          nullable: true
     Role:
       type: object
       properties:

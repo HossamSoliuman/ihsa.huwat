@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Captain\CatchLogController as CaptainCatchLogCon
 use App\Http\Controllers\Api\V1\Captain\DashboardController as CaptainDashboardController;
 use App\Http\Controllers\Api\V1\Captain\TripController as CaptainTripController;
 use App\Http\Controllers\Api\V1\Counter\DashboardController as CounterDashboardController;
+use App\Http\Controllers\Api\V1\CounterApplicationController;
 use App\Http\Controllers\Api\V1\Counter\TripController as CounterTripController;
 use App\Http\Controllers\Api\V1\Dalal\CustomerController as DalalCustomerController;
 use App\Http\Controllers\Api\V1\Dalal\DashboardController as DalalDashboardController;
@@ -64,6 +65,19 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::delete('avatar', [MeController::class, 'removeAvatar'])->name('avatar.remove');
             Route::post('fcm-token', [MeController::class, 'updateFcmToken'])->name('fcm-token');
         });
+    });
+
+    /*
+     * التقديم لوظيفة عدّاد في جولات شركات التشغيل — بلا حساب؛ الطلب يُتابَع
+     * بمفتاحه (token) بعد التقديم.
+     */
+    Route::get('hiring-rounds', [CounterApplicationController::class, 'rounds'])->name('hiring-rounds');
+    Route::prefix('counter-applications')->name('counter-applications.')->group(function (): void {
+        Route::post('/', [CounterApplicationController::class, 'store'])->middleware('throttle:5,1')->name('store');
+        Route::get('{token}', [CounterApplicationController::class, 'show'])->middleware('throttle:30,1')->name('show');
+        Route::post('{token}/verify', [CounterApplicationController::class, 'verify'])->middleware('throttle:10,1')->name('verify');
+        Route::post('{token}/resend', [CounterApplicationController::class, 'resend'])->middleware('throttle:3,1')->name('resend');
+        Route::post('{token}/withdraw', [CounterApplicationController::class, 'withdraw'])->middleware('throttle:10,1')->name('withdraw');
     });
 
     Route::middleware(['auth:sanctum', 'api.active'])->group(function (): void {
