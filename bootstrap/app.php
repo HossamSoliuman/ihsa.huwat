@@ -8,6 +8,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -27,11 +28,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [ForceJsonResponse::class]);
 
         /*
-         * صفحتا دخول: بوابة المعلومات على مضيفها (مساراتها admin.*)، ولوحة الإدارة
-         * على /admin في النطاق الرئيسي. الزائر يُرسَل إلى صفحة الموضع الذي طرقه،
-         * والداخل الذي يطرق صفحة دخول يُعاد إلى رئيسة موضعها.
+         * صفحتا دخول: إدارة النظام — بوابة المعلومات على مضيفها (admin.*) وقسمها
+         * على النطاق الرئيسي (subadmin.*) — ثم تطبيق حوات على /admin. الزائر
+         * يُرسَل إلى صفحة الموضع الذي طرقه، والداخل الذي يطرق صفحة دخول يُعاد
+         * إلى رئيسة موضعها.
          */
-        $middleware->redirectGuestsTo(fn (Request $request) => str_starts_with((string) $request->route()?->getName(), 'admin.')
+        $middleware->redirectGuestsTo(fn (Request $request) => Str::startsWith((string) $request->route()?->getName(), ['admin.', 'subadmin.'])
             ? route('login')
             : route('panel.login'));
 

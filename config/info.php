@@ -8,24 +8,23 @@ return [
      */
     'domain' => env('INFO_PORTAL_DOMAIN'),
 
-    'title' => 'مركز إدارة النظام',
+    'title' => 'إدارة النظام',
     'subtitle' => 'HAWAT IHSA Administration Center — المرجع الأساسي للبيانات الأساسية والإعدادات',
     'notice' => 'هذه اللوحة لإدارة البيانات الأساسية (Master Data) فقط. لا تُعدّل بيانات الرحلات أو المصيد المعتمد مباشرةً — تمرّ عبر مسارها التشغيلي مع سجل العمليات.',
     'default_tab' => 'geo',
 
     // هوية الشريط العلوي — سطر عربي وسطر إنجليزي أسفله.
     'brand_title' => 'حوات إحصاء',
-    'brand_subtitle' => 'HAWAT IHSA — مركز إدارة النظام',
+    'brand_subtitle' => 'HAWAT IHSA — إدارة النظام',
 
-    // تجميع روابط القائمة الجانبية — كل مفتاح يظهر مرة واحدة فقط حتى يبقى تبويب واحد نشطًا.
-    'sidebar' => [
-        'المرجع الأساسي' => ['geo', 'fleet'],
-        'التشغيل' => ['seasons', 'licenses', 'markets'],
-        'الحوكمة' => ['data-quality', 'data-catalog', 'business-glossary', 'fao', 'audit'],
-        'التكاملات' => ['powerbi', 'powerbi-blueprint', 'powerbi-feed', 'arcgis', 'fabric', 'hawat-ai', 'sms', 'firebase'],
-        'الأدوات والإعدادات' => ['import', 'stats', 'translation', 'permissions'],
-    ],
-
+    /*
+     * القائمة الجانبية ليست هنا: البوابة نصف "إدارة النظام" ونصفه الآخر قسم
+     * /subadmin، فقائمتهما واحدة في config/hawat.php → nav_subadmin.
+     *
+     * تبويبات سقطت لأن لصفحتها موضعًا آخر، وروابطها القديمة تُحوَّل إليه
+     * (routes/web.php): "الرخص" إلى رخص المواسم في الخدمات والتراخيص، و"سجل
+     * العمليات" إلى صفحته في /subadmin.
+     */
     'tabs' => [
 
         'geo' => [
@@ -60,17 +59,10 @@ return [
             'resources' => ['markets', 'market-auctions'],
         ],
 
-        'licenses' => [
-            'label' => 'الرخص',
-            'label_en' => 'Licenses',
-            'icon' => 'ticket',
-            'type' => 'resource',
-            'resources' => ['season-licenses'],
-        ],
-
+        // صفحة المستخدمين الوحيدة: كانت في /subadmin نسخة للعرض فقط، والتحرير هنا.
         'permissions' => [
-            'label' => 'الصلاحيات',
-            'label_en' => 'Permissions',
+            'label' => 'المستخدمون والصلاحيات',
+            'label_en' => 'Users & Permissions',
             'icon' => 'key',
             'type' => 'resource',
             'resources' => ['user-permissions'],
@@ -194,14 +186,6 @@ return [
             'icon' => 'library',
             'type' => 'resource',
             'resources' => ['glossary-terms', 'kpi-registry'],
-        ],
-
-        'audit' => [
-            'label' => 'سجل العمليات',
-            'label_en' => 'Audit Log',
-            'icon' => 'history',
-            'type' => 'resource',
-            'resources' => ['audit-logs'],
         ],
 
     ],

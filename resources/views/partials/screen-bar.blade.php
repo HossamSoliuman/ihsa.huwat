@@ -6,7 +6,7 @@
      * المطويين. على شاشة الاختيار زره الأول يُنهي وضع العرض، وعلى بقية اللوحات
      * يرجع إليها دون مغادرته.
      */
-    $home = Nav::portal()['home'];
+    $home = Nav::screenHome();
     $isHome = request()->routeIs($home);
 @endphp
 <div class="screen-bar">

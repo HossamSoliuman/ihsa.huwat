@@ -7,6 +7,7 @@ use App\Support\AdminRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class AdminResourceController extends Controller
 {
@@ -16,7 +17,7 @@ class AdminResourceController extends Controller
 
     public function store(Request $request, string $tab, string $resource): RedirectResponse
     {
-        $this->guard($resource);
+        $this->guard($tab, $resource);
 
         $data = $this->registry->normalize(
             $resource,
@@ -32,7 +33,7 @@ class AdminResourceController extends Controller
 
     public function update(Request $request, string $tab, string $resource, int $id): RedirectResponse
     {
-        $this->guard($resource);
+        $this->guard($tab, $resource);
 
         $data = $this->registry->normalize(
             $resource,
@@ -49,7 +50,7 @@ class AdminResourceController extends Controller
 
     public function destroy(string $tab, string $resource, int $id): RedirectResponse
     {
-        $this->guard($resource);
+        $this->guard($tab, $resource);
 
         $this->registry->model($resource)->newQuery()->findOrFail($id)->delete();
 
@@ -58,8 +59,13 @@ class AdminResourceController extends Controller
         return $this->back($tab, $resource, 'تم حذف السجل.');
     }
 
-    private function guard(string $resource): void
+    private function guard(string $tab, string $resource): void
     {
+        // المورد يُكتب من تبويبه وحده: مورد تبويبٍ أُسقط (كالرخص) لا يُفتح من تبويب آخر.
+        if (! array_key_exists($resource, $this->registry->resourcesForTab($tab))) {
+            throw new NotFoundHttpException;
+        }
+
         if (! empty($this->registry->resource($resource)['readonly'])) {
             throw new AccessDeniedHttpException('هذا السجل للعرض فقط.');
         }

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'لوحة الإدارة')
+@section('title', 'المدير العام')
 
 @php
     use App\Models\Trip;
@@ -23,7 +23,7 @@
         <div class="lead">
             <div class="icon-wrap">@include('partials.icon', ['name' => 'layout-dashboard'])</div>
             <div>
-                <h1>لوحة الإدارة</h1>
+                <h1>المدير العام</h1>
                 <p>حال الأسطول والرحلات والمصيد والمبيعات على مستوى النظام كله</p>
             </div>
         </div>

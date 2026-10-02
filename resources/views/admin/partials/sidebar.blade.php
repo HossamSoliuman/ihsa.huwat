@@ -1,22 +1,11 @@
 @php
-    $allTabs = config('info.tabs', []);
-    $groups = [];
-    $placed = [];
+    use App\Support\Nav;
 
-    foreach (config('info.sidebar', []) as $group => $keys) {
-        $items = array_values(array_intersect(array_unique($keys), array_keys($allTabs)));
-
-        if ($items) {
-            $groups[$group] = $items;
-            $placed = array_merge($placed, $items);
-        }
-    }
-
-    // أي تبويب غير مُدرج في مجموعة يظهر هنا حتى لا يختفي من القائمة.
-    if ($rest = array_values(array_diff(array_keys($allTabs), $placed))) {
-        $groups['أخرى'] = $rest;
-    }
-
+    /*
+     * قائمة "إدارة النظام" نفسها التي في /subadmin: تبويبات هذه البوابة ولوحات
+     * القسم على النطاق الرئيسي في قائمة واحدة (config/hawat.php → nav_subadmin).
+     * الأيقونات من مجموعة اللوحة لأن عناصر القسم منها.
+     */
     $user = auth()->user();
 @endphp
 
@@ -29,15 +18,19 @@
     </div>
 
     <nav class="sidebar-nav">
-        @foreach ($groups as $group => $keys)
+        @foreach (Nav::sections(Nav::SUBADMIN) as $section)
             <div class="nav-section">
-                <p class="nav-section-title">{{ $group }}</p>
-                @foreach ($keys as $key)
-                    <a class="nav-link {{ $key === $activeTab ? 'is-active' : '' }}"
-                       href="{{ route('admin.tab', $key) }}"
-                       @if ($key === $activeTab) aria-current="page" @endif>
-                        @include('admin.partials.icon', ['name' => $allTabs[$key]['icon']])
-                        <span>{{ $allTabs[$key]['label'] }}</span>
+                <p class="nav-section-title">{{ $section['title'] }}</p>
+                @foreach ($section['items'] as $item)
+                    {{-- رئيسة البوابة تعرض التبويب الافتراضي، فيُعرف النشط من $activeTab لا من المسار. --}}
+                    @php
+                        $active = isset($item['tab']) && $item['tab'] === $activeTab;
+                    @endphp
+                    <a class="nav-link {{ $active ? 'is-active' : '' }}"
+                       href="{{ Nav::url($item) }}"
+                       @if ($active) aria-current="page" @endif>
+                        @include('partials.icon', ['name' => $item['icon']])
+                        <span>{{ $item['label'] }}</span>
                     </a>
                 @endforeach
             </div>

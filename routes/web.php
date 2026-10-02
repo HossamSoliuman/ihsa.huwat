@@ -91,13 +91,12 @@ use App\Http\Controllers\SupplyChainController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\SustainabilityController;
 use App\Http\Controllers\TripController;
-use App\Http\Controllers\UserAccessController;
 use App\Services\Owner\OwnerReports;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| بوابة المعلومات — مركز إدارة النظام
+| بوابة المعلومات — نصف إدارة النظام
 |--------------------------------------------------------------------------
 |
 | تُسجَّل قبل لوحة الوزارة عمدًا: المسار بلا قيد نطاق يلتقط أي مضيف، فلو جاءت
@@ -137,6 +136,14 @@ $infoPortal = function (): void {
             Route::put('{tab}/integration/{provider}', [IntegrationSettingController::class, 'update'])->name('integration.update');
         });
     });
+
+    /*
+     * تبويبات سقطت لأن لصفحتها موضعًا واحدًا خارج البوابة. التحويل دائم حتى
+     * لا تتعطّل الروابط المحفوظة، والوجهة تطلب دخولها بنفسها إن لزم.
+     */
+    foreach (['licenses' => 'services.season-licenses', 'audit' => 'subadmin.audit-log'] as $vacated => $destination) {
+        Route::get("admin/{$vacated}", fn () => redirect()->route($destination, [], 301));
+    }
 };
 
 $infoDomain = config('info.domain');
@@ -159,8 +166,8 @@ if ($onSeparateHost) {
 */
 
 /*
- * لوحة الحكومة التنفيذية — تحت البادئة /gov بقائمة جانبية خاصة بها
- * (config/hawat.php → nav_gov). صفحاتها لم تعد تُقدَّم من المسارات العليا.
+ * شاشة العرض — لوحات القاعة تحت البادئة /gov، وهي تبويب واحد في قائمة الإحصاء
+ * (مربّعاتها من config/hawat.php → nav_gov). صفحاتها لم تعد تُقدَّم من المسارات العليا.
  */
 $govDashboard = function (): void {
     // الرئيسة شاشة اختيار بمربّعات كبيرة (تُعرض على شاشة قاعة)، ولوحة المؤشرات
@@ -176,20 +183,15 @@ $govDashboard = function (): void {
 };
 
 /*
- * قسم الإدارة الفرعية — بوابة قائمة بذاتها تحت البادئة /subadmin.
+ * إدارة النظام — نصفها على النطاق الرئيسي تحت البادئة /subadmin، ونصفها الآخر
+ * بوابة المعلومات على مضيفها. قائمتهما واحدة (config/hawat.php → nav_subadmin)
+ * ودخولهما واحد: دخول بوابة المعلومات.
  *
- * لوحاته الثماني تدير القطاع نفسه لا بياناته: مركز الإدارة والصلاحيات والهيكل
- * التنظيمي، ثم متابعة المهام والتنبيهات، ثم التدقيق والإنذارات والإعدادات. كانت
- * موزّعة بين لوحة الحكومة والمنصة التشغيلية — وأكثرها شاشات لم تُبنَ — فجُمعت هنا.
+ * لوحات هذا النصف تدير القطاع نفسه لا بياناته: الهيكل التنظيمي والموظفون، ثم
+ * المهام والتنبيهات والإنذارات، ثم سجل العمليات والإعدادات. لا رئيسة له: /subadmin
+ * يُحوَّل إلى المستخدمين والصلاحيات في بوابة المعلومات، صفحتهم الوحيدة.
  */
 $subAdministration = function (): void {
-    /*
-     * رئيسة القسم هي المستخدمون والصلاحيات: صفحة سرد اللوحات حُذفت لأن القائمة
-     * الجانبية تعرض اللوحات كلها. "مركز الإدارة" يبقى رابطًا في القائمة لأنه بوابة
-     * المعلومات على مضيفها المستقل، لا صفحة من صفحات هذا القسم.
-     */
-    Route::get('/', [UserAccessController::class, 'index'])->name('users');
-
     Route::get('/org-structure', [OrgStructureController::class, 'index'])->name('org-structure');
     Route::post('/org-structure', [OrgStructureController::class, 'store'])->name('org-structure.store');
     Route::put('/org-structure/{position}', [OrgStructureController::class, 'update'])->name('org-structure.update');
@@ -198,6 +200,13 @@ $subAdministration = function (): void {
     Route::post('/org-structure/{position}/staff', [OrgStructureController::class, 'storeStaff'])->name('org-structure.staff.store');
     Route::put('/org-structure/staff/{staff}', [OrgStructureController::class, 'updateStaff'])->name('org-structure.staff.update');
     Route::delete('/org-structure/staff/{staff}', [OrgStructureController::class, 'destroyStaff'])->name('org-structure.staff.destroy');
+
+    // جاءت من قسم الخدمات والتراخيص: إدارة الموظفين شأن إداري لا خدمة.
+    Route::get('/staff-management', [ServiceStaffController::class, 'index'])->name('staff-management');
+    Route::post('/staff-management', [ServiceStaffController::class, 'store'])->name('staff-management.store');
+    Route::put('/staff-management/{staff}', [ServiceStaffController::class, 'update'])->name('staff-management.update');
+    Route::post('/staff-management/{staff}/section', [ServiceStaffController::class, 'reassign'])->name('staff-management.reassign');
+    Route::delete('/staff-management/{staff}', [ServiceStaffController::class, 'destroy'])->name('staff-management.destroy');
 
     Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log');
 
@@ -223,9 +232,10 @@ $subAdministration = function (): void {
 /*
  * قسم الخدمات والتراخيص — بوابة قائمة بذاتها تحت البادئة /services.
  *
- * سبع لوحات تغطّي دورة الخدمة كاملة: الطلب يصل ويُعالَج ويُعتمد فتُصدر رخصته،
+ * ست لوحات تغطّي دورة الخدمة كاملة: الطلب يصل ويُعالَج ويُعتمد فتُصدر رخصته،
  * ويُتابَع من يخالف شروطها. "رخص المواسم" جاءت من المنصة التشغيلية و"الرقابة
- * والامتثال" من لوحة الحكومة — طرفا الدورة نفسها التي يفتحها الطلب.
+ * والامتثال" من لوحة الحكومة — طرفا الدورة نفسها التي يفتحها الطلب. وإدارة
+ * الموظفين انتقلت إلى إدارة النظام.
  */
 $servicesSection = function (): void {
     /*
@@ -242,12 +252,6 @@ $servicesSection = function (): void {
     Route::post('/my-workspace/notifications/{notification}/read', [MyWorkspaceController::class, 'markRead'])->name('my-workspace.read');
 
     Route::get('/staff-dashboard', [ServiceStaffDashboardController::class, 'index'])->name('staff-dashboard');
-
-    Route::get('/staff-management', [ServiceStaffController::class, 'index'])->name('staff-management');
-    Route::post('/staff-management', [ServiceStaffController::class, 'store'])->name('staff-management.store');
-    Route::put('/staff-management/{staff}', [ServiceStaffController::class, 'update'])->name('staff-management.update');
-    Route::post('/staff-management/{staff}/section', [ServiceStaffController::class, 'reassign'])->name('staff-management.reassign');
-    Route::delete('/staff-management/{staff}', [ServiceStaffController::class, 'destroy'])->name('staff-management.destroy');
 
     Route::get('/season-licenses', [SeasonLicenseController::class, 'index'])->name('season-licenses');
     Route::post('/season-licenses', [SeasonLicenseController::class, 'store'])->name('season-licenses.store');
@@ -608,9 +612,9 @@ $adminPanel = function () use ($operationsConsole): void {
 };
 
 /*
- * البوابات الخمس تتشارك النطاق الرئيسي: صفحة اختيار على "/sections"، ثم لوحة الحكومة
- * تحت /gov، وقسم الإحصاء تحت /stats، وقسم الإدارة الفرعية تحت /subadmin، وقسم
- * الخدمات والتراخيص تحت /services، ولوحة الإدارة تحت /admin.
+ * البوابات تتشارك النطاق الرئيسي: صفحة اختيار على "/sections"، ثم الإحصاء تحت
+ * /stats ومعه شاشة العرض تحت /gov، والخدمات والتراخيص تحت /services، وإدارة
+ * النظام تحت /subadmin (ونصفها الآخر بوابة المعلومات)، وتطبيق حوات تحت /admin.
  */
 $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdministration, $servicesSection, $adminPanel): void {
     /*
@@ -629,7 +633,8 @@ $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdmi
 
     Route::prefix('stats')->name('stats.')->group($statisticsSection);
 
-    Route::prefix('subadmin')->name('subadmin.')->group($subAdministration);
+    // خلف دخول بوابة المعلومات، نصفها الآخر — انظر redirectGuestsTo في bootstrap/app.php.
+    Route::prefix('subadmin')->name('subadmin.')->middleware('auth')->group($subAdministration);
 
     Route::prefix('services')->name('services.')->group($servicesSection);
 
@@ -664,11 +669,19 @@ $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdmi
         '/gov/annual-bulletin' => '/stats/annual-bulletin',
         '/gov/food-security' => '/stats/food-security',
         '/gov/alerts' => '/subadmin/alerts',
-        '/subadmin/users' => '/subadmin',
         '/services/fisher-services' => '/services',
         '/gov/compliance' => '/services/compliance',
+        '/services/staff-management' => '/subadmin/staff-management',
     ] as $vacated => $destination) {
         Route::permanentRedirect($vacated, $destination);
+    }
+
+    /*
+     * صفحة المستخدمين في /subadmin كانت نسخة للعرض فقط من تبويب بوابة المعلومات
+     * الذي يحرّرهم، فبقي التبويب وحده. وجهته على مضيف آخر، فتُبنى عند الطلب.
+     */
+    foreach (['/subadmin', '/subadmin/users'] as $vacated) {
+        Route::get($vacated, fn () => redirect()->route('admin.tab', 'permissions', 301));
     }
 };
 

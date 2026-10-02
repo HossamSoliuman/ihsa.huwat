@@ -1,46 +1,48 @@
 @php
+    use App\Models\Role;
     use App\Support\Nav;
 
     /*
-     * الصفحة تُقرأ في شاشة واحدة بلا تمرير، فوصف كل بوابة سطر قصير والتبويبات
+     * الصفحة تُقرأ في شاشة واحدة بلا تمرير، فوصف كل بوابة سطر قصير والوسوم
      * وحدها تفصّل ما بداخلها.
      *
-     * الخمس الأولى بوابات لوحة الوزارة، تُقرأ من Nav. والسادسة بوابة المعلومات:
-     * ليست منها — لها مضيفها وتخطيطها وقائمتها — فتُبنى هنا من config/info.php،
-     * ووسومها مجموعات قائمتها الجانبية. وهي وحدها خلف تسجيل دخول فتحمل علامته.
+     * أربع بوابات في منتجين، لكلٍّ عنوانه: بوابات الوزارة الثلاث، ثم تطبيق حوات.
+     * وسوم بوابات الوزارة مجموعات قائمتها، ووسوم التطبيق أدواره — قائمته
+     * تتبدّل مع الدور فلا تصف التطبيق مجموعاتُ دورٍ واحد.
      */
-    $blurbs = [
-        Nav::GOV => 'الإنتاج والخريطة البحرية والاستدامة.',
-        Nav::STATS => 'المؤشرات والرصد والتحليلات والتقارير.',
-        Nav::SUBADMIN => 'الصلاحيات والهيكل والمهام والإنذارات.',
-        Nav::SERVICES => 'طلبات الصيادين والرخص والدعم الفني.',
-        Nav::OPS => 'حسابات التطبيق والملاك والدلالون ومركز المعلومات.',
-    ];
-
-    $portals = [];
-
-    foreach ($blurbs as $key => $blurb) {
+    $card = function (string $key, string $blurb, ?array $tags = null): array {
         $portal = Nav::portal($key);
 
-        $portals[] = [
+        return [
             'label' => $portal['label'],
             'icon' => $portal['icon'],
             'href' => route($portal['home']),
             'blurb' => $blurb,
-            'tags' => array_column(Nav::sections($key), 'title'),
-            // لوحة الإدارة وحدها من الخمس خلف الدخول.
-            'guarded' => $key === Nav::OPS,
+            'tags' => $tags ?? array_column(Nav::sections($key), 'title'),
+            // الإحصاء والخدمات مفتوحتان، وإدارة النظام والتطبيق خلف الدخول.
+            'guarded' => in_array($key, [Nav::SUBADMIN, Nav::OPS], true),
         ];
-    }
+    };
 
-    $portals[] = [
-        'label' => config('info.title'),
-        // لا 'settings': ترسها ثمانية أشعة حول دائرة، فتُقرأ شمسًا في هذا القياس.
-        'icon' => 'user-cog',
-        'href' => route('admin.index'),
-        'blurb' => 'البيانات الأساسية والتكاملات وسجل العمليات.',
-        'tags' => array_keys(config('info.sidebar')),
-        'guarded' => true,
+    $groups = [
+        [
+            'title' => 'الوزارة',
+            'portals' => [
+                $card(Nav::STATS, 'شاشة العرض والمؤشرات والرصد والتحليلات والتقارير.'),
+                $card(Nav::SERVICES, 'طلبات الصيادين والرخص والامتثال والدعم الفني.'),
+                $card(Nav::SUBADMIN, 'المستخدمون والموظفون والبيانات الأساسية والتكاملات.'),
+            ],
+        ],
+        [
+            'title' => 'تطبيق حوات',
+            'portals' => [
+                // اسم كل دور عنوانُ قائمته الأولى في nav_panel.
+                $card(Nav::OPS, 'لوحة التطبيق على الويب، وقائمتها حسب دور الحساب.', array_map(
+                    fn (string $role) => config("hawat.nav_panel.{$role}.0.title"),
+                    [Role::OWNER, Role::CAPTAIN, Role::COUNTER, Role::DALAL, Role::MERCHANT],
+                )),
+            ],
+        ],
     ];
 @endphp
 <!DOCTYPE html>
@@ -54,12 +56,14 @@
     @include('partials.styles')
     <style>
         html, body { height: 100%; }
-        {{-- الصفحة كلها في نافذة واحدة: ترويسة، ثم البوابات، ثم حقوق حوات. --}}
+        {{-- الصفحة كلها في نافذة واحدة: ترويسة، ثم البوابات، ثم حقوق حوات. وعلى
+             الشاشة الضيقة تتراصّ الصناديق فتُمرَّر بدل أن تُقصّ. --}}
         .portal-page {
-            height: 100dvh; overflow: hidden;
+            min-height: 100dvh;
             display: grid; grid-template-rows: auto 1fr auto; gap: 1.5rem;
             padding: 1.5rem clamp(1rem, 3vw, 2.5rem);
         }
+        @media (min-width: 1200px) and (min-height: 700px) { .portal-page { height: 100dvh; overflow: hidden; } }
         .portal-head { display: flex; justify-content: center; }
         .hawat-mark img { height: clamp(40px, 6vh, 64px); width: auto; display: block; }
         {{-- نسخة الشعار البيضاء للوضع الليلي، والزرقاء للنهاري. --}}
@@ -68,11 +72,24 @@
         .dark .hawat-mark .mark-dark { display: block; }
 
         .portal-main { display: flex; align-items: center; justify-content: center; min-height: 0; }
-        .portal-grid { display: grid; gap: 1rem; width: 100%; max-width: 30rem; }
-        @media (min-width: 720px) { .portal-grid { grid-template-columns: 1fr 1fr; max-width: 56rem; } }
-        {{-- ثلاث في الصفّ على الشاشة المتوسطة، ثم الستّ في صفّ واحد على العريضة. --}}
-        @media (min-width: 980px) { .portal-grid { grid-template-columns: repeat(3, 1fr); max-width: 76rem; } }
-        @media (min-width: 1400px) { .portal-grid { grid-template-columns: repeat(6, 1fr); max-width: 122rem; } }
+        {{-- منتجان، لكلٍّ عنوانه: بوابات الوزارة الثلاث ثم تطبيق حوات. يتراصّان على
+             الشاشة المتوسطة، ويتجاوران على العريضة فتصطفّ الأربع في صفّ واحد. --}}
+        .portal-groups { display: grid; gap: 1.5rem; width: 100%; max-width: 30rem; }
+        .portal-group { display: flex; flex-direction: column; gap: .75rem; min-width: 0; }
+        .group-title {
+            display: flex; align-items: center; gap: .6rem;
+            font-size: .8rem; font-weight: 800; color: hsl(var(--primary));
+        }
+        .group-title::after { content: ''; flex: 1; border-top: 1px solid var(--hair); }
+        .portal-grid { display: grid; gap: 1rem; flex: 1; }
+        @media (min-width: 860px) {
+            .portal-groups { max-width: 60rem; }
+            .portal-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (min-width: 1200px) {
+            .portal-groups { grid-template-columns: 3fr 1fr; gap: 2rem; max-width: 88rem; }
+            .portal-group:last-child .portal-grid { grid-template-columns: 1fr; }
+        }
         {{-- بوّابات الواجهة على قاعدة اللوحة نفسها التي في الداخل: سطحٌ شفّاف
              تمرّ خلفه صورة الصفحة، يحدّه خطٌّ شعري وأربعة أقواس زوايا — لا
              لونُ بطاقةٍ مصمت يقتطعها من الخلفية. والمرور يزيدها لمسةَ لونٍ
@@ -98,7 +115,7 @@
             border: 1px solid hsl(var(--primary) / .35); background: hsl(var(--primary) / .08);
         }
         .portal-lock svg { width: 12px; height: 12px; }
-        .portal-card h2 { font-size: 1.05rem; font-weight: 700; }
+        .portal-card h3 { font-size: 1.05rem; font-weight: 700; }
         .portal-card .blurb { font-size: .78rem; line-height: 1.6; color: hsl(var(--muted-foreground)); }
         .portal-tags { display: flex; flex-wrap: wrap; gap: .3rem; }
         .portal-tag { font-size: 10.5px; font-weight: 600; padding: .15rem .45rem; border-radius: 9999px; background: hsl(var(--muted) / .8); color: hsl(var(--muted-foreground)); }
@@ -123,32 +140,39 @@
         </header>
 
         <main class="portal-main">
-            <div class="portal-grid">
-                @foreach ($portals as $entry)
-                    <a href="{{ $entry['href'] }}" class="portal-card">
-                        <div class="card-top">
-                            <div class="icon-wrap">@include('partials.icon', ['name' => $entry['icon']])</div>
-                            @if ($entry['guarded'])
-                                <span class="portal-lock" title="بوابة محميّة — تتطلب تسجيل الدخول">
-                                    @include('partials.icon', ['name' => 'shield-alert'])
-                                    دخول
-                                </span>
-                            @endif
-                        </div>
-                        <div>
-                            <h2>{{ $entry['label'] }}</h2>
-                            <p class="blurb">{{ $entry['blurb'] }}</p>
-                        </div>
-                        <div class="portal-tags">
-                            @foreach ($entry['tags'] as $tag)
-                                <span class="portal-tag">{{ $tag }}</span>
+            <div class="portal-groups">
+                @foreach ($groups as $group)
+                    <section class="portal-group">
+                        <h2 class="group-title">{{ $group['title'] }}</h2>
+                        <div class="portal-grid">
+                            @foreach ($group['portals'] as $entry)
+                                <a href="{{ $entry['href'] }}" class="portal-card">
+                                    <div class="card-top">
+                                        <div class="icon-wrap">@include('partials.icon', ['name' => $entry['icon']])</div>
+                                        @if ($entry['guarded'])
+                                            <span class="portal-lock" title="بوابة محميّة — تتطلب تسجيل الدخول">
+                                                @include('partials.icon', ['name' => 'shield-alert'])
+                                                دخول
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <h3>{{ $entry['label'] }}</h3>
+                                        <p class="blurb">{{ $entry['blurb'] }}</p>
+                                    </div>
+                                    <div class="portal-tags">
+                                        @foreach ($entry['tags'] as $tag)
+                                            <span class="portal-tag">{{ $tag }}</span>
+                                        @endforeach
+                                    </div>
+                                    <span class="portal-enter">
+                                        الدخول
+                                        @include('partials.icon', ['name' => 'chevron-left'])
+                                    </span>
+                                </a>
                             @endforeach
                         </div>
-                        <span class="portal-enter">
-                            الدخول
-                            @include('partials.icon', ['name' => 'chevron-left'])
-                        </span>
-                    </a>
+                    </section>
                 @endforeach
             </div>
         </main>

@@ -1,13 +1,13 @@
 @extends('layouts.auth')
 
-@section('title', 'لوحة الإدارة')
+@section('title', 'تطبيق حوات')
 
 @section('card')
     <div class="auth-brand">
-        <div class="ico">@include('partials.icon', ['name' => 'layers'])</div>
+        <div class="ico">@include('partials.icon', ['name' => 'smartphone'])</div>
         <div>
-            <h1>لوحة الإدارة</h1>
-            <p style="font-size:.74rem;color:hsl(var(--muted-foreground))">الملاك والدلالون والتجار ومركز المعلومات</p>
+            <h1>تطبيق حوات</h1>
+            <p style="font-size:.74rem;color:hsl(var(--muted-foreground))">الملاك والكباتن والعدّادون والدلالون والتجار</p>
         </div>
     </div>
 

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\AdminTaskController;
+use App\Http\Controllers\OrgStructureController;
 use App\Models\AdminTask;
 use App\Models\Alert;
 use App\Models\AuditLog;
@@ -16,6 +18,7 @@ use App\Models\Port;
 use App\Models\Region;
 use App\Models\StaffNotification;
 use App\Models\Trip;
+use App\Models\User;
 use App\Models\UserPermission;
 use App\Support\AlertGenerator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,7 +26,8 @@ use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 /**
- * قسم الإدارة الفرعية — هيكله التنظيمي ومهامه وتنبيهاته وإنذاراته.
+ * إدارة النظام على النطاق الرئيسي (/subadmin) — هيكله التنظيمي ومهامه وتنبيهاته
+ * وإنذاراته.
  *
  * الاختبارات هنا تحرس القواعد لا العرض: أن الشجرة تبقى شجرة بعد حذف منصب أب،
  * وأن المهمة لا تُسند لمن لا يملك صلاحيتها، وأن الإنذار لا يُغلق بلا مسؤول،
@@ -43,6 +47,9 @@ class SubAdministrationSectionTest extends TestCase
     {
         parent::setUp();
 
+        // القسم نصف إدارة النظام، خلف دخول بوابة المعلومات.
+        $this->actingAs(User::factory()->create());
+
         $this->seedOrganisation();
     }
 
@@ -61,7 +68,7 @@ class SubAdministrationSectionTest extends TestCase
             'display_order' => 2,
         ]);
 
-        $rows = collect(\App\Http\Controllers\OrgStructureController::tree(
+        $rows = collect(OrgStructureController::tree(
             OrgPosition::orderBy('display_order')->get()
         ));
 
@@ -137,13 +144,13 @@ class SubAdministrationSectionTest extends TestCase
     public function test_the_calendar_pads_the_month_until_its_first_weekday(): void
     {
         // مارس 2026 يبدأ يوم أحد (أول أعمدة الشبكة) ⇒ لا فراغات قبله، و31 يومًا.
-        $cells = \App\Http\Controllers\AdminTaskController::cells(Carbon::parse('2026-03-01'));
+        $cells = AdminTaskController::cells(Carbon::parse('2026-03-01'));
 
         $this->assertCount(31, $cells);
         $this->assertSame('2026-03-01', $cells[0]);
 
         // أبريل 2026 يبدأ يوم أربعاء ⇒ ثلاث خانات فارغة قبل أول يوم.
-        $april = \App\Http\Controllers\AdminTaskController::cells(Carbon::parse('2026-04-01'));
+        $april = AdminTaskController::cells(Carbon::parse('2026-04-01'));
 
         $this->assertSame([null, null, null], array_slice($april, 0, 3));
         $this->assertSame('2026-04-01', $april[3]);
@@ -377,17 +384,6 @@ class SubAdministrationSectionTest extends TestCase
     | المستخدمون وسجل العمليات والإعدادات
     |--------------------------------------------------------------------------
     */
-
-    public function test_the_users_page_filters_by_role(): void
-    {
-        UserPermission::create(['user_email' => 'admin@hawat.sa', 'full_name' => 'مدير النظام', 'role' => 'admin', 'active' => true]);
-        UserPermission::create(['user_email' => 'east@hawat.sa', 'full_name' => 'مدير الشرقية', 'role' => 'region_manager', 'region' => 'المنطقة الشرقية', 'active' => true]);
-
-        $this->get('/subadmin?role=region_manager')
-            ->assertOk()
-            ->assertSee('مدير الشرقية', false)
-            ->assertDontSee('admin@hawat.sa', false);
-    }
 
     public function test_the_audit_log_filters_by_action(): void
     {

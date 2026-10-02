@@ -15,7 +15,7 @@
 
     <div class="card" style="display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.75rem 1rem;margin-bottom:1rem;font-size:.72rem;color:hsl(var(--muted-foreground))">
         @include('partials.icon', ['name' => 'layers'])
-        <span>خريطة حوات المحلية — فعّل ArcGIS من مركز الإدارة لإظهار الطبقات المؤسسية</span>
+        <span>خريطة حوات المحلية — فعّل ArcGIS من إدارة النظام لإظهار الطبقات المؤسسية</span>
     </div>
 
     <div class="grid-3" style="grid-template-columns:1fr">

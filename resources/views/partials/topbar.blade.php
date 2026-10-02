@@ -15,7 +15,7 @@
 
     <div class="topbar-actions">
         @php
-            // جرس الإشعارات لحسابات التطبيق في لوحة الإدارة وحدها — بوابات
+            // جرس الإشعارات لحسابات التطبيق في تطبيق حوات وحده — بوابات
             // الوزارة المفتوحة لا حساب فيها.
             $bellUser = App\Support\Nav::portalKey() === App\Support\Nav::OPS ? auth()->user() : null;
             $unreadCount = $bellUser?->app_role_key ? $bellUser->appNotifications()->unread()->count() : 0;

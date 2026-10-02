@@ -16,7 +16,7 @@
             <div class="nav-section">
                 <p class="nav-section-title">{{ $section['title'] }}</p>
                 @foreach ($section['items'] as $item)
-                    <a href="{{ route($item['route']) }}" class="nav-link {{ request()->routeIs($item['route']) ? 'is-active' : '' }}">
+                    <a href="{{ Nav::url($item) }}" class="nav-link {{ Nav::isActive($item) ? 'is-active' : '' }}">
                         @include('partials.icon', ['name' => $item['icon']])
                         <span>{{ $item['label'] }}</span>
                     </a>
@@ -27,8 +27,17 @@
 
     {{--
         ذيل القائمة: هويّة المستخدم — الداخل باسمه ودوره وزرّ خروجه، والزائر
-        (بوابات الوزارة المفتوحة) بهويّة المشاهدة الافتراضية.
+        (بوابات الوزارة المفتوحة) بهويّة المشاهدة الافتراضية. البوابتان خلف
+        الدخول لكلٍّ خروجها: تطبيق حوات إلى دخوله، وإدارة النظام إلى دخول
+        بوابة المعلومات.
     --}}
+    @php
+        $logout = match (Nav::portalKey()) {
+            Nav::OPS => 'panel.logout',
+            Nav::SUBADMIN => 'logout',
+            default => null,
+        };
+    @endphp
     <div class="sidebar-foot">
         <div class="user-chip">
             <div class="avatar">{{ $user?->initial ?? 'م' }}</div>
@@ -37,8 +46,8 @@
                 <p class="sub">{{ $user?->display_role ?? 'الإدارة العليا' }}</p>
             </div>
         </div>
-        @if ($user && Nav::portalKey() === Nav::OPS)
-            <form method="POST" action="{{ route('panel.logout') }}">
+        @if ($user && $logout)
+            <form method="POST" action="{{ route($logout) }}">
                 @csrf
                 <button type="submit" class="icon-action" title="تسجيل الخروج" aria-label="تسجيل الخروج">
                     @include('partials.icon', ['name' => 'log-out'])

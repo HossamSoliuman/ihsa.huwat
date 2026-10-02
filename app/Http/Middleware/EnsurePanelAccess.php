@@ -31,7 +31,7 @@ class EnsurePanelAccess
         }
 
         if ($user->app_role_key === null) {
-            abort(403, 'ليس لهذا الحساب دور في لوحة الإدارة.');
+            abort(403, 'ليس لهذا الحساب دور في تطبيق حوات.');
         }
 
         if ($roles !== [] && ! $user->hasAppRole(...$roles)) {

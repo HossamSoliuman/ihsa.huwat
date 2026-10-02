@@ -21,7 +21,7 @@
     @if (! $trip->canSell())
         <div class="card"><p class="card-sub">مصيد هذه الرحلة غير متاح — لم يكتمل العد أو نفد.</p></div>
     @elseif ($dalals->isEmpty())
-        <div class="card"><p class="card-sub">لا دلالين مفعّلين بعد — تُنشئ الإدارة حسابات الدلالين من لوحة الإدارة.</p></div>
+        <div class="card"><p class="card-sub">لا دلالين مفعّلين بعد — تُنشئ إدارة حوات حسابات الدلالين.</p></div>
     @else
         <form method="POST" action="{{ route('panel.owner.consignments.store') }}" class="card" style="display:flex;flex-direction:column;gap:1rem">
             @csrf

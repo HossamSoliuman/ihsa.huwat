@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\AuditLog;
 use App\Models\Boat;
 use App\Models\BusinessGlossaryTerm;
 use App\Models\DataCatalogAsset;
@@ -17,7 +16,6 @@ use App\Models\Market;
 use App\Models\MarketAuction;
 use App\Models\Port;
 use App\Models\Region;
-use App\Models\SeasonLicense;
 use App\Models\Species;
 use App\Models\StatisticsOfficer;
 use App\Models\UiTranslation;
@@ -298,35 +296,6 @@ return [
         ],
     ],
 
-    'season-licenses' => [
-        'label' => 'رخص المواسم',
-        'model' => SeasonLicense::class,
-        'title' => 'رخص المواسم',
-        'description' => 'رخص الصيد الموسمية المرتبطة بالقوارب والحصص.',
-        'with' => ['fishingSeason', 'boat', 'port'],
-        'columns' => ['license_number' => 'رقم الرخصة', 'fishingSeason.name' => 'الموسم', 'boat.name' => 'القارب', 'species' => 'النوع', 'quota_kg' => 'الحصة (كجم)', 'status' => 'الحالة'],
-        'badges' => ['status' => ['سارية' => 'ok', 'منتهية' => 'danger', 'ملغاة' => 'danger', 'معلقة' => 'warn']],
-        'fields' => [
-            ['key' => 'license_number', 'label' => 'رقم الرخصة', 'required' => true],
-            ['key' => 'fishing_season_id', 'label' => 'الموسم', 'type' => 'select', 'required' => true, 'options_from' => ['model' => FishingSeason::class, 'value' => 'id', 'label' => 'name']],
-            ['key' => 'boat_id', 'label' => 'القارب', 'type' => 'select', 'options_from' => $boatOptions],
-            ['key' => 'boat_name', 'label' => 'اسم القارب', 'required' => true],
-            ['key' => 'fisher_name', 'label' => 'اسم الصياد'],
-            ['key' => 'captain', 'label' => 'الكابتن'],
-            ['key' => 'holder_name', 'label' => 'اسم صاحب الرخصة'],
-            ['key' => 'species', 'label' => 'النوع', 'type' => 'select', 'options_from' => ['model' => Species::class, 'column' => 'name_ar']],
-            ['key' => 'port_id', 'label' => 'الميناء', 'type' => 'select', 'options_from' => $portOptions],
-            ['key' => 'gear_type', 'label' => 'أداة الصيد', 'type' => 'select', 'options_from' => ['model' => GearType::class, 'column' => 'name']],
-            ['key' => 'allowed_area', 'label' => 'المنطقة المسموحة', 'type' => 'textarea'],
-            ['key' => 'issue_date', 'label' => 'تاريخ الإصدار', 'type' => 'date'],
-            ['key' => 'expiry_date', 'label' => 'تاريخ الانتهاء', 'type' => 'date'],
-            ['key' => 'quota_kg', 'label' => 'الحصة (كجم)', 'type' => 'number'],
-            ['key' => 'used_kg', 'label' => 'المستخدم (كجم)', 'type' => 'number'],
-            ['key' => 'status', 'label' => 'الحالة', 'type' => 'select', 'options' => ['سارية', 'منتهية', 'ملغاة', 'معلقة']],
-            ['key' => 'notes', 'label' => 'ملاحظات', 'type' => 'textarea'],
-        ],
-    ],
-
     'markets' => [
         'label' => 'الأسواق',
         'model' => Market::class,
@@ -540,16 +509,6 @@ return [
             ['key' => 'status', 'label' => 'حالة الاعتماد', 'type' => 'select', 'options' => ['مسودة', 'معتمد', 'مرفوض']],
             ['key' => 'notes', 'label' => 'ملاحظات', 'type' => 'textarea'],
         ],
-    ],
-
-    'audit-logs' => [
-        'label' => 'سجل العمليات',
-        'model' => AuditLog::class,
-        'title' => 'سجل العمليات',
-        'description' => 'سجل غير قابل للتعديل لكل العمليات الحساسة في النظام.',
-        'readonly' => true,
-        'columns' => ['created_at' => 'الوقت', 'action' => 'العملية', 'entity' => 'الكيان', 'record_label' => 'السجل', 'user_email' => 'المستخدم', 'role' => 'الدور', 'details' => 'التفاصيل'],
-        'fields' => [],
     ],
 
 ];

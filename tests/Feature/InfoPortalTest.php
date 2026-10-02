@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\AuditLog;
 use App\Models\Governorate;
 use App\Models\Port;
 use App\Models\Region;
@@ -204,18 +203,32 @@ class InfoPortalTest extends TestCase
         ]);
     }
 
-    public function test_the_audit_log_refuses_writes(): void
+    public function test_a_resource_is_written_only_through_its_own_tab(): void
     {
         $this->signIn();
+        $governorate = $this->governorate();
 
-        $this->post(route('admin.resource.store', ['tab' => 'audit', 'resource' => 'audit-logs']), [])
-            ->assertForbidden();
+        // الموانئ من تبويب البيانات الجغرافية، فلا تُكتب من تبويب الأسطول.
+        $this->post(route('admin.resource.store', ['tab' => 'fleet', 'resource' => 'ports']), [
+            'name' => 'ميناء الدمام',
+            'governorate_id' => $governorate->id,
+            'status' => 'نشط',
+        ])->assertNotFound();
 
-        $log = AuditLog::create(['action' => 'اختبار', 'entity' => 'System']);
+        $this->assertDatabaseMissing('ports', ['name' => 'ميناء الدمام']);
+    }
 
-        $this->delete(route('admin.resource.destroy', ['tab' => 'audit', 'resource' => 'audit-logs', 'id' => $log->id]))
-            ->assertForbidden();
+    public function test_a_dropped_tab_redirects_to_the_page_that_replaced_it(): void
+    {
+        // الرخص موضعها الخدمات والتراخيص، وسجل العمليات صفحته في إدارة النظام.
+        $this->signIn();
 
-        $this->assertDatabaseHas('audit_logs', ['id' => $log->id]);
+        $this->get(self::PORTAL.'/admin/licenses')
+            ->assertMovedPermanently()
+            ->assertRedirect(route('services.season-licenses'));
+
+        $this->get(self::PORTAL.'/admin/audit')
+            ->assertMovedPermanently()
+            ->assertRedirect(route('subadmin.audit-log'));
     }
 }

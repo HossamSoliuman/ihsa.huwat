@@ -173,7 +173,7 @@ class ServiceStaffController extends Controller
     private function back(Request $request, string $message): RedirectResponse
     {
         return redirect()
-            ->route('services.staff-management', $request->only('section', 'q'))
+            ->route('subadmin.staff-management', $request->only('section', 'q'))
             ->with('status', $message);
     }
 }

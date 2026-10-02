@@ -10,6 +10,7 @@ use App\Models\Governorate;
 use App\Models\Port;
 use App\Models\Region;
 use App\Models\SupportTicket;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -333,13 +334,13 @@ class ServicesSectionTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | إدارة الموظفين
+    | إدارة الموظفين — انتقلت إلى إدارة النظام، فتُطلب بمستخدم داخل
     |--------------------------------------------------------------------------
     */
 
     public function test_an_empty_authorisation_means_every_service(): void
     {
-        $this->post('/services/staff-management', [
+        $this->actingAs(User::factory()->create())->post('/subadmin/staff-management', [
             'name' => 'موظف مفتوح التخويل',
             'role' => 'معالج',
             'section' => 'الخدمات والتراخيص',
@@ -357,7 +358,7 @@ class ServicesSectionTest extends TestCase
 
     public function test_a_staff_member_can_be_moved_between_sections(): void
     {
-        $this->post("/services/staff-management/{$this->clerk->id}/section", ['section' => 'الإحصاء'])
+        $this->actingAs(User::factory()->create())->post("/subadmin/staff-management/{$this->clerk->id}/section", ['section' => 'الإحصاء'])
             ->assertSessionHasNoErrors();
 
         $this->assertSame('الإحصاء', $this->clerk->refresh()->section);
@@ -367,7 +368,7 @@ class ServicesSectionTest extends TestCase
     {
         $this->request(['assigned_staff_id' => $this->clerk->id]);
 
-        $this->delete("/services/staff-management/{$this->clerk->id}")
+        $this->actingAs(User::factory()->create())->delete("/subadmin/staff-management/{$this->clerk->id}")
             ->assertSessionHasErrors('staff');
 
         $this->assertNotNull($this->clerk->fresh());
@@ -375,7 +376,7 @@ class ServicesSectionTest extends TestCase
 
     public function test_the_job_number_stays_unique_across_staff(): void
     {
-        $this->post('/services/staff-management', [
+        $this->actingAs(User::factory()->create())->post('/subadmin/staff-management', [
             'name' => 'مكرّر', 'role' => 'معالج', 'section' => 'الخدمات والتراخيص',
             'job_number' => $this->clerk->job_number,
         ])->assertSessionHasErrors('job_number');

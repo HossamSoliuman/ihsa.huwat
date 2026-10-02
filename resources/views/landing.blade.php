@@ -821,7 +821,7 @@
                     <div class="card ld-form ld-reg-done" data-reveal role="status">
                         <span class="ico-box">@include('partials.icon', ['name' => 'check-circle'])</span>
                         <h3>وصل طلبك، {{ session('registered') }}</h3>
-                        <p>طلبك الآن بانتظار مراجعة إدارة حوات. بعد اعتماده تدخل التطبيق ولوحة الإدارة برقم جوالك وكلمة المرور التي اخترتها.</p>
+                        <p>طلبك الآن بانتظار مراجعة إدارة حوات. بعد اعتماده تدخل التطبيق ولوحته على الويب برقم جوالك وكلمة المرور التي اخترتها.</p>
                         <a class="btn btn-outline" href="#top">العودة إلى الأعلى</a>
                     </div>
                 @else

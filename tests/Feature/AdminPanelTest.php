@@ -98,7 +98,7 @@ class AdminPanelTest extends TestCase
             ->get('/admin')
             ->assertOk()
             ->assertSee(route('panel.users'), false)
-            ->assertSee(route('boats'), false)
+            ->assertSee(route('trips'), false)
             ->assertSee('class="sidebar"', false)
             ->assertSee(route('panel.logout'), false);
 

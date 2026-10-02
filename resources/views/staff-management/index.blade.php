@@ -44,7 +44,7 @@
         </label>
         <label class="field"><span>بحث</span><input class="input" type="search" name="q" value="{{ $query }}" placeholder="الاسم، الرقم الوظيفي، البريد..."></label>
         <button type="submit" class="btn btn-primary">بحث</button>
-        <a href="{{ route('services.staff-management') }}" class="btn btn-outline">إعادة تعيين</a>
+        <a href="{{ route('subadmin.staff-management') }}" class="btn btn-outline">إعادة تعيين</a>
     </form>
 
     <div class="cards-grid cols-3">
@@ -88,7 +88,7 @@
                         <button type="button" class="icon-action" title="تعديل" onclick='openStaffForm(@json($payload))'>
                             @include('partials.icon', ['name' => 'pencil'])
                         </button>
-                        <form method="POST" action="{{ route('services.staff-management.destroy', ['staff' => $member] + $filters) }}" onsubmit="return confirm('حذف الموظف «{{ $member->name }}»؟')">
+                        <form method="POST" action="{{ route('subadmin.staff-management.destroy', ['staff' => $member] + $filters) }}" onsubmit="return confirm('حذف الموظف «{{ $member->name }}»؟')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="icon-action" title="حذف">@include('partials.icon', ['name' => 'trash'])</button>
@@ -96,7 +96,7 @@
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('services.staff-management.reassign', ['staff' => $member] + $filters) }}" style="margin-top:.75rem">
+                <form method="POST" action="{{ route('subadmin.staff-management.reassign', ['staff' => $member] + $filters) }}" style="margin-top:.75rem">
                     @csrf
                     <label class="field"><span>القسم</span>
                         <select class="select" name="section" onchange="this.form.submit()">
@@ -168,7 +168,7 @@
             </div>
             <button type="button" class="icon-action" onclick="toggleDrawer('staffDrawer', false)">@include('partials.icon', ['name' => 'x'])</button>
         </div>
-        <form method="POST" id="staffForm" action="{{ route('services.staff-management.store', $filters) }}" class="drawer-body">
+        <form method="POST" id="staffForm" action="{{ route('subadmin.staff-management.store', $filters) }}" class="drawer-body">
             @csrf
             <input type="hidden" name="_method" id="staffMethod" value="POST">
             <div class="form-grid">
@@ -241,8 +241,8 @@
 
 @push('scripts')
 <script>
-    const staffStoreUrl = @json(route('services.staff-management.store', $filters));
-    const staffUpdateUrl = @json(route('services.staff-management.update', ['staff' => '__ID__'] + $filters));
+    const staffStoreUrl = @json(route('subadmin.staff-management.store', $filters));
+    const staffUpdateUrl = @json(route('subadmin.staff-management.update', ['staff' => '__ID__'] + $filters));
     const permissionFields = @json(array_values($permissionFields));
 
     function openStaffForm(member = null) {

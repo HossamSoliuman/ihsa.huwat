@@ -6,9 +6,8 @@
     use App\Support\Nav;
 
     /*
-     * المربّعات هي تبويبات القائمة الجانبية نفسها عدا هذه الشاشة، فلا تُذكر
-     * اللوحات هنا مرتين: يكفي تعديل nav_gov ليتبدّل الاثنان معًا. السطر الوصفي
-     * وحده محلّي — القائمة الجانبية لا تعرضه.
+     * المربّعات لوحات nav_gov عدا هذه الشاشة، فلا تُذكر اللوحات هنا مرتين:
+     * يكفي تعديل nav_gov ليظهر مربّعها. السطر الوصفي وحده محلّي.
      */
     $blurbs = [
         'gov.overview' => 'المصيد المعتمد والرحلات والأسطول والتنبيهات في لوحة واحدة.',
@@ -19,7 +18,7 @@
     ];
 
     $screen = Nav::screenMode();
-    $tiles = collect(Nav::sections())
+    $tiles = collect(Nav::screens())
         ->flatMap(fn (array $section) => array_map(
             fn (array $item) => $item + ['group' => $section['title']],
             $section['items'],

@@ -9,9 +9,10 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * لوحة الحكومة تُعرض على شاشة قاعة: رئيستها شاشة اختيار بمربّعات، ونقر المربّع
- * يفتح لوحته في وضع العرض (?screen=1) بلا قائمة جانبية ولا شريط علوي. هذه
- * الاختبارات تحرس الطرفين — أن كل تبويب له مربّعه، وأن وضع العرض يطوي التخطيط.
+ * شاشة العرض (/gov، تبويب في قائمة الإحصاء) تُعرض على شاشة قاعة: رئيستها شاشة
+ * اختيار بمربّعات، ونقر المربّع يفتح لوحته في وضع العرض (?screen=1) بلا قائمة
+ * جانبية ولا شريط علوي. هذه الاختبارات تحرس الطرفين — أن كل لوحة لها مربّعها،
+ * وأن وضع العرض يطوي التخطيط.
  */
 class GovScreensTest extends TestCase
 {
@@ -21,7 +22,7 @@ class GovScreensTest extends TestCase
     {
         $response = $this->get('/gov')->assertOk();
 
-        foreach (Nav::sections(Nav::GOV) as $section) {
+        foreach (Nav::screens() as $section) {
             foreach ($section['items'] as $item) {
                 if ($item['route'] === 'gov.home') {
                     // شاشة الاختيار لا تعرض مربّعًا لنفسها.
@@ -71,15 +72,24 @@ class GovScreensTest extends TestCase
     public function test_only_the_government_portal_opens_in_display_mode(): void
     {
         // بقية البوابات تُدار من مكتب لا من قاعة، فتبقى على تخطيطها الكامل.
-        // لوحة الإدارة خلف الدخول، فتُطلب صفحتها بمدير عام داخل.
+        // إدارة النظام وتطبيق حوات خلف الدخول، فتُطلب صفحاتهما بمدير عام داخل.
         $this->actingAs(User::factory()->superAdmin()->create());
 
-        foreach (['/stats', '/subadmin', '/services', '/admin/boats'] as $url) {
+        foreach (['/stats', '/subadmin/org-structure', '/services', '/admin/boats'] as $url) {
             $this->get($url)
                 ->assertOk()
                 ->assertSee('class="sidebar"', false)
                 ->assertDontSee('class="screen-bar"', false);
         }
+    }
+
+    public function test_the_wall_screens_sit_under_one_tab_of_the_statistics_menu(): void
+    {
+        // خارج وضع العرض تظهر قائمة الإحصاء، وتبويب "شاشة العرض" نشطٌ على أي لوحة منها.
+        $this->get('/gov/production?screen=0')
+            ->assertOk()
+            ->assertSee(route('stats.field-statistics'), false)
+            ->assertSee('<a href="'.route('gov.home').'" class="nav-link is-active">', false);
     }
 
     public function test_display_mode_returns_to_the_home_screen_without_leaving_it(): void

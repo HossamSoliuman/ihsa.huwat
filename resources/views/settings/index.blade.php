@@ -15,25 +15,6 @@
 
     @if (session('status'))<div class="flash">{{ session('status') }}</div>@endif
 
-    <div class="cards-grid" style="margin-bottom:1.25rem">
-        <a href="{{ route('admin.index') }}" class="entity-card" style="flex-direction:row;align-items:center;gap:.75rem;padding:1rem">
-            <div class="kpi-icon primary">@include('partials.icon', ['name' => 'shield-check'])</div>
-            <div style="flex:1;min-width:0">
-                <p style="font-size:.875rem;font-weight:700">مركز إدارة النظام</p>
-                <p style="font-size:.72rem;color:hsl(var(--muted-foreground))">إدارة البيانات الأساسية والإعدادات المركزية</p>
-            </div>
-            @include('partials.icon', ['name' => 'external-link'])
-        </a>
-        <a href="{{ route('admin.tab', 'permissions') }}" class="entity-card" style="flex-direction:row;align-items:center;gap:.75rem;padding:1rem">
-            <div class="kpi-icon info">@include('partials.icon', ['name' => 'users'])</div>
-            <div style="flex:1;min-width:0">
-                <p style="font-size:.875rem;font-weight:700">إدارة الصلاحيات</p>
-                <p style="font-size:.72rem;color:hsl(var(--muted-foreground))">الأدوار والنطاق الجغرافي للمناطق والمحافظات والموانئ</p>
-            </div>
-            @include('partials.icon', ['name' => 'external-link'])
-        </a>
-    </div>
-
     <form method="POST" action="{{ route('subadmin.settings.update') }}">
         @csrf
         @method('PUT')
