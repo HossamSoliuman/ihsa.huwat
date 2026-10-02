@@ -74,7 +74,7 @@
                         <td>
                             <span class="badge {{ $counter->isSuspended() ? 'badge-danger' : 'badge-ok' }}">{{ $counter->status }}</span>
                             @if ($counter->isSuspended())
-                                <div class="card-sub">{{ $counter->suspender?->name }} · <span class="num">{{ $counter->suspended_at->format('Y-m-d') }}</span>@if ($counter->suspension_reason) — {{ $counter->suspension_reason }}@endif</div>
+                                <div class="card-sub">{{ $counter->suspender?->name }} · <bdi dir="ltr" class="num">{{ $counter->suspended_at->format('Y-m-d') }}</bdi>@if ($counter->suspension_reason) — {{ $counter->suspension_reason }}@endif</div>
                             @endif
                         </td>
                         <td>

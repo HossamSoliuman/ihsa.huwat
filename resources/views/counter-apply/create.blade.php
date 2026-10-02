@@ -92,7 +92,8 @@
         const row = tree.find(r => String(r.round_id) === round.value);
         info.hidden = !row;
         if (row) {
-            info.textContent = `${row.title} · ${row.company} · بقي ${row.seats_left} مقعد · يُغلق التقديم ${row.closes_at}` + (row.notes ? ' — ' + row.notes : '');
+            // التاريخ معزول LTR (⁦…⁩) حتى لا ينقلب بعد النص العربي.
+            info.textContent = `${row.title} · ${row.company} · بقي ${row.seats_left} مقعد · يُغلق التقديم ⁦${row.closes_at}⁩` + (row.notes ? ' — ' + row.notes : '');
         }
     }
 

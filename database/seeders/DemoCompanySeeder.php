@@ -25,7 +25,8 @@ class DemoCompanySeeder extends Seeder
 {
     public function run(): void
     {
-        $homePortId = Boat::whereHas('owner', fn ($q) => $q->where('phone', '0500000001'))->orderBy('id')->value('port_id');
+        $owner = User::where('phone', '0500000001')->first();
+        $homePortId = $owner ? Boat::forOwner($owner)->orderBy('id')->value('port_id') : null;
         $ports = Port::query()
             ->when($homePortId, fn ($q) => $q->orderByRaw('id = ? DESC', [$homePortId]))
             ->orderBy('id')

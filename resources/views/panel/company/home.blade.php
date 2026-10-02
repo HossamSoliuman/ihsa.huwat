@@ -56,7 +56,7 @@
                 <div style="display:flex;justify-content:space-between;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--hair)">
                     <div>
                         <div style="font-weight:700">{{ $round->title }}</div>
-                        <div class="card-sub">{{ $round->port?->name }} · حتى <span class="num">{{ $round->closes_at->format('Y-m-d') }}</span></div>
+                        <div class="card-sub">{{ $round->port?->name }} · حتى <bdi dir="ltr" class="num">{{ $round->closes_at->format('Y-m-d') }}</bdi></div>
                     </div>
                     <div style="text-align:left">
                         <span class="badge {{ $round->state_tone }}">{{ $round->state_label }}</span>

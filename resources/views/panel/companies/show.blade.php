@@ -133,7 +133,7 @@
                         <tr>
                             <td style="font-weight:600">{{ $round->title }}</td>
                             <td>{{ $round->port?->name }}</td>
-                            <td class="num" style="font-size:.74rem">{{ $round->opens_at->format('Y-m-d') }} ← {{ $round->closes_at->format('Y-m-d') }}</td>
+                            <td class="num" style="font-size:.74rem"><bdi dir="ltr">{{ $round->opens_at->format('Y-m-d') }}</bdi> ← <bdi dir="ltr">{{ $round->closes_at->format('Y-m-d') }}</bdi></td>
                             <td class="num">{{ $round->approved_count }} / {{ $round->seats }}</td>
                             <td><span class="badge {{ $round->state_tone }}">{{ $round->state_label }}</span></td>
                         </tr>

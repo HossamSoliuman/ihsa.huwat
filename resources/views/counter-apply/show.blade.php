@@ -23,7 +23,7 @@
         <dt style="color:hsl(var(--muted-foreground))">الجولة</dt>
         <dd style="margin:0">{{ $application->round?->title }}</dd>
         <dt style="color:hsl(var(--muted-foreground))">تاريخ التقديم</dt>
-        <dd style="margin:0" class="num">{{ $application->created_at->format('Y-m-d H:i') }}</dd>
+        <dd style="margin:0" class="num"><bdi dir="ltr">{{ $application->created_at->format('Y-m-d H:i') }}</bdi></dd>
         @if ($application->rejection_reason)
             <dt style="color:hsl(var(--muted-foreground))">سبب الرفض</dt>
             <dd style="margin:0">{{ $application->rejection_reason }}</dd>

@@ -51,7 +51,7 @@
                     <tr>
                         <td style="font-weight:600">{{ $round->title }}@if ($round->notes)<div class="card-sub">{{ $round->notes }}</div>@endif</td>
                         <td>{{ $round->port?->name }}</td>
-                        <td class="num" style="font-size:.74rem">{{ $round->opens_at->format('Y-m-d') }} ← {{ $round->closes_at->format('Y-m-d') }}</td>
+                        <td class="num" style="font-size:.74rem"><bdi dir="ltr">{{ $round->opens_at->format('Y-m-d') }}</bdi> ← <bdi dir="ltr">{{ $round->closes_at->format('Y-m-d') }}</bdi></td>
                         <td class="num">{{ $round->approved_count }} / {{ $round->seats }}</td>
                         <td class="num">
                             @if ($round->pending_count > 0)

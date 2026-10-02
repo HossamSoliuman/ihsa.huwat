@@ -73,7 +73,7 @@
                     <dt style="color:hsl(var(--muted-foreground))">الهوية</dt>
                     <dd style="margin:0" class="num"><bdi dir="ltr">{{ $item->national_id }}</bdi></dd>
                     <dt style="color:hsl(var(--muted-foreground))">تاريخ الميلاد</dt>
-                    <dd style="margin:0" class="num">{{ $item->birth_date?->format('Y-m-d') ?? '—' }}</dd>
+                    <dd style="margin:0" class="num"><bdi dir="ltr">{{ $item->birth_date?->format('Y-m-d') ?? '—' }}</bdi></dd>
                     <dt style="color:hsl(var(--muted-foreground))">المؤهل</dt>
                     <dd style="margin:0">{{ $item->qualification ?? '—' }}</dd>
                     <dt style="color:hsl(var(--muted-foreground))">سنوات الخبرة</dt>
@@ -81,7 +81,7 @@
                     <dt style="color:hsl(var(--muted-foreground))">البريد</dt>
                     <dd style="margin:0" dir="ltr">{{ $item->email ?? '—' }}</dd>
                     <dt style="color:hsl(var(--muted-foreground))">تاريخ الطلب</dt>
-                    <dd style="margin:0" class="num">{{ $item->created_at->format('Y-m-d H:i') }} <span style="color:hsl(var(--muted-foreground))">({{ $item->created_at->diffForHumans() }})</span></dd>
+                    <dd style="margin:0" class="num"><bdi dir="ltr">{{ $item->created_at->format('Y-m-d H:i') }}</bdi> <span style="color:hsl(var(--muted-foreground))">({{ $item->created_at->diffForHumans() }})</span></dd>
                 </dl>
 
                 @if ($item->notes)
@@ -105,7 +105,7 @@
                     </div>
                 @elseif ($item->reviewed_at)
                     <div class="card-sub" style="padding-top:.6rem;border-top:1px solid var(--hair)">
-                        {{ $item->status_label }} بواسطة {{ $item->reviewer?->name ?? '—' }} · <span class="num">{{ $item->reviewed_at->format('Y-m-d H:i') }}</span>
+                        {{ $item->status_label }} بواسطة {{ $item->reviewer?->name ?? '—' }} · <bdi dir="ltr" class="num">{{ $item->reviewed_at->format('Y-m-d H:i') }}</bdi>
                         @if ($item->rejection_reason)
                             <div style="margin-top:.35rem">السبب: {{ $item->rejection_reason }}</div>
                         @endif
