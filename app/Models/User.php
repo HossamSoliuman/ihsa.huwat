@@ -29,6 +29,7 @@ class User extends Authenticatable
         'password',
         'role_id',
         'owner_id',
+        'operating_company_id',
         'active',
         'locale',
         'avatar_path',
@@ -164,6 +165,15 @@ class User extends Authenticatable
     public function statisticsOfficer(): HasOne
     {
         return $this->hasOne(StatisticsOfficer::class);
+    }
+
+    /**
+     * شركة التشغيل لحساب موظفها (دور company). شركة العدّاد في سجلّ موظف
+     * الإحصاء لا هنا.
+     */
+    public function operatingCompany(): BelongsTo
+    {
+        return $this->belongsTo(OperatingCompany::class);
     }
 
     /**

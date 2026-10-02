@@ -11,6 +11,7 @@ use App\Models\Trip;
 use App\Models\User;
 use App\Services\Captain\CaptainDashboard;
 use App\Services\Counter\CounterDashboard;
+use App\Services\Counters\CompanyDashboard;
 use App\Services\Dalal\DalalDashboard;
 use App\Services\Owner\DalalSettlement;
 use App\Services\Owner\FleetAlerts;
@@ -53,6 +54,12 @@ class HomeController extends Controller
 
         if ($user->hasAppRole(Role::COUNTER)) {
             return view('panel.counter.home', ['user' => $user] + $counterDashboard->for($user));
+        }
+
+        if ($user->hasAppRole(Role::COMPANY)) {
+            abort_unless($user->operatingCompany?->isActive(), 403, 'حسابك غير مربوط بشركة تشغيل نشطة — راجع المدير العام.');
+
+            return view('panel.company.home', ['user' => $user] + app(CompanyDashboard::class)->for($user->operatingCompany));
         }
 
         if ($user->hasAppRole(Role::DALAL)) {

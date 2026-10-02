@@ -17,6 +17,9 @@ class OtpCode extends BaseModel
 
     public const PURPOSE_PASSWORD_RESET = 'password_reset';
 
+    /** توثيق جوال المتقدّم لوظيفة عدّاد قبل أن يصل طلبه الشركة. */
+    public const PURPOSE_COUNTER_APPLICATION = 'counter_application';
+
     public const MAX_ATTEMPTS = 5;
 
     public const TTL_MINUTES = 10;

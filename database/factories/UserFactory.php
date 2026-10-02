@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\OperatingCompany;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -77,6 +78,14 @@ class UserFactory extends Factory
     public function ownedBy(User $owner): static
     {
         return $this->state(fn () => ['owner_id' => $owner->id]);
+    }
+
+    /**
+     * موظف شركة تشغيل يدخل بوابتها.
+     */
+    public function company(OperatingCompany $company): static
+    {
+        return $this->role(Role::COMPANY)->state(fn () => ['operating_company_id' => $company->id]);
     }
 
     public function inactive(): static

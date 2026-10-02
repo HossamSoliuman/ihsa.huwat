@@ -4,12 +4,15 @@ namespace App\Services\Notifications;
 
 use App\Models\AppNotification;
 use App\Models\Consignment;
+use App\Models\CounterApplication;
 use App\Models\DalalInvoiceReview;
 use App\Models\DalalPartnership;
 use App\Models\DalalPayout;
 use App\Models\NotificationType;
+use App\Models\Port;
 use App\Models\Role;
 use App\Models\Sale;
+use App\Models\StatisticsOfficer;
 use App\Models\Trip;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -58,6 +61,10 @@ class Notifier
     public const INVOICE_REPLIED = 'رد الدلال على فاتورة مرفوضة';
 
     public const RECEIPT_RECORDED = 'سجّل المالك استلام دفعة';
+
+    public const COUNTER_APPLIED = 'طلب توظيف عدّاد';
+
+    public const COUNTER_TRANSFERRED = 'نُقلت إلى ميناء آخر';
 
     public function __construct(private readonly PushSender $push) {}
 
@@ -241,6 +248,34 @@ class Notifier
         $this->notify($payout->dalal, self::RECEIPT_RECORDED, 'سجّل المالك استلام دفعة',
             "سجّل {$payout->owner?->name} أنه استلم منك ".number_format((float) $payout->amount, 2).' ر.س.',
             null, ['target' => 'owners', 'payout_id' => $payout->id]);
+    }
+
+    /*
+     * شركة التشغيل وعدّادوها. المتقدّم لا حساب له قبل الاعتماد، فقرار طلبه
+     * يصله رسالة نصية (CounterApplicationReview) لا إشعار تطبيق.
+     */
+
+    /**
+     * طلب توظيف وُثّق جواله: يُبلَّغ به موظفو الشركة المفعّلون.
+     */
+    public function counterApplied(CounterApplication $application): void
+    {
+        $staff = User::where('operating_company_id', $application->operating_company_id)
+            ->where('active', true)
+            ->whereHas('appRole', fn ($q) => $q->where('key', Role::COMPANY))
+            ->get();
+
+        foreach ($staff as $user) {
+            $this->notify($user, self::COUNTER_APPLIED, 'طلب توظيف عدّاد',
+                "تقدّم {$application->name} لوظيفة عدّاد في {$application->port?->name} — راجعه من طلبات التوظيف.",
+                null, ['target' => 'applications', 'application_id' => $application->id]);
+        }
+    }
+
+    public function counterTransferred(StatisticsOfficer $officer, Port $from): void
+    {
+        $this->notify($officer->user, self::COUNTER_TRANSFERRED, 'نُقلت إلى ميناء آخر',
+            "نُقل عملك من {$from->name} إلى {$officer->port?->name} — طابورك الآن طابور الميناء الجديد.");
     }
 
     private function pct(mixed $value): string

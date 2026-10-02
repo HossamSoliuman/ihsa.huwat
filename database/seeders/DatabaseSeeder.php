@@ -25,6 +25,8 @@ class DatabaseSeeder extends Seeder
             // قوائم بوابة المالك، ثم ربط المالك التجريبي بقاربين ورحلاتهما.
             LookupSeeder::class,
             DemoOwnerSeeder::class,
+            // شركة تشغيل تجريبية توظّف العدّادين في ميناء المالك التجريبي.
+            DemoCompanySeeder::class,
         ]);
     }
 }

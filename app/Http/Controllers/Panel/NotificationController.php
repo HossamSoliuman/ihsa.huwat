@@ -63,6 +63,7 @@ class NotificationController extends Controller
             [Role::DALAL, 'partnerships'] => route('panel.dalal.requests'),
             [Role::DALAL, 'owners'] => route('panel.dalal.owners'),
             [Role::DALAL, 'sale'] => route('panel.dalal.sales.show', $data['sale_id']),
+            [Role::COMPANY, 'applications'] => route('panel.company.applications'),
             [Role::OWNER, 'dalal_invoice'] => route('panel.owner.dalal-invoices.show', $data['sale_id']),
             // بيع من مصيده يفتح فاتورته، ودفعة الدلال تفتح كشف حسابه عنده.
             [Role::OWNER, 'dalals'] => match (true) {

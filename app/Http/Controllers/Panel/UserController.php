@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\OperatingCompany;
 use App\Models\Port;
 use App\Models\Role;
 use App\Models\StatisticsOfficer;
@@ -30,7 +31,7 @@ class UserController extends Controller
     {
         $roles = Role::orderBy('display_order')->get();
 
-        $query = User::with(['appRole', 'owner', 'statisticsOfficer'])
+        $query = User::with(['appRole', 'owner', 'statisticsOfficer', 'operatingCompany'])
             ->whereNotNull('role_id')
             ->when($request->filled('role'), fn ($q) => $q->whereHas('appRole', fn ($r) => $r->where('key', $request->query('role'))))
             ->when($request->query('status') === 'active', fn ($q) => $q->where('active', true))
@@ -51,6 +52,7 @@ class UserController extends Controller
             'roles' => $roles,
             'owners' => User::whereHas('appRole', fn ($r) => $r->where('key', Role::OWNER))->orderBy('name')->get(['id', 'name']),
             'ports' => Port::orderBy('name')->get(['id', 'name']),
+            'companies' => OperatingCompany::orderBy('name')->get(['id', 'name']),
             'counts' => [
                 'total' => User::whereNotNull('role_id')->count(),
                 'active' => User::whereNotNull('role_id')->where('active', true)->count(),
@@ -143,6 +145,7 @@ class UserController extends Controller
             'role_id' => ['required', Rule::exists('roles', 'id')->where('active', true)],
             'owner_id' => ['nullable', Rule::exists('users', 'id')],
             'port_id' => ['nullable', Rule::exists('ports', 'id')],
+            'operating_company_id' => ['nullable', Rule::exists('operating_companies', 'id')],
             'password' => [$user ? 'nullable' : 'required', 'string', 'min:8'],
             'active' => ['nullable', 'boolean'],
         ], [
@@ -165,6 +168,13 @@ class UserController extends Controller
             $request->validate(['port_id' => ['required']], ['port_id.required' => 'العدّاد يعمل في ميناء — اختر الميناء.']);
         } else {
             $data['port_id'] = null;
+        }
+
+        // موظف شركة التشغيل لا بدّ له من شركة يدخل بوابتها.
+        if ($role->key === Role::COMPANY) {
+            $request->validate(['operating_company_id' => ['required']], ['operating_company_id.required' => 'موظف شركة التشغيل يتبع شركة — اختر الشركة.']);
+        } else {
+            $data['operating_company_id'] = null;
         }
 
         $data['email'] = $data['email'] ?? null;

@@ -72,11 +72,17 @@ use App\Http\Controllers\Panel\Owner\TripController as OwnerTripController;
 use App\Http\Controllers\Panel\Owner\VendorController as OwnerVendorController;
 use App\Http\Controllers\Panel\ProfileController as PanelProfileController;
 use App\Http\Controllers\Panel\RegistrationRequestController as PanelRegistrationController;
+use App\Http\Controllers\Panel\Company\ApplicationController as CompanyApplicationController;
+use App\Http\Controllers\Panel\Company\CounterController as CompanyCounterController;
+use App\Http\Controllers\Panel\Company\HiringRoundController as CompanyHiringRoundController;
+use App\Http\Controllers\Panel\CompanyController as PanelCompanyController;
+use App\Http\Controllers\Panel\CounterController as PanelCounterController;
 use App\Http\Controllers\Panel\UserController as PanelUserController;
 use App\Http\Controllers\PerformanceCompareController;
 use App\Http\Controllers\PortController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\RegionController;
+use App\Http\Controllers\CounterApplicationController;
 use App\Http\Controllers\RegistrationRequestController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SeaMapController;
@@ -399,6 +405,22 @@ $adminPanel = function () use ($operationsConsole): void {
             Route::post('/registrations/{registration}/approve', [PanelRegistrationController::class, 'approve'])->name('panel.registrations.approve');
             Route::post('/registrations/{registration}/reject', [PanelRegistrationController::class, 'reject'])->name('panel.registrations.reject');
 
+            // شركات التشغيل وموانئها وحسابات موظفيها — توظّف العدّادين من بوابتها.
+            Route::get('/companies', [PanelCompanyController::class, 'index'])->name('panel.companies');
+            Route::post('/companies', [PanelCompanyController::class, 'store'])->name('panel.companies.store');
+            Route::get('/companies/{company}', [PanelCompanyController::class, 'show'])->name('panel.companies.show');
+            Route::put('/companies/{company}', [PanelCompanyController::class, 'update'])->name('panel.companies.update');
+            Route::delete('/companies/{company}', [PanelCompanyController::class, 'destroy'])->name('panel.companies.destroy');
+            Route::post('/companies/{company}/ports', [PanelCompanyController::class, 'attachPort'])->name('panel.companies.ports.attach');
+            Route::delete('/companies/{company}/ports/{port}', [PanelCompanyController::class, 'detachPort'])->name('panel.companies.ports.detach');
+            Route::post('/companies/{company}/staff', [PanelCompanyController::class, 'storeStaff'])->name('panel.companies.staff.store');
+
+            // العدّادون كلهم (وزارة وشركات): إيقاف لا ترفعه الشركة، ونقل.
+            Route::get('/counters', [PanelCounterController::class, 'index'])->name('panel.counters');
+            Route::post('/counters/{counter}/suspend', [PanelCounterController::class, 'suspend'])->name('panel.counters.suspend');
+            Route::post('/counters/{counter}/reactivate', [PanelCounterController::class, 'reactivate'])->name('panel.counters.reactivate');
+            Route::post('/counters/{counter}/transfer', [PanelCounterController::class, 'transfer'])->name('panel.counters.transfer');
+
             $operationsConsole();
         });
 
@@ -572,6 +594,28 @@ $adminPanel = function () use ($operationsConsole): void {
         });
 
         /*
+         * بوابة شركة التشغيل: جولات التوظيف في موانئها، وطلبات العدّادين
+         * واعتمادها، وعدّادوها ونشاطهم وإيقافهم ونقلهم. كل سجل مقيّد بشركة
+         * الموظف — انظر ResolvesCompanyRecords.
+         */
+        Route::prefix('company')->name('panel.company.')->middleware('panel:company')->group(function (): void {
+            Route::get('/hiring', [CompanyHiringRoundController::class, 'index'])->name('hiring');
+            Route::post('/hiring', [CompanyHiringRoundController::class, 'store'])->name('hiring.store');
+            Route::put('/hiring/{round}', [CompanyHiringRoundController::class, 'update'])->name('hiring.update');
+            Route::post('/hiring/{round}/open', [CompanyHiringRoundController::class, 'open'])->name('hiring.open');
+            Route::post('/hiring/{round}/close', [CompanyHiringRoundController::class, 'close'])->name('hiring.close');
+
+            Route::get('/applications', [CompanyApplicationController::class, 'index'])->name('applications');
+            Route::post('/applications/{application}/approve', [CompanyApplicationController::class, 'approve'])->name('applications.approve');
+            Route::post('/applications/{application}/reject', [CompanyApplicationController::class, 'reject'])->name('applications.reject');
+
+            Route::get('/counters', [CompanyCounterController::class, 'index'])->name('counters');
+            Route::post('/counters/{counter}/suspend', [CompanyCounterController::class, 'suspend'])->name('counters.suspend');
+            Route::post('/counters/{counter}/reactivate', [CompanyCounterController::class, 'reactivate'])->name('counters.reactivate');
+            Route::post('/counters/{counter}/transfer', [CompanyCounterController::class, 'transfer'])->name('counters.transfer');
+        });
+
+        /*
          * بوابة الدلال: مخزونه مما أرسله الملاك، والبيع منه بالسطور والفاتورة،
          * وعملاؤه، وطلبات الملاك، والصيّادون المرتبطون ودفعاتهم، والتقارير،
          * والإعدادات. كل سجل مقيّد به — انظر ResolvesDalalRecords.
@@ -623,6 +667,14 @@ $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdmi
      */
     Route::view('/', 'landing')->name('landing');
     Route::post('/register-request', [RegistrationRequestController::class, 'store'])->middleware('throttle:5,1')->name('landing.register');
+
+    // التقديم لوظيفة عدّاد في جولات شركات التشغيل، والمتابعة بمفتاح الطلب.
+    Route::get('/counter/apply', [CounterApplicationController::class, 'create'])->name('counter-apply');
+    Route::post('/counter/apply', [CounterApplicationController::class, 'store'])->middleware('throttle:5,1')->name('counter-apply.store');
+    Route::get('/counter/apply/{token}', [CounterApplicationController::class, 'show'])->name('counter-apply.show');
+    Route::post('/counter/apply/{token}/verify', [CounterApplicationController::class, 'verify'])->middleware('throttle:10,1')->name('counter-apply.verify');
+    Route::post('/counter/apply/{token}/resend', [CounterApplicationController::class, 'resend'])->middleware('throttle:3,1')->name('counter-apply.resend');
+    Route::post('/counter/apply/{token}/withdraw', [CounterApplicationController::class, 'withdraw'])->name('counter-apply.withdraw');
 
     Route::view('/sections', 'portal')->name('portal');
 

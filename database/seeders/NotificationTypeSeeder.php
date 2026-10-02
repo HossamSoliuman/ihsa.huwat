@@ -30,6 +30,8 @@ class NotificationTypeSeeder extends Seeder
         ['رفض المالك فاتورتك', 'Invoice rejected by owner', 'x-circle'],
         ['رد الدلال على فاتورة مرفوضة', 'Dalal replied to a rejected invoice', 'file-text'],
         ['سجّل المالك استلام دفعة', 'Owner recorded a receipt', 'calculator'],
+        ['طلب توظيف عدّاد', 'New counter application', 'user-plus'],
+        ['نُقلت إلى ميناء آخر', 'Moved to another port', 'arrow-left-right'],
     ];
 
     public function run(): void

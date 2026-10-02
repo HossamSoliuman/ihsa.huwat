@@ -258,6 +258,13 @@ return [
                 ],
             ],
             [
+                'title' => 'العدّادون',
+                'items' => [
+                    ['label' => 'شركات التشغيل', 'route' => 'panel.companies', 'icon' => 'building'],
+                    ['label' => 'العدّادون', 'route' => 'panel.counters', 'icon' => 'clipboard-check'],
+                ],
+            ],
+            [
                 'title' => 'الحساب',
                 'items' => [
                     ['label' => 'الإشعارات', 'route' => 'panel.notifications', 'icon' => 'bell'],
@@ -348,6 +355,24 @@ return [
                 'items' => [
                     ['label' => 'الرئيسية', 'route' => 'panel.home', 'icon' => 'layout-dashboard'],
                     ['label' => 'طابور العد', 'route' => 'panel.counter.trips', 'icon' => 'clipboard-check'],
+                ],
+            ],
+            [
+                'title' => 'الحساب',
+                'items' => [
+                    ['label' => 'الإشعارات', 'route' => 'panel.notifications', 'icon' => 'bell'],
+                    ['label' => 'الملف الشخصي', 'route' => 'panel.profile', 'icon' => 'user'],
+                ],
+            ],
+        ],
+        'company' => [
+            [
+                'title' => 'شركة التشغيل',
+                'items' => [
+                    ['label' => 'الرئيسية', 'route' => 'panel.home', 'icon' => 'layout-dashboard'],
+                    ['label' => 'جولات التوظيف', 'route' => 'panel.company.hiring', 'icon' => 'calendar'],
+                    ['label' => 'طلبات التوظيف', 'route' => 'panel.company.applications', 'icon' => 'user-plus'],
+                    ['label' => 'العدّادون', 'route' => 'panel.company.counters', 'icon' => 'users'],
                 ],
             ],
             [

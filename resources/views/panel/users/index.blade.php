@@ -64,13 +64,13 @@
                         <td dir="ltr" style="font-family:monospace;text-align:right">{{ $account->phone ?? '—' }}</td>
                         <td dir="ltr" style="text-align:right;font-size:.74rem">{{ $account->email ?? '—' }}</td>
                         <td>{{ $account->appRole?->name }}</td>
-                        <td>{{ $account->owner?->name ?? '—' }}</td>
+                        <td>{{ $account->owner?->name ?? $account->operatingCompany?->name ?? '—' }}</td>
                         <td style="font-size:.74rem;color:hsl(var(--muted-foreground))">{{ $account->last_login_at?->diffForHumans() ?? 'لم يدخل بعد' }}</td>
                         <td><span class="badge {{ $account->active ? 'badge-ok' : 'badge-danger' }}">{{ $account->active ? 'مفعّل' : 'معطّل' }}</span></td>
                         <td>
                             <div style="display:flex;gap:.25rem;justify-content:flex-end">
                                 <button type="button" class="icon-action" title="تعديل"
-                                    onclick='openUserForm({!! json_encode($account->only(['id', 'name', 'phone', 'email', 'role_id', 'owner_id', 'active']) + ['port_id' => $account->statisticsOfficer?->port_id], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!})'>
+                                    onclick='openUserForm({!! json_encode($account->only(['id', 'name', 'phone', 'email', 'role_id', 'owner_id', 'operating_company_id', 'active']) + ['port_id' => $account->statisticsOfficer?->port_id], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!})'>
                                     @include('partials.icon', ['name' => 'pencil'])
                                 </button>
                                 @unless ($account->is(auth()->user()))
@@ -131,6 +131,13 @@
                         @foreach ($ports as $p)<option value="{{ $p->id }}">{{ $p->name }}</option>@endforeach
                     </select>
                 </label>
+                {{-- موظف شركة التشغيل يُسأل عن شركته: يدخل بوابتها. --}}
+                <label class="field" id="u-company-field" hidden><span>الشركة *</span>
+                    <select class="select" name="operating_company_id" id="u-company">
+                        <option value="">— اختر الشركة —</option>
+                        @foreach ($companies as $c)<option value="{{ $c->id }}">{{ $c->name }}</option>@endforeach
+                    </select>
+                </label>
                 <label class="field"><span id="u-password-label">كلمة المرور *</span><input class="input" type="password" name="password" id="u-password" dir="ltr" minlength="8" autocomplete="new-password"></label>
             </div>
             <label class="auth-remember" style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;cursor:pointer">
@@ -161,6 +168,10 @@
         const needsPort = key === 'counter';
         document.getElementById('u-port-field').hidden = !needsPort;
         document.getElementById('u-port').required = needsPort;
+
+        const needsCompany = key === 'company';
+        document.getElementById('u-company-field').hidden = !needsCompany;
+        document.getElementById('u-company').required = needsCompany;
     }
 
     function openUserForm(user = null) {
@@ -175,6 +186,7 @@
         document.getElementById('u-role').value = user?.role_id ?? '';
         document.getElementById('u-owner').value = user?.owner_id ?? '';
         document.getElementById('u-port').value = user?.port_id ?? '';
+        document.getElementById('u-company').value = user?.operating_company_id ?? '';
         document.getElementById('u-active').checked = user ? Boolean(user.active) : true;
         // كلمة المرور تُطلب عند الإنشاء وحده؛ في التعديل تُترك فارغة لتبقى كما هي.
         const password = document.getElementById('u-password');

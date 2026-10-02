@@ -6,7 +6,7 @@ use App\Models\Role;
 use Illuminate\Database\Seeder;
 
 /**
- * أدوار تطبيق حوات الثمانية. المفاتيح ثابتة (App\Models\Role) لأن الشيفرة
+ * أدوار تطبيق حوات التسعة. المفاتيح ثابتة (App\Models\Role) لأن الشيفرة
  * تتفرّع عليها؛ الأسماء والترتيب هنا لأنها تُعرض وتُرتَّب.
  */
 class RoleSeeder extends Seeder
@@ -61,6 +61,12 @@ class RoleSeeder extends Seeder
             'name' => 'تاجر السوق',
             'name_en' => 'Merchant',
             'description' => 'مشترٍ مسجّل في سوق السمك يزايد ويشتري.',
+            'has_portal' => true,
+        ],
+        Role::COMPANY => [
+            'name' => 'شركة التشغيل',
+            'name_en' => 'Operating Company',
+            'description' => 'تفتح التوظيف في موانئها وتعتمد العدّادين وتوقفهم وتنقلهم.',
             'has_portal' => true,
         ],
     ];

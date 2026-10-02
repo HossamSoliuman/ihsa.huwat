@@ -32,6 +32,11 @@ class Role extends BaseModel
     public const MERCHANT = 'merchant';
 
     /**
+     * موظف شركة التشغيل: يوظّف العدّادين في موانئ شركته ويديرهم.
+     */
+    public const COMPANY = 'company';
+
+    /**
      * الأدوار التي ينشئها مالك لحسابه: تتبعه في owner_id ولا تُنشأ من المدير العام.
      */
     public const OWNER_MANAGED = [self::CAPTAIN, self::CREW, self::EMPLOYEE];

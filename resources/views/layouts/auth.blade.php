@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الدخول — @yield('title')</title>
+    <title>@yield('title_prefix', 'تسجيل الدخول') — @yield('title')</title>
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,6 +48,8 @@
 
         .auth-foot { font-size: .72rem; color: hsl(var(--muted-foreground)); text-align: center; }
     </style>
+    {{-- صفحات تستعير الإطار نفسه ببطاقة أعرض (التقديم لوظيفة عدّاد). --}}
+    @stack('head')
     <script>
         // الوضع الداكن هو الأصل: لا يُطفأ إلا إذا اختار المستخدم الفاتح صراحةً.
         if (localStorage.getItem('hawat-theme') !== 'light') {
@@ -84,5 +86,6 @@
             localStorage.setItem('hawat-theme', dark ? 'dark' : 'light');
         }
     </script>
+    @stack('scripts')
 </body>
 </html>
