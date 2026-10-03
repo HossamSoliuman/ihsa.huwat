@@ -1,119 +1,132 @@
 <style>
 /*
- * بوابة المعلومات — ما تنفرد به وحدها.
+ * إدارة النظام — ما تنفرد به صفحات بوابة المعلومات داخل تخطيط اللوحة.
  *
- * نظام التصميم كلّه في partials/styles.blade.php ويُحمَّل قبل هذا الملف:
- * المتغيّرات والوضعان الفاتح والداكن، والشريط العلوي والقائمة الجانبية،
- * والبطاقة والجدول والحقل والزرّ. فلا يُعاد هنا شيء منها — إنما التبويبات
- * والنموذج المنبثق وما تحتاجه بنية هذه البوابة وحدها.
+ * نظام التصميم كلّه في partials/styles.blade.php: المتغيّرات والوضعان،
+ * والبطاقة والجدول والحقل والزرّ وأقواس الزوايا. هنا الرئيسة وشريط الجداول
+ * وشريط الأدوات والنموذج المنبثق فحسب.
  */
 
-/*
- * القائمة أوسع قليلًا من قائمة اللوحة: أسماء تبويبات البوابة أطول — "كتالوج
- * ومسارات البيانات"، "قاموس الأعمال والمؤشرات" — فكانت تُقصّ بثلاث نقاط عند
- * 12.5rem. والشريط العلوي يتبعها لأن كتلة الشعار بعرضها.
- */
-:root { --sidebar-w: 15rem; }
+/* سطر فوق عنوان الصفحة: القسم ثم موضع الصفحة منه. */
+.eyebrow { display: flex; align-items: center; gap: .35rem; margin-bottom: .2rem; font-size: .68rem; font-weight: 600; color: hsl(var(--muted-foreground)); }
+.eyebrow a:hover { color: hsl(var(--primary)); }
+.eyebrow svg { width: 11px; height: 11px; opacity: .6; }
+.page-header .en { font-family: 'Chakra Petch', sans-serif; letter-spacing: .02em; }
 
-/*
- * أيقونات البوابة تُرسم من مسارات في admin/partials/icon.blade.php بلا سمات
- * قياس، فتأخذ قياسها من هنا. وأي قاعدة أخصّ منها (.btn svg، .nav-link svg)
- * تتقدّم عليها كما هي في اللوحة.
- */
-.icon { width: 1rem; height: 1rem; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+/* ── الرئيسة ─────────────────────────────────────────────── */
+.hub-section { margin-top: 1.6rem; }
+.hub-title { display: flex; align-items: center; gap: .6rem; margin-bottom: .7rem; font-size: .74rem; font-weight: 700; letter-spacing: .02em; color: hsl(var(--muted-foreground)); }
+.hub-title::after { content: ''; flex: 1; height: 1px; background: var(--hair); }
+.hub-title .n { font-family: 'Chakra Petch', sans-serif; font-weight: 600; opacity: .7; }
+.hub-grid { display: grid; gap: .6rem; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .hub-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1100px) { .hub-grid { grid-template-columns: repeat(3, 1fr); } }
+.hub-card { position: relative; display: flex; align-items: center; gap: .8rem; border: 1px solid var(--hair); background: var(--surface); padding: .85rem .95rem; color: inherit; transition: border-color .15s, background .15s; }
+.hub-card::before { content: ''; position: absolute; inset-block: 0; inset-inline-start: 0; width: 2px; background: hsl(var(--primary)); transform: scaleY(0); transition: transform .18s; }
+.hub-card:hover { border-color: hsl(var(--primary) / .55); background: hsl(var(--primary) / .04); }
+.hub-card:hover::before { transform: scaleY(1); }
+.hub-card .glyph { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; flex-shrink: 0; border: 1px solid hsl(var(--primary) / .35); background: hsl(var(--primary) / .08); color: hsl(var(--primary)); }
+.hub-card .glyph svg { width: 17px; height: 17px; }
+.hub-card .body { min-width: 0; flex: 1; }
+.hub-card .name { font-size: .84rem; font-weight: 700; line-height: 1.45; }
+.hub-card .en { margin-top: .05rem; font-family: 'Chakra Petch', sans-serif; font-size: .66rem; letter-spacing: .03em; color: hsl(var(--muted-foreground)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hub-card .meta { display: flex; flex-direction: column; align-items: flex-end; gap: .35rem; flex-shrink: 0; }
+.hub-card > svg { width: 14px; height: 14px; color: hsl(var(--muted-foreground)); transition: transform .15s, color .15s; }
+.hub-card:hover > svg { color: hsl(var(--primary)); transform: translateX(-3px); }
 
-.topbar-actions form { display: flex; }
+/* ── صفحة التبويب ────────────────────────────────────────── */
+.panel { gap: 0; padding: 0; }
+.panel-body { display: flex; flex-direction: column; gap: 1rem; padding: 1.1rem 1.15rem; }
 
-/* رسالة الخطأ: نسخة حمراء من .flash الخضراء التي في اللوحة. */
-.flash-error { border-color: hsl(352 80% 50% / .45); background: hsl(352 80% 50% / .1); color: #be123c; }
-html.dark .flash-error { color: hsl(352 85% 72%); }
-.flash-error ul { padding-inline-start: 1.1rem; }
-.flash-error li { line-height: 1.9; }
+/* جداول التبويب: شريط بخطّ سفلي، والنشط مسطّر باللون مع عدد سجلاته. */
+.restabs { display: flex; gap: .15rem; overflow-x: auto; overflow-y: hidden; border-bottom: 1px solid var(--hair); padding-inline: .6rem; scrollbar-width: thin; }
+.restab { display: inline-flex; align-items: center; gap: .45rem; padding: .75rem .7rem .65rem; border-bottom: 2px solid transparent; margin-bottom: -1px; font-size: .78rem; font-weight: 600; color: hsl(var(--muted-foreground)); white-space: nowrap; transition: color .15s, border-color .15s; }
+.restab:hover { color: hsl(var(--foreground)); }
+.restab.is-active { color: hsl(var(--primary)); border-bottom-color: hsl(var(--primary)); }
+.restab .count { min-width: 1.4rem; padding: .05rem .35rem; border: 1px solid hsl(var(--border)); background: hsl(var(--muted) / .6); font-size: .64rem; text-align: center; color: hsl(var(--muted-foreground)); }
+.restab.is-active .count { border-color: hsl(var(--primary) / .45); background: hsl(var(--primary) / .1); color: hsl(var(--primary)); }
 
-/*
- * تنبيه البوابة: صندوق كهرماني يقول ما لا يُحرَّر من هنا. مبنيّ على قاعدة
- * .note-box نفسها لكن بلون التحذير لا بلون التأكيد.
- */
-.notice { display: flex; align-items: flex-start; gap: .7rem; border: 1px solid hsl(38 90% 45% / .45); background: hsl(38 90% 45% / .08); padding: .8rem .95rem; font-size: .78rem; line-height: 1.9; }
-.notice svg { width: 18px; height: 18px; margin-top: .15rem; color: #b45309; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: .8rem; }
+.toolbar h2 { font-size: .98rem; font-weight: 700; }
+.toolbar p { margin-top: .15rem; font-size: .72rem; line-height: 1.75; color: hsl(var(--muted-foreground)); }
+.toolbar .tools { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
+.search { position: relative; display: flex; }
+.search svg { position: absolute; inset-inline-start: .6rem; top: 50%; width: 14px; height: 14px; transform: translateY(-50%); color: hsl(var(--muted-foreground)); pointer-events: none; }
+.search .input { width: 16rem; max-width: 60vw; padding-inline-start: 1.9rem; }
+.search .clear { position: absolute; inset-inline-end: .35rem; top: 50%; transform: translateY(-50%); }
+
+/* ترويسة الجدول ثابتة عند التمرير، والسطر يُبرز تحت المؤشّر. */
+.panel .table-card { max-height: 68vh; overflow: auto; }
+.panel .data-table thead th { position: sticky; top: 0; z-index: 1; }
+.panel .data-table tbody tr:hover td { background: hsl(var(--primary) / .035); }
+.panel .data-table td:first-child { font-weight: 600; }
+
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: .55rem; padding: 3rem 1.25rem; text-align: center; }
+.empty-state .glyph { display: grid; place-items: center; width: 2.8rem; height: 2.8rem; border: 1px dashed hsl(var(--border)); color: hsl(var(--muted-foreground)); }
+.empty-state .glyph svg { width: 18px; height: 18px; }
+.empty-state h3 { font-size: .86rem; font-weight: 700; }
+.empty-state p { max-width: 26rem; font-size: .74rem; line-height: 1.8; color: hsl(var(--muted-foreground)); }
+
+/* خلايا الإجراءات: زرّان متجاوران في وسط الخانة، بلا لفّ سطر بينهما. */
+.cell-actions { width: 1%; text-align: center; white-space: nowrap; }
+.inline-form { display: inline; }
+.cell-actions .icon-action { display: inline-grid; place-items: center; vertical-align: middle; }
+
+.pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; font-size: .74rem; color: hsl(var(--muted-foreground)); }
+.pager .range { font-family: 'Chakra Petch', 'Tajawal', sans-serif; }
+.pager nav { display: flex; gap: .25rem; }
+.pager nav a, .pager nav span { display: inline-flex; align-items: center; border: 1px solid hsl(var(--border)); padding: .3rem .75rem; }
+.pager nav a:hover { border-color: hsl(var(--primary) / .6); color: hsl(var(--foreground)); }
+.pager nav .is-disabled { opacity: .45; }
+
+/* تنبيه البوابة: سطر كهرماني يقول ما لا يُحرَّر من هنا. */
+.notice { display: flex; align-items: center; gap: .6rem; border: 1px solid hsl(38 90% 45% / .35); border-inline-start-width: 3px; background: hsl(38 90% 45% / .06); padding: .6rem .85rem; margin-bottom: 1rem; font-size: .74rem; line-height: 1.8; }
+.notice svg { width: 16px; height: 16px; flex-shrink: 0; color: #b45309; }
 html.dark .notice svg { color: hsl(38 90% 66%); }
 .notice strong { font-weight: 700; }
 
-/*
- * شريط التبويبات: القائمة الجانبية تعرضها كلّها، وهذا الشريط طريق أقصر إليها
- * من داخل الصفحة. رقاقات بحدٍّ شعري وزاوية قائمة، والنشطة وحدها ممتلئة باللون.
- */
-.tabbar { display: flex; flex-wrap: wrap; gap: .3rem; }
-.tabbar-item { display: inline-flex; align-items: center; gap: .4rem; border: 1px solid hsl(var(--border)); padding: .35rem .7rem; font-size: .74rem; font-weight: 600; color: hsl(var(--muted-foreground)); transition: color .15s, border-color .15s, background .15s; }
-.tabbar-item svg { width: 14px; height: 14px; }
-.tabbar-item:hover { color: hsl(var(--foreground)); border-color: hsl(var(--primary) / .5); }
-.tabbar-item.is-active { background: hsl(var(--primary)); border-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
-
-/* لوحة التبويب: بطاقة اللوحة نفسها (.card) بفاصل أوسع بين كتلها. */
-.panel { gap: 1rem; padding: 1.1rem 1.15rem; }
-
-/* تبويبات الموارد داخل اللوحة — أصغر من شريط التبويبات وبلا أيقونات. */
-.subtabbar { display: flex; flex-wrap: wrap; gap: .3rem; }
-.subtab { border: 1px solid hsl(var(--border)); padding: .3rem .75rem; font-size: .74rem; font-weight: 600; color: hsl(var(--muted-foreground)); }
-.subtab:hover { color: hsl(var(--foreground)); border-color: hsl(var(--primary) / .5); }
-.subtab.is-active { background: hsl(var(--primary)); border-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
-
-/*
- * ترويسة القسم هنا سطران وزرّ في الطرف المقابل — لا العنوان والخطّ الممتدّ
- * الذي في لوحات الوزارة، فتُعاد صياغتها على هذا الشكل.
- */
+/* ترويسة الأقسام في لوحات الأدوات والتكاملات: سطران وزرّ في الطرف المقابل. */
 .section-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: .75rem; margin: 0; }
 .section-head h2 { font-size: .95rem; font-weight: 700; letter-spacing: 0; white-space: normal; }
 .section-head p { margin-top: .15rem; font-size: .72rem; line-height: 1.75; color: hsl(var(--muted-foreground)); }
 
-.empty-state { padding: 2.5rem 1.25rem; text-align: center; font-size: .8rem; color: hsl(var(--muted-foreground)); }
-
-/* خلايا الإجراءات: زرّان متجاوران في وسط الخانة، بلا لفّ سطر بينهما. */
-.cell-actions { text-align: center; white-space: nowrap; }
-.inline-form { display: inline; }
-.cell-actions .icon-action { display: inline-grid; place-items: center; vertical-align: middle; margin-inline-start: .15rem; }
-
-.pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; font-size: .74rem; color: hsl(var(--muted-foreground)); }
-.pager nav { display: flex; gap: .3rem; }
-.pager nav a, .pager nav span { border: 1px solid hsl(var(--border)); padding: .25rem .7rem; }
-.pager nav a:hover { border-color: hsl(var(--primary) / .6); color: hsl(var(--foreground)); }
-
-/*
- * الحقل: التسمية عنصر <label> لا <span>، فتأخذ ما تأخذه أختها في اللوحة.
- * والحقول نفسها تحمل .input و .select فتُصمَّم من هناك.
- */
+/* الحقل: التسمية عنصر <label>، والحقول نفسها تحمل .input و .select. */
 .field label { font-size: .7rem; font-weight: 600; color: hsl(var(--muted-foreground)); }
 .field .req { color: #d61f47; margin-inline-start: .15rem; }
 html.dark .field .req { color: hsl(352 85% 72%); }
 .field textarea.input { min-height: 5rem; resize: vertical; line-height: 1.8; }
-/* خانة الاختيار سطر واحد: المربّع ثم نصّه. */
 .field-check { flex-direction: row; align-items: center; gap: .5rem; }
 .field-check input[type=checkbox] { width: 1rem; height: 1rem; accent-color: hsl(var(--primary)); cursor: pointer; }
 .field-check label { font-size: .78rem; font-weight: 600; color: hsl(var(--foreground)); cursor: pointer; }
 .field-wide { grid-column: 1 / -1; }
 
+.form-actions { display: flex; gap: .5rem; border-top: 1px solid var(--hair); padding-top: 1rem; margin-top: .25rem; }
+
 /*
- * النموذج المنبثق: <dialog> أصليّ لا لوح منزلق، فيبقى بسطحٍ مصمت — هو فوق
- * الصفحة لا فيها — لكن بزاويته القائمة وخطّه الشعري كبقية اللوحة.
+ * النموذج المنبثق: <dialog> أصليّ بسطحٍ مصمت فوق الصفحة، بزاوية قائمة وخطّ
+ * شعري. رأسه وذيله ثابتان، والجسم وحده يتمرّر إن طالت الحقول.
  */
 dialog.modal {
     border: 1px solid hsl(var(--border)); border-radius: 0; padding: 0;
-    /* التوسيط من المتصفّح نفسه، و* { margin: 0 } في اللوحة يُبطله فيُعاد هنا. */
-    margin: auto;
-    width: min(70rem, 96vw); max-width: 96vw; max-height: 94vh;
+    margin: auto; /* * { margin: 0 } في اللوحة يُبطل توسيط المتصفّح. */
+    width: min(56rem, 94vw); max-width: 94vw; max-height: 90vh;
     background: hsl(var(--background)); color: hsl(var(--foreground));
     font-family: inherit;
     box-shadow: 0 28px 70px -20px rgba(0, 0, 0, .55);
 }
-dialog.modal::backdrop { background: rgba(0, 0, 0, .6); }
+dialog.modal[open] { display: flex; flex-direction: column; animation: modal-in .16s ease-out; }
+dialog.modal > form { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+dialog.modal.sm { width: min(26rem, 94vw); }
+dialog.modal::backdrop { background: rgba(2, 8, 20, .62); backdrop-filter: blur(2px); }
+@keyframes modal-in { from { opacity: 0; transform: translateY(6px) scale(.985); } }
 .modal-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--hair); padding: .9rem 1.2rem; }
-.modal-head h3 { font-size: 1rem; font-weight: 700; }
-.modal-body { padding: 1.2rem; }
-.modal-foot { display: flex; gap: .5rem; border-top: 1px solid var(--hair); padding: .85rem 1.2rem; }
-/*
- * بلا تمرير داخلي: النموذج يتمدّد ليتسع لحقوله كلّها دفعة واحدة، والحقول
- * تتراصّ بعرضٍ أدنى ثابت فيملأ الصفّ ما وسعه منها.
- */
-.modal .form-grid { grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: .75rem .85rem; }
+.modal-head h3 { font-size: .98rem; font-weight: 700; }
+.modal-head p { margin-top: .1rem; font-size: .7rem; color: hsl(var(--muted-foreground)); }
+.modal-body { padding: 1.2rem; overflow-y: auto; }
+.modal-body > p { font-size: .8rem; line-height: 1.9; }
+.modal-foot { display: flex; gap: .5rem; border-top: 1px solid var(--hair); padding: .85rem 1.2rem; background: hsl(var(--muted) / .35); }
+.modal .form-grid { grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: .8rem .9rem; }
 .modal .field textarea.input { min-height: 4rem; }
+.btn-danger { background: #d61f47; border-color: #d61f47; color: #fff; }
+.btn-danger:hover { background: #be123c; }
 </style>

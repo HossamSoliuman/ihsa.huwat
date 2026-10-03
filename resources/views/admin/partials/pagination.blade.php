@@ -1,17 +1,17 @@
 @if ($paginator->hasPages())
-    <nav>
+    <nav aria-label="الصفحات">
         @if ($paginator->onFirstPage())
-            <span>السابق</span>
+            <span class="is-disabled">السابق</span>
         @else
-            <a href="{{ $paginator->previousPageUrl() }}">السابق</a>
+            <a href="{{ $paginator->previousPageUrl() }}" rel="prev">السابق</a>
         @endif
 
         <span>صفحة {{ $paginator->currentPage() }} من {{ $paginator->lastPage() }}</span>
 
         @if ($paginator->hasMorePages())
-            <a href="{{ $paginator->nextPageUrl() }}">التالي</a>
+            <a href="{{ $paginator->nextPageUrl() }}" rel="next">التالي</a>
         @else
-            <span>التالي</span>
+            <span class="is-disabled">التالي</span>
         @endif
     </nav>
 @endif

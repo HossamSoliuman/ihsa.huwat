@@ -11,8 +11,8 @@
 </div>
 
 @if (! empty($config['safety_title']))
-    <div class="note-box">
-        @include('admin.partials.icon', ['name' => 'shield'])
+    <div class="note-box" style="margin-top:0">
+        @include('partials.icon', ['name' => 'shield-check'])
         <div>
             <div class="n-title">{{ $config['safety_title'] }}</div>
             <p class="n-body">{{ $config['safety_text'] }}</p>
@@ -69,9 +69,9 @@
         </div>
     </div>
 
-    <div style="margin-top:1.1rem;">
+    <div class="form-actions" style="margin-top:1.1rem;">
         <button type="submit" class="btn btn-primary">
-            @include('admin.partials.icon', ['name' => 'save'])
+            @include('partials.icon', ['name' => 'save'])
             حفظ الإعدادات
         </button>
     </div>

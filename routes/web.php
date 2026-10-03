@@ -101,75 +101,24 @@ use App\Services\Owner\OwnerReports;
 use Illuminate\Support\Facades\Route;
 
 /*
-|--------------------------------------------------------------------------
-| بوابة المعلومات — نصف إدارة النظام
-|--------------------------------------------------------------------------
-|
-| تُسجَّل قبل لوحة الوزارة عمدًا: المسار بلا قيد نطاق يلتقط أي مضيف، فلو جاءت
-| مسارات اللوحة أولًا لابتلعت "/" على info.hawat.sa قبل أن تصل إلى هنا.
-|
-| عند ترك INFO_PORTAL_DOMAIN فارغًا تعمل البوابة تحت البادئة /info بدل مضيف مستقل.
-|
-*/
-
+ * بوابة المعلومات — نصف "إدارة النظام" الذي يحرّر البيانات الأساسية عبر
+ * تبويبات config/info.php. تُسجَّل تحت /subadmin مع نصفه الآخر خلف دخول واحد،
+ * والقيد على {tab} يمنعها من ابتلاع لوحات القسم ذات الأسماء الثابتة.
+ */
 $infoPortal = function (): void {
-    /*
-     * الدخول على مضيف البوابة نفسه، واسمه "login" مجرّدًا لأن وسيط auth يحوّل
-     * إليه بهذا الاسم. والمحاولات مخنوقة: ستّ في الدقيقة تكفي من يعرف كلمته.
-     */
-    Route::middleware('guest')->group(function (): void {
-        Route::get('login', [LoginController::class, 'create'])->name('login');
-        Route::post('login', [LoginController::class, 'store'])->middleware('throttle:6,1');
+    Route::get('/', [AdminController::class, 'index'])->name('admin.index');
+
+    // تبويب مجهول يُردّ بـ 404 من الموجّه بدل أن يصل إلى السجل فيرمي استثناءً.
+    Route::name('admin.')->whereIn('tab', array_keys(config('info.tabs')))->group(function (): void {
+        Route::get('{tab}', [AdminController::class, 'show'])->name('tab');
+
+        Route::post('{tab}/{resource}', [AdminResourceController::class, 'store'])->name('resource.store');
+        Route::put('{tab}/{resource}/{id}', [AdminResourceController::class, 'update'])->name('resource.update');
+        Route::delete('{tab}/{resource}/{id}', [AdminResourceController::class, 'destroy'])->name('resource.destroy');
+
+        Route::put('{tab}/integration/{provider}', [IntegrationSettingController::class, 'update'])->name('integration.update');
     });
-
-    Route::post('logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
-
-    /*
-     * ما بقي من البوابة خلف الدخول: تحرير البيانات الأساسية يُنسب إلى صاحبه في
-     * سجل العمليات، فلا يُفتح لزائر مجهول.
-     */
-    Route::middleware('auth')->group(function (): void {
-        Route::get('/', [AdminController::class, 'index'])->name('admin.index');
-
-        // تبويب مجهول يُردّ بـ 404 من الموجّه بدل أن يصل إلى السجل فيرمي استثناءً.
-        Route::prefix('admin')->name('admin.')->whereIn('tab', array_keys(config('info.tabs')))->group(function (): void {
-            Route::get('{tab}', [AdminController::class, 'show'])->name('tab');
-
-            Route::post('{tab}/{resource}', [AdminResourceController::class, 'store'])->name('resource.store');
-            Route::put('{tab}/{resource}/{id}', [AdminResourceController::class, 'update'])->name('resource.update');
-            Route::delete('{tab}/{resource}/{id}', [AdminResourceController::class, 'destroy'])->name('resource.destroy');
-
-            Route::put('{tab}/integration/{provider}', [IntegrationSettingController::class, 'update'])->name('integration.update');
-        });
-    });
-
-    /*
-     * تبويبات سقطت لأن لصفحتها موضعًا واحدًا خارج البوابة. التحويل دائم حتى
-     * لا تتعطّل الروابط المحفوظة، والوجهة تطلب دخولها بنفسها إن لزم.
-     */
-    foreach (['licenses' => 'services.season-licenses', 'audit' => 'subadmin.audit-log'] as $vacated => $destination) {
-        Route::get("admin/{$vacated}", fn () => redirect()->route($destination, [], 301));
-    }
 };
-
-$infoDomain = config('info.domain');
-$onSeparateHost = is_string($infoDomain) && $infoDomain !== '';
-
-if ($onSeparateHost) {
-    Route::domain($infoDomain)->group($infoPortal);
-} else {
-    Route::prefix('info')->group($infoPortal);
-}
-
-/*
-|--------------------------------------------------------------------------
-| لوحة الوزارة — النطاق الرئيسي
-|--------------------------------------------------------------------------
-|
-| حين تعمل البوابة على مضيف مستقل تُقيَّد اللوحة بنطاقها الرئيسي، وإلا لظهرت
-| صفحاتها أيضًا على info.hawat.sa. وإن لم يُعرف النطاق الرئيسي تبقى بلا قيد.
-|
-*/
 
 /*
  * شاشة العرض — لوحات القاعة تحت البادئة /gov، وهي تبويب واحد في قائمة الإحصاء
@@ -189,13 +138,12 @@ $govDashboard = function (): void {
 };
 
 /*
- * إدارة النظام — نصفها على النطاق الرئيسي تحت البادئة /subadmin، ونصفها الآخر
- * بوابة المعلومات على مضيفها. قائمتهما واحدة (config/hawat.php → nav_subadmin)
- * ودخولهما واحد: دخول بوابة المعلومات.
+ * إدارة النظام — نصفاها تحت البادئة /subadmin: هذا النصف ثم بوابة المعلومات.
+ * قائمتهما واحدة (config/hawat.php → nav_subadmin) ودخولهما واحد على /login.
  *
  * لوحات هذا النصف تدير القطاع نفسه لا بياناته: الهيكل التنظيمي والموظفون، ثم
- * المهام والتنبيهات والإنذارات، ثم سجل العمليات والإعدادات. لا رئيسة له: /subadmin
- * يُحوَّل إلى المستخدمين والصلاحيات في بوابة المعلومات، صفحتهم الوحيدة.
+ * المهام والتنبيهات والإنذارات، ثم سجل العمليات والإعدادات. ورئيسة القسم كلّه
+ * (/subadmin) نظرة عامة من بوابة المعلومات.
  */
 $subAdministration = function (): void {
     Route::get('/org-structure', [OrgStructureController::class, 'index'])->name('org-structure');
@@ -660,7 +608,7 @@ $adminPanel = function () use ($operationsConsole): void {
  * /stats ومعه شاشة العرض تحت /gov، والخدمات والتراخيص تحت /services، وإدارة
  * النظام تحت /subadmin (ونصفها الآخر بوابة المعلومات)، وتطبيق حوات تحت /admin.
  */
-$governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdministration, $servicesSection, $adminPanel): void {
+$governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdministration, $infoPortal, $servicesSection, $adminPanel): void {
     /*
      * الجذر صفحة الهبوط العامة (التعريف بحوات ومسار الصيد والتواصل)؛ صفحة اختيار
      * البوابات تبقى متاحة على /sections لمن يعرف مسارها.
@@ -685,8 +633,21 @@ $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdmi
 
     Route::prefix('stats')->name('stats.')->group($statisticsSection);
 
-    // خلف دخول بوابة المعلومات، نصفها الآخر — انظر redirectGuestsTo في bootstrap/app.php.
-    Route::prefix('subadmin')->name('subadmin.')->middleware('auth')->group($subAdministration);
+    /*
+     * دخول إدارة النظام، واسمه "login" مجرّدًا لأن وسيط auth يحوّل إليه بهذا
+     * الاسم. والمحاولات مخنوقة: ستّ في الدقيقة تكفي من يعرف كلمته.
+     */
+    Route::middleware('guest')->group(function (): void {
+        Route::get('/login', [LoginController::class, 'create'])->name('login');
+        Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:6,1');
+    });
+    Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
+
+    // إدارة النظام بنصفيها خلف دخولها — انظر redirectGuestsTo في bootstrap/app.php.
+    Route::prefix('subadmin')->middleware('auth')->group(function () use ($subAdministration, $infoPortal): void {
+        Route::name('subadmin.')->group($subAdministration);
+        $infoPortal();
+    });
 
     Route::prefix('services')->name('services.')->group($servicesSection);
 
@@ -730,17 +691,19 @@ $governmentPortal = function () use ($govDashboard, $statisticsSection, $subAdmi
 
     /*
      * صفحة المستخدمين في /subadmin كانت نسخة للعرض فقط من تبويب بوابة المعلومات
-     * الذي يحرّرهم، فبقي التبويب وحده. وجهته على مضيف آخر، فتُبنى عند الطلب.
+     * الذي يحرّرهم، فبقي التبويب وحده. وتبويبات سقطت من البوابة لأن لصفحتها
+     * موضعًا واحدًا خارجها. التحويل دائم حتى لا تتعطّل الروابط المحفوظة.
      */
-    foreach (['/subadmin', '/subadmin/users'] as $vacated) {
-        Route::get($vacated, fn () => redirect()->route('admin.tab', 'permissions', 301));
+    foreach (['/subadmin/users' => 'admin.tab', '/subadmin/licenses' => 'services.season-licenses', '/subadmin/audit' => 'subadmin.audit-log'] as $vacated => $destination) {
+        Route::get($vacated, fn () => redirect()->route($destination, $destination === 'admin.tab' ? 'permissions' : [], 301));
     }
+
+    /*
+     * البوابة كانت على مضيف مستقل (info.hawat.sa) ثم تحت /info. مضيفها القديم
+     * يُحوَّل في nginx، وهذه بقايا البادئة.
+     */
+    Route::permanentRedirect('/info', '/subadmin');
+    Route::get('/info/admin/{path}', fn (string $path) => redirect('/subadmin/'.$path, 301))->where('path', '.*');
 };
 
-$governmentDomain = config('hawat.domain');
-
-if ($onSeparateHost && is_string($governmentDomain) && $governmentDomain !== '' && $governmentDomain !== $infoDomain) {
-    Route::domain($governmentDomain)->group($governmentPortal);
-} else {
-    $governmentPortal();
-}
+$governmentPortal();

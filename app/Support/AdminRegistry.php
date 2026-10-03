@@ -24,11 +24,6 @@ class AdminRegistry
         return $tab + ['key' => $key];
     }
 
-    public function defaultTab(): string
-    {
-        return config('info.default_tab', array_key_first($this->tabs()));
-    }
-
     public function resource(string $key): array
     {
         $resource = config("info_resources.{$key}");
@@ -56,11 +51,22 @@ class AdminRegistry
         return new $class;
     }
 
-    public function records(string $resourceKey)
+    /**
+     * سجلات المورد صفحةً صفحة، مرشّحةً بنصّ البحث إن وُجد. البحث في الحقول
+     * النصية وحدها لأنها أعمدة الجدول نفسه، لا مسارات علاقات ولا قيم محسوبة.
+     */
+    public function records(string $resourceKey, ?string $search = null)
     {
+        $columns = collect($this->fields($resourceKey))
+            ->whereIn('type', ['text', 'textarea'])
+            ->pluck('key');
+
         return $this->model($resourceKey)
             ->newQuery()
             ->with($this->resource($resourceKey)['with'])
+            ->when($search !== null && $search !== '' && $columns->isNotEmpty(), fn ($query) => $query->where(
+                fn ($where) => $columns->each(fn (string $column) => $where->orWhere($column, 'like', '%'.$search.'%')),
+            ))
             ->latest('id')
             ->paginate(25)
             ->withQueryString();

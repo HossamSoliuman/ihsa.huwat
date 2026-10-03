@@ -6,7 +6,7 @@
 </div>
 
 <div class="notice">
-    @include('admin.partials.icon', ['name' => 'upload'])
+    @include('partials.icon', ['name' => 'upload'])
     <p>يُقبل الاستيراد للبيانات الأساسية فقط. الصف الأول يجب أن يحتوي أسماء الأعمدة كما هي موضحة في الجدول أدناه.</p>
 </div>
 

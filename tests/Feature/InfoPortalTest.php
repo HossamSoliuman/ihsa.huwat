@@ -10,18 +10,16 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * بوابة المعلومات تعمل على مضيف مستقل فوق نفس قاعدة البيانات التي تقرأ منها
- * لوحة الوزارة، وخلف تسجيل دخول لأنها تحرّر البيانات الأساسية. هذه الاختبارات
- * تحرس الفصل بين المضيفين، والباب المغلق أمام الزائر، وتحرير الحقول المرتبطة
- * بمفاتيح أجنبية — وهي المواضع التي تنكسر بصمت عند تغيير المخطط.
+ * بوابة المعلومات نصف إدارة النظام تحت /subadmin، خلف تسجيل دخول لأنها تحرّر
+ * البيانات الأساسية. هذه الاختبارات تحرس الباب المغلق أمام الزائر، وتعايش
+ * تبويباتها مع لوحات القسم في البادئة نفسها، وتحرير الحقول المرتبطة بمفاتيح
+ * أجنبية — وهي المواضع التي تنكسر بصمت عند تغيير المخطط.
  */
 class InfoPortalTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const PORTAL = 'http://info.hawat.test';
-
-    private const MINISTRY = 'http://hawat.test';
+    private const PORTAL = '/subadmin';
 
     /**
      * البوابة كلها خلف الدخول، فكل اختبار يمسّ محتواها يبدأ بمستخدم داخلٍ إليها.
@@ -46,18 +44,49 @@ class InfoPortalTest extends TestCase
         ]);
     }
 
-    public function test_the_portal_answers_on_its_own_host(): void
+    public function test_the_portal_answers_under_the_subadmin_prefix(): void
     {
         $this->signIn();
 
-        $this->get(self::PORTAL.'/')->assertOk();
-        $this->get(self::PORTAL.'/admin/geo')->assertOk();
+        // الرئيسة نظرة عامة تقود إلى كل تبويب، والتبويب يعرض جدوله.
+        $this->get(self::PORTAL)->assertOk()->assertSee(route('admin.tab', 'geo'), false);
+        $this->get(self::PORTAL.'/geo')->assertOk();
+        $this->get(self::PORTAL.'/powerbi')->assertOk();
+        $this->get(self::PORTAL.'/stats')->assertOk();
+    }
+
+    public function test_the_tabs_share_the_prefix_with_the_section_pages(): void
+    {
+        $this->signIn();
+
+        $this->get(self::PORTAL.'/audit-log')->assertOk();
+        $this->get(self::PORTAL.'/org-structure')->assertOk();
+    }
+
+    public function test_the_old_host_paths_redirect_into_the_prefix(): void
+    {
+        $this->get('/info')->assertMovedPermanently()->assertRedirect('/subadmin');
+        $this->get('/info/admin/geo')->assertMovedPermanently()->assertRedirect('/subadmin/geo');
+    }
+
+    public function test_a_search_narrows_the_records(): void
+    {
+        $this->signIn();
+        $governorate = $this->governorate();
+
+        Port::create(['name' => 'ميناء الدمام', 'governorate_id' => $governorate->id, 'status' => 'نشط']);
+        Port::create(['name' => 'ميناء جازان', 'governorate_id' => $governorate->id, 'status' => 'نشط']);
+
+        $this->get(self::PORTAL.'/geo?resource=ports&q=جازان')
+            ->assertOk()
+            ->assertSee('ميناء جازان')
+            ->assertDontSee('ميناء الدمام');
     }
 
     public function test_a_guest_is_sent_to_the_login_page(): void
     {
-        $this->get(self::PORTAL.'/')->assertRedirect(route('login'));
-        $this->get(self::PORTAL.'/admin/geo')->assertRedirect(route('login'));
+        $this->get(self::PORTAL)->assertRedirect(route('login'));
+        $this->get(self::PORTAL.'/geo')->assertRedirect(route('login'));
 
         // والكتابة محجوبة كالقراءة: لا يكفي إخفاء الصفحة عن الزائر.
         $this->post(route('admin.resource.store', ['tab' => 'geo', 'resource' => 'ports']), [
@@ -101,23 +130,7 @@ class InfoPortalTest extends TestCase
     {
         $this->signIn();
 
-        $this->get(self::PORTAL.'/admin/no-such-tab')->assertNotFound();
-    }
-
-    public function test_the_ministry_dashboard_answers_on_the_main_host(): void
-    {
-        $this->get(self::MINISTRY.'/')->assertOk();
-        $this->get(self::MINISTRY.'/gov')->assertOk();
-    }
-
-    public function test_the_two_portals_do_not_leak_onto_each_other(): void
-    {
-        $this->signIn();
-
-        // صفحة من لوحة الحكومة وأخرى من المنصة التشغيلية — كلتاهما محجوبتان عن مضيف البوابة.
-        $this->get(self::PORTAL.'/gov/production')->assertNotFound();
-        $this->get(self::PORTAL.'/boats')->assertNotFound();
-        $this->get(self::MINISTRY.'/admin/geo')->assertNotFound();
+        $this->get(self::PORTAL.'/no-such-tab')->assertNotFound();
     }
 
     public function test_a_record_is_created_through_a_relation_backed_select(): void
@@ -223,11 +236,11 @@ class InfoPortalTest extends TestCase
         // الرخص موضعها الخدمات والتراخيص، وسجل العمليات صفحته في إدارة النظام.
         $this->signIn();
 
-        $this->get(self::PORTAL.'/admin/licenses')
+        $this->get(self::PORTAL.'/licenses')
             ->assertMovedPermanently()
             ->assertRedirect(route('services.season-licenses'));
 
-        $this->get(self::PORTAL.'/admin/audit')
+        $this->get(self::PORTAL.'/audit')
             ->assertMovedPermanently()
             ->assertRedirect(route('subadmin.audit-log'));
     }

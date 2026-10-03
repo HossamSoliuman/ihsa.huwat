@@ -196,10 +196,8 @@ class PortalSplitTest extends TestCase
 
     public function test_the_old_users_page_redirects_to_the_one_that_edits_them(): void
     {
-        // صفحة /subadmin كانت نسخة للعرض فقط من تبويب بوابة المعلومات.
-        foreach (['/subadmin', '/subadmin/users'] as $old) {
-            $this->get($old)->assertMovedPermanently()->assertRedirect(route('admin.tab', 'permissions'));
-        }
+        // صفحة /subadmin/users كانت نسخة للعرض فقط من تبويب بوابة المعلومات.
+        $this->get('/subadmin/users')->assertMovedPermanently()->assertRedirect(route('admin.tab', 'permissions'));
     }
 
     public function test_the_sections_page_offers_four_portals_in_two_products(): void
