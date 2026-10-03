@@ -12,7 +12,6 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'calendar'])</div>
             <div>
                 <h1>جولات التوظيف</h1>
-                <p>الجولة المفتوحة تظهر في صفحة التقديم وفي التطبيق ما دامت داخل مدتها وفيها مقعد</p>
             </div>
         </div>
         <div class="actions">
@@ -29,7 +28,7 @@
         <div class="flash-error">لم يُسند إلى شركتك ميناء بعد — يسنده المدير العام، ثم تفتح فيه جولة.</div>
     @endif
 
-    <p class="card-sub" style="margin:0 0 1rem">رابط التقديم الذي تنشره: <a href="{{ route('counter-apply') }}" dir="ltr">{{ route('counter-apply') }}</a></p>
+    @include('panel.company.partials.apply-link')
 
     <form method="GET" class="filter-bar" style="margin-bottom:1.25rem">
         <label class="field"><span>الحالة</span>

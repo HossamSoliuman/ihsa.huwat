@@ -20,7 +20,6 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'user-plus'])</div>
             <div>
                 <h1>طلبات التوظيف</h1>
-                <p>من تقدّم لوظيفة عدّاد في جولاتك ووثّق جواله — الاعتماد ينشئ حسابه في ميناء الجولة</p>
             </div>
         </div>
     </div>

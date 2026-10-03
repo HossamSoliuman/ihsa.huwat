@@ -8,7 +8,6 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'users'])</div>
             <div>
                 <h1>العدّادون</h1>
-                <p>عدّادو {{ $company->name }} ونشاطهم — أوقف أحدهم أو انقله بين موانئ الشركة</p>
             </div>
         </div>
     </div>

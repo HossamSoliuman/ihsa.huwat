@@ -8,7 +8,6 @@
             <div class="icon-wrap">@include('partials.icon', ['name' => 'building'])</div>
             <div>
                 <h1>{{ $company->name }}</h1>
-                <p>مرحبًا {{ $user->name }} — افتح جولة توظيف في موانئك، وراجع طلبات العدّادين، وتابع نشاطهم</p>
             </div>
         </div>
         <div class="actions">
@@ -22,6 +21,8 @@
     @if ($kpis['ports'] === 0)
         <div class="flash-error">لم يُسند إلى شركتك ميناء بعد — لا تُفتح جولة توظيف إلا في موانئك. يسندها المدير العام.</div>
     @endif
+
+    @include('panel.company.partials.apply-link')
 
     <div class="stat-grid cols-5" style="margin-bottom:1.25rem">
         @include('partials.stat-card', ['label' => 'الموانئ', 'value' => number_format($kpis['ports']), 'icon' => 'anchor', 'tone' => 'primary'])
